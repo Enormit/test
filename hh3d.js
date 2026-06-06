@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name          HH3D Auto - v1.0
 // @namespace     hh3d-tool
-// @version       v 1.0
+// @version       v1.0
 // @description   Auto  HH3D
 // @author        Cre: [Unknown] - v1.0
 // @include       *://hoathinh3d.co*/*
@@ -10427,6 +10427,13 @@
     const hvmuaruong = new HoangVucShop();
 
     const luyendan = new LuyenDan();
+
+    if (securityToken) {
+        console.log("[HH3D Auto] Đã lấy thành công token, tự động chạy luyện đan ngay lập tức...");
+        luyendan.doLuyenDan().catch(err => {
+            console.error("[HH3D Auto] Lỗi khi tự động chạy luyện đan:", err);
+        });
+    }
 
     // Khởi tạo và chạy UI
     const uiStyles = new UIMenuStyles();
