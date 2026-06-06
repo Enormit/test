@@ -1,11 +1,11 @@
 // ==UserScript==
-// @name          HH3D Auto - v1.1
+// @name          HH3D Auto - v1.2
 // @namespace     hh3d-tool
-// @version       v1.1
+// @version       v1.2
 // @updateURL     https://raw.githubusercontent.com/phamquyet47204/tool-automation/main/hh3d.user.js
 // @downloadURL   https://raw.githubusercontent.com/phamquyet47204/tool-automation/main/hh3d.user.js
 // @description   Auto  HH3D
-// @author        Cre: [Unknown] - v1.1
+// @author        Cre: [Unknown] - v1.2
 // @include       *://hoathinh3d.co*/*
 // @exclude       *://hoathinh3d.co/khoang-mach*
 // @require       https://cdn.jsdelivr.net/npm/sweetalert2@11.26.12/dist/sweetalert2.all.min.js
@@ -1069,11 +1069,19 @@
                 indicatorHTML = `<span class="quest-autorun-indicator ${isEnabled ? 'enabled' : 'disabled'}" data-task="${quest.taskId}"></span>`;
             }
 
+            let progressText = '';
+            if (quest.taskId === 'luyenDan') {
+                const savedProgress = localStorage.getItem(`luyenDanLastProgress_${accountId}`);
+                if (savedProgress) {
+                    progressText = ` (${savedProgress})`;
+                }
+            }
+
             return `
                 <div class="nv-quest-item" data-task-id="${quest.taskId}">
                     ${indicatorHTML}
                     <span class="nv-quest-icon" data-task="${quest.taskId}" style="cursor: ${quest.autorunEnabled ? 'pointer' : 'default'};" title="${quest.autorunEnabled ? 'Bấm để bật/tắt chạy tự động' : ''}">${quest.taskIcon}</span>
-                    <span class="nv-quest-name">${quest.taskName}<span class="quest-progress" style="color:#9ca3af;font-size:10px;"></span></span>
+                    <span class="nv-quest-name">${quest.taskName}<span class="quest-progress" style="color:#9ca3af;font-size:10px;">${progressText}</span></span>
                     <div class="quest-controls">
                         ${extraControls.join('')}
                         ${buttonHTML}
@@ -1318,6 +1326,9 @@
             // Gom progress theo từng quest item trong UI
             const questItems = document.querySelectorAll('.nv-quest-item');
             questItems.forEach(item => {
+                if (item.getAttribute('data-task-id') === 'luyenDan') {
+                    return;
+                }
                 const nameEl = item.querySelector('.nv-quest-name');
                 const progressContent = item.querySelector('.quest-progress')?.textContent || '';
                 const itemName = ((nameEl?.textContent || '').replace(progressContent, '')).trim();
@@ -4470,6 +4481,12 @@
 
         updateProgress(text) {
             try {
+                const localStorageKey = `luyenDanLastProgress_${accountId}`;
+                if (text) {
+                    localStorage.setItem(localStorageKey, text);
+                } else {
+                    localStorage.removeItem(localStorageKey);
+                }
                 const span = document.querySelector('.nv-quest-item[data-task-id="luyenDan"] .quest-progress');
                 if (span) {
                     span.textContent = text ? ` (${text})` : '';
@@ -4545,6 +4562,7 @@
         }
 
         async doLuyenDan() {
+            countdownTimer.remove('luyenDan');
             console.log(`${this.logPrefix} ▶️ Bắt đầu kiểm tra Lò Đan...`);
             try {
                 const stateRes = await this.sendLdRequest("/state?fresh=1", "GET");
@@ -4647,11 +4665,13 @@
                     const elapsedMin = elapsedMs / 60000;
 
                     console.log(`${this.logPrefix} Đang luyện. Trôi qua: ${elapsedMin.toFixed(1)}p/5p. Còn: ${timerLeftSec}s. Giai đoạn nhạy cảm: ${unstableLeftSec}s. Độ ổn định: ${stability.toFixed(1)}%. Giữ lửa: ${tuneCount}/${tuneSurvivalMin}`);
-                    this.updateProgress(`Độ ổn định: ${stability.toFixed(0)}% - Còn: ${timerLeftSec}s`);
+                    localStorage.setItem(`luyenDanStability_${accountId}`, String(stability.toFixed(0)));
+                    countdownTimer.set('luyenDan', timerLeftSec * 1000);
 
                     if (elapsedMin > 5) {
                         console.log(`${this.logPrefix} Đã qua 5 phút luyện. Dừng vòng lặp kiểm tra Điều Hỏa. Chờ hoàn thành sau ${timerLeftSec}s...`);
-                        this.updateProgress(`Luyện (>5p - ${timerLeftSec}s)`);
+                        localStorage.setItem(`luyenDanStability_${accountId}`, String(stability.toFixed(0)));
+                        countdownTimer.set('luyenDan', timerLeftSec * 1000);
                         return Math.min(timerLeftSec * 1000 + 3000, 30000);
                     }
 
@@ -9128,8 +9148,10 @@
 
         remove(taskName) {
             delete this.tasks[taskName];
-            const el = document.querySelector(`.quest-next-time[data-task="${taskName}"]`);
-            if (el) { el.textContent = ''; el.classList.remove('active'); }
+            if (taskName !== 'luyenDan') {
+                const el = document.querySelector(`.quest-next-time[data-task="${taskName}"]`);
+                if (el) { el.textContent = ''; el.classList.remove('active'); }
+            }
             if (Object.keys(this.tasks).length === 0) this._stop();
         }
 
@@ -9151,6 +9173,22 @@
             const now = Date.now();
             for (const taskName in this.tasks) {
                 const remaining = this.tasks[taskName] - now;
+                if (taskName === 'luyenDan') {
+                    const el = document.querySelector('.nv-quest-item[data-task-id="luyenDan"] .quest-progress');
+                    if (el) {
+                        if (remaining <= 0) {
+                            el.textContent = '';
+                            delete this.tasks[taskName];
+                        } else {
+                            const stab = localStorage.getItem(`luyenDanStability_${accountId}`) || '100';
+                            const totalSec = Math.floor(remaining / 1000);
+                            const text = `Độ ổn định: ${stab}% - Còn: ${totalSec}s`;
+                            el.textContent = ` (${text})`;
+                            localStorage.setItem(`luyenDanLastProgress_${accountId}`, text);
+                        }
+                    }
+                    continue;
+                }
                 const el = document.querySelector(`.quest-next-time[data-task="${taskName}"]`);
                 if (!el) continue;
                 if (remaining <= 0) {
