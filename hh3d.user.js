@@ -1,11 +1,11 @@
 // ==UserScript==
-// @name          HH3D Auto - v1.2
+// @name          HH3D Auto - v1.3
 // @namespace     hh3d-tool
-// @version       v1.2
+// @version       v1.3
 // @updateURL     https://raw.githubusercontent.com/phamquyet47204/tool-automation/main/hh3d.user.js
 // @downloadURL   https://raw.githubusercontent.com/phamquyet47204/tool-automation/main/hh3d.user.js
 // @description   Auto  HH3D
-// @author        Cre: [Unknown] - v1.2
+// @author        Cre: [Unknown] - v1.3
 // @include       *://hoathinh3d.co*/*
 // @exclude       *://hoathinh3d.co/khoang-mach*
 // @require       https://cdn.jsdelivr.net/npm/sweetalert2@11.26.12/dist/sweetalert2.all.min.js
@@ -9181,8 +9181,11 @@
                             delete this.tasks[taskName];
                         } else {
                             const stab = localStorage.getItem(`luyenDanStability_${accountId}`) || '100';
-                            const totalSec = Math.floor(remaining / 1000);
-                            const text = `Độ ổn định: ${stab}% - Còn: ${totalSec}s`;
+                            const totalSec = Math.max(0, Math.floor(remaining / 1000));
+                            const minVal = Math.floor(totalSec / 60);
+                            const secVal = totalSec % 60;
+                            const timeStr = `${String(minVal).padStart(2, '0')}:${String(secVal).padStart(2, '0')}`;
+                            const text = `Độ ổn định: ${stab}% - Còn: ${timeStr}`;
                             el.textContent = ` (${text})`;
                             localStorage.setItem(`luyenDanLastProgress_${accountId}`, text);
                         }
