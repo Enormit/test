@@ -1,9 +1,11 @@
 // ==UserScript==
-// @name          HH3D Auto - v1.0
+// @name          HH3D Auto - v1.1
 // @namespace     hh3d-tool
-// @version       v1.0
+// @version       v1.1
+// @updateURL     https://raw.githubusercontent.com/phamquyet47204/tool-automation/main/hh3d.user.js
+// @downloadURL   https://raw.githubusercontent.com/phamquyet47204/tool-automation/main/hh3d.user.js
 // @description   Auto  HH3D
-// @author        Cre: [Unknown] - v1.0
+// @author        Cre: [Unknown] - v1.1
 // @include       *://hoathinh3d.co*/*
 // @exclude       *://hoathinh3d.co/khoang-mach*
 // @require       https://cdn.jsdelivr.net/npm/sweetalert2@11.26.12/dist/sweetalert2.all.min.js
@@ -2008,7 +2010,7 @@
 
 
             case 'luyenDan': {
-                const minStars = localStorage.getItem('luyenDanMinStars') || '3';
+                const minStars = localStorage.getItem('luyenDanMinStars') || '4';
                 const autoDecompose = localStorage.getItem('luyenDanAutoDecompose') !== 'false';
                 const autoTune = localStorage.getItem('luyenDanAutoTune') !== 'false';
                 return `
@@ -2020,9 +2022,8 @@
                         <select id="luyendan-min-stars" class="settings-select" style="width: 100%; margin-top: 6px;">
                             <option value="1" ${minStars === '1' ? 'selected' : ''}>⭐ 1 Sao trở lên</option>
                             <option value="2" ${minStars === '2' ? 'selected' : ''}>⭐⭐ 2 Sao trở lên</option>
-                            <option value="3" ${minStars === '3' ? 'selected' : ''}>⭐⭐⭐ 3 Sao trở lên (Mặc định)</option>
-                            <option value="4" ${minStars === '4' ? 'selected' : ''}>⭐⭐⭐⭐ 4 Sao trở lên</option>
-                            <option value="5" ${minStars === '5' ? 'selected' : ''}>⭐⭐⭐⭐⭐ 5 Sao</option>
+                            <option value="3" ${minStars === '3' ? 'selected' : ''}>⭐⭐⭐ 3 Sao trở lên</option>
+                            <option value="4" ${minStars === '4' ? 'selected' : ''}>⭐⭐⭐⭐ 4 Sao trở lên (Mặc định)</option>
                         </select>
                         <p class="settings-description">Nếu đan dược thu hoạch được bằng hoặc cao hơn số sao này, tool sẽ tự động sử dụng.</p>
                     </div>
@@ -2275,7 +2276,7 @@
                     break;
 
                 case 'luyenDan': {
-                    const minStars = document.getElementById('luyendan-min-stars')?.value || '3';
+                    const minStars = document.getElementById('luyendan-min-stars')?.value || '4';
                     const autoDecompose = document.getElementById('luyendan-auto-decompose')?.checked ?? true;
                     const autoTune = document.getElementById('luyendan-auto-tune')?.checked ?? true;
 
@@ -4591,7 +4592,7 @@
 
                             const pillId = collectRes.data?.pill_id;
                             if (pillId) {
-                                const minStars = parseInt(localStorage.getItem('luyenDanMinStars') || '3', 10);
+                                const minStars = parseInt(localStorage.getItem('luyenDanMinStars') || '4', 10);
                                 const autoDecompose = localStorage.getItem('luyenDanAutoDecompose') !== 'false';
 
                                 if (stars >= minStars) {
