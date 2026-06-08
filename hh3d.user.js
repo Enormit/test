@@ -1,11 +1,11 @@
 // ==UserScript==
-// @name          HH3D Auto - v2.2
+// @name          HH3D Auto - v2.3
 // @namespace     hh3d-tool
-// @version       v2.2
+// @version       v2.3
 // @updateURL     https://raw.githubusercontent.com/phamquyet47204/tool-automation/main/hh3d.user.js
 // @downloadURL   https://raw.githubusercontent.com/phamquyet47204/tool-automation/main/hh3d.user.js
 // @description   Auto  HH3D
-// @author        Cre: [Unknown] - v2.2
+// @author        Cre: [Unknown] - v2.3
 // @include       *://hoathinh3d.co*/*
 // @exclude       *://hoathinh3d.co/khoang-mach*
 // @require       https://cdn.jsdelivr.net/npm/sweetalert2@11.26.12/dist/sweetalert2.all.min.js
@@ -1486,13 +1486,25 @@
                 case 'khoangmach':
                 case 'tienduyen':
                 case 'hoatdongngay':
+                    if (taskTracker.isTaskDone(accountId, quest.taskId)) {
+                        // button.disabled = true;
+                        button.textContent = '✓ Xong';
+                        countdownTimer.remove(quest.taskId);
+                        if (questItem) questItem.classList.add('done');
+                    } else {
+                        // button.disabled = false;
+                        button.textContent = quest.buttonText;
+                        if (questItem) questItem.classList.remove('done');
+                    }
+                    break;
+
                 case 'luyenDan':
                     if (taskTracker.isTaskDone(accountId, quest.taskId)) {
                         // button.disabled = true;
                         button.textContent = '✓ Xong';
-                        // nếu đã hoàn thành thì dừng countdown timer
-                        countdownTimer.remove(quest.taskId);
-                        if (quest.taskId === 'luyenDan') {
+                        // Chỉ remove timer khi KHÔNG đang xử lý để tránh xóa span progress giữa chừng
+                        if (!luyendan || !luyendan.isProcessing) {
+                            countdownTimer.remove('luyenDan');
                             countdownTimer.remove('luyenDanCheck');
                         }
                         if (questItem) questItem.classList.add('done');
@@ -9456,8 +9468,13 @@
         remove(taskName) {
             delete this.tasks[taskName];
             if (taskName === 'luyenDan') {
-                const el = document.querySelector('.nv-quest-item[data-task-id="luyenDan"] .quest-progress');
-                if (el) { el.textContent = ''; }
+                // Chỉ xóa span khi KHÔNG có crafting timer đang chạy và KHÔNG đang xử lý
+                const isCrafting = !!this.tasks['luyenDan']; // đã bị xóa ở trên, luôn false
+                const isActive = (typeof luyendan !== 'undefined' && luyendan && luyendan.isProcessing);
+                if (!isActive) {
+                    const el = document.querySelector('.nv-quest-item[data-task-id="luyenDan"] .quest-progress');
+                    if (el) { el.textContent = ''; }
+                }
             } else if (taskName === 'luyenDanCheck') {
                 const el = document.querySelector('.quest-next-time[data-task="luyenDan"]');
                 if (el) { el.textContent = ''; el.classList.remove('active'); }
@@ -9830,8 +9847,13 @@
                     // Cho phép taskAction trả về delay thực tế (ms hoặc chuỗi thời gian)
                     let result = await taskAction();
                     // Cập nhật trạng thái UI sau khi task chạy xong
-                    // updateAllQuestButtons().catch(() => {});
-                    loadHH3DProfile().catch(() => { });
+                    // Không gọi loadHH3DProfile cho luyenDan vì nó sẽ xóa span progress đang hiển thị
+                    if (taskName !== 'luyenDan') {
+                        loadHH3DProfile().catch(() => { });
+                    } else {
+                        // Chỉ cập nhật nút trạng thái, không rebuild toàn bộ profile
+                        updateAllQuestButtons().catch(() => { });
+                    }
                     // Nếu trả về số, dùng làm delay
                     if (typeof result === 'number' && !isNaN(result) && result > 0) {
                         timeToNextCheck = result;
