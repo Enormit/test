@@ -3233,7 +3233,7 @@
             }
 
             const lastCheck = taskTracker.getLastCheckTienDuyen(accountId);
-            const now = new Date();
+            const now = Date.now();
             if (now - lastCheck < 1800000) return;
 
             const list = await this.getWeddingRooms();
@@ -3242,33 +3242,46 @@
                 return;
             }
 
+            console.log(`[HH3D Tiên Duyên] Bắt đầu quét danh sách phòng cưới (${list.data.length} phòng)...`);
+
             for (const room of list.data) {
-                taskTracker.setLastCheckTienDuyen(accountId, now);
                 console.log(`👉 Kiểm tra phòng ${room.wedding_room_id}`);
-
-                if (room.has_blessed === false) {
-                    const bless = await this.addBlessing(room.wedding_room_id);
-                    if (bless && bless.success === true) {
-                        showNotification(
-                            `Bạn đã gửi lời chúc phúc cho cặp đôi <br><b>${room.user1_name} 💞 ${room.user2_name}</b>`,
-                            "success"
-                        );
+                try {
+                    // Sử dụng kiểm tra phủ định/khẳng định lỏng (loose checks) tránh lỗi kiểu dữ liệu số/chuỗi từ API
+                    if (!room.has_blessed) {
+                        const bless = await this.addBlessing(room.wedding_room_id);
+                        if (bless && bless.success) {
+                            showNotification(
+                                `Bạn đã gửi lời chúc phúc cho cặp đôi <br><b>${room.user1_name} 💞 ${room.user2_name}</b>`,
+                                "success"
+                            );
+                        } else {
+                            console.log(`[HH3D Tiên Duyên] Chúc phúc phòng ${room.wedding_room_id} không thành công:`, bless?.message || 'Lỗi không xác định');
+                        }
                     }
+
+                    if (room.has_li_xi) {
+                        const liXi = await this.receiveLiXi(room.wedding_room_id);
+                        if (liXi && liXi.success) {
+                            showNotification(
+                                `Nhận lì xì phòng cưới ${room.wedding_room_id} được <b>${liXi.data.amount} ${liXi.data.name}</b>!`,
+                                "success"
+                            );
+                        } else {
+                            console.log(`[HH3D Tiên Duyên] Nhận lì xì phòng ${room.wedding_room_id} không thành công:`, liXi?.message || 'Lỗi không xác định');
+                        }
+                    }
+                } catch (err) {
+                    console.error(`[HH3D Tiên Duyên] Lỗi khi xử lý phòng ${room.wedding_room_id}:`, err);
                 }
 
-                if (room.has_li_xi === true) {
-                    const liXi = await this.receiveLiXi(room.wedding_room_id);
-                    if (liXi && liXi.success === true) {
-                        showNotification(
-                            `Nhận lì xì phòng cưới ${room.wedding_room_id} được <b>${liXi.data.amount} ${liXi.data.name}</b>!`,
-                            "success"
-                        );
-                    }
-                }
-
-                // ⏳ Chờ 1 giây tránh spam
-                await new Promise(r => setTimeout(r, 1000));
+                // ⏳ Chờ 1.5 giây tránh spam (được bọc thêm jitter bởi fetch wrapper)
+                await new Promise(r => setTimeout(r, 1500));
             }
+
+            // Chỉ cập nhật thời gian check sau khi đã quét xong toàn bộ danh sách phòng
+            taskTracker.setLastCheckTienDuyen(accountId, now);
+            console.log(`[HH3D Tiên Duyên] Đã hoàn thành quét toàn bộ phòng cưới.`);
         }
     }
 
