@@ -4545,6 +4545,7 @@
 
         updateProgress(text) {
             try {
+                const accountId = localStorage.getItem('hh3d_account_id') || '';
                 const localStorageKey = `luyenDanLastProgress_${accountId}`;
                 if (text) {
                     localStorage.setItem(localStorageKey, text);
@@ -4628,6 +4629,7 @@
         async doLuyenDan() {
             countdownTimer.remove('luyenDan');
             console.log(`${this.logPrefix} ▶️ Bắt đầu kiểm tra Lò Đan...`);
+            const accountId = localStorage.getItem('hh3d_account_id') || await getAccountId() || '';
             try {
                 const stateRes = await this.sendLdRequest("/state?fresh=1", "GET");
                 if (!stateRes || !stateRes.data) {
@@ -9225,6 +9227,7 @@
             } else {
                 const el = document.querySelector('.nv-quest-item[data-task-id="luyenDan"] .quest-progress');
                 if (el) el.textContent = '';
+                const accountId = localStorage.getItem('hh3d_account_id') || '';
                 localStorage.removeItem(`luyenDanLastProgress_${accountId}`);
             }
             if (Object.keys(this.tasks).length === 0) this._stop();
@@ -9255,6 +9258,7 @@
                             el.textContent = '';
                             delete this.tasks[taskName];
                         } else {
+                            const accountId = localStorage.getItem('hh3d_account_id') || '';
                             const isSafe = localStorage.getItem(`luyenDanIsSafe_${accountId}`) === 'true';
                             const tuneCount = localStorage.getItem(`luyenDanTuneCount_${accountId}`) || '0';
                             const tuneSurvivalMin = localStorage.getItem(`luyenDanTuneSurvivalMin_${accountId}`) || '3';
