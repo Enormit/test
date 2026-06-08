@@ -4674,11 +4674,13 @@
 
                     console.log(`${this.logPrefix} Đang luyện. Trôi qua: ${elapsedMin.toFixed(1)}p/5p. Còn: ${timerLeftSec}s. Giai đoạn nhạy cảm: ${unstableLeftSec}s. Độ ổn định: ${stability.toFixed(1)}%. Giữ lửa: ${tuneCount}/${tuneSurvivalMin}`);
                     localStorage.setItem(`luyenDanStability_${accountId}`, String(stability.toFixed(0)));
+                    localStorage.setItem(`luyenDanTuneCount_${accountId}`, String(tuneCount));
                     countdownTimer.set('luyenDan', timerLeftSec * 1000);
 
                     if (elapsedMin > 5) {
                         console.log(`${this.logPrefix} Đã qua 5 phút luyện. Dừng vòng lặp kiểm tra Điều Hỏa. Chờ hoàn thành sau ${timerLeftSec}s...`);
                         localStorage.setItem(`luyenDanStability_${accountId}`, String(stability.toFixed(0)));
+                        localStorage.setItem(`luyenDanTuneCount_${accountId}`, String(tuneCount));
                         countdownTimer.set('luyenDan', timerLeftSec * 1000);
                         return Math.min(timerLeftSec * 1000 + 3000, 30000);
                     }
@@ -4699,6 +4701,12 @@
                                 if (tuneRes && (tuneRes.success || tuneRes.data)) {
                                     successCount++;
                                     console.log(`${this.logPrefix} Điều Hỏa lần ${i + 1} thành công.`);
+                                    const updatedTuneCount = tuneRes.data?.craft?.tune_count || tuneRes.data?.tune_count || (tuneCount + successCount);
+                                    localStorage.setItem(`luyenDanTuneCount_${accountId}`, String(updatedTuneCount));
+                                    const updatedStab = tuneRes.data?.craft?.stability_pct;
+                                    if (updatedStab != null) {
+                                        localStorage.setItem(`luyenDanStability_${accountId}`, String(parseFloat(updatedStab).toFixed(0)));
+                                    }
                                 } else {
                                     console.log(`${this.logPrefix} Điều Hỏa lần ${i + 1} thất bại: ${tuneRes?.message || 'lỗi Rest'}`);
                                 }
@@ -9196,11 +9204,12 @@
                             delete this.tasks[taskName];
                         } else {
                             const stab = localStorage.getItem(`luyenDanStability_${accountId}`) || '100';
+                            const tuneCount = localStorage.getItem(`luyenDanTuneCount_${accountId}`) || '0';
                             const totalSec = Math.max(0, Math.floor(remaining / 1000));
                             const minVal = Math.floor(totalSec / 60);
                             const secVal = totalSec % 60;
                             const timeStr = `${String(minVal).padStart(2, '0')}:${String(secVal).padStart(2, '0')}`;
-                            const text = `Độ ổn định: ${stab}% - Còn: ${timeStr}`;
+                            const text = `Độ ổn định: ${stab}% - Điều Hỏa: ${tuneCount}/3 - Còn: ${timeStr}`;
                             el.textContent = ` (${text})`;
                             localStorage.setItem(`luyenDanLastProgress_${accountId}`, text);
                         }
