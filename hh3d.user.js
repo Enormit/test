@@ -1,11 +1,11 @@
 // ==UserScript==
-// @name          HH3D Auto - v2.0
+// @name          HH3D Auto - v2.1
 // @namespace     hh3d-tool
-// @version       v2.0
+// @version       v2.1
 // @updateURL     https://raw.githubusercontent.com/phamquyet47204/tool-automation/main/hh3d.user.js
 // @downloadURL   https://raw.githubusercontent.com/phamquyet47204/tool-automation/main/hh3d.user.js
 // @description   Auto  HH3D
-// @author        Cre: [Unknown] - v2.0
+// @author        Cre: [Unknown] - v2.1
 // @include       *://hoathinh3d.co*/*
 // @exclude       *://hoathinh3d.co/khoang-mach*
 // @require       https://cdn.jsdelivr.net/npm/sweetalert2@11.26.12/dist/sweetalert2.all.min.js
@@ -4751,12 +4751,6 @@
 
         async doLuyenDan() {
             countdownTimer.remove('luyenDan');
-            const accountId = localStorage.getItem('hh3d_account_id') || '';
-            if (accountId && taskTracker.isTaskDone(accountId, 'luyenDan')) {
-                console.log(`${this.logPrefix} Nhiệm vụ Luyện Đan đã hoàn thành hoặc tạm dừng (hết nguyên liệu). Bỏ qua.`);
-                this.updateProgress("Hết nguyên liệu");
-                return null;
-            }
             // Dùng accountId toàn cục
             const autoLuyenDan = localStorage.getItem('autoLuyenDan') !== '0';
             try {
@@ -4879,7 +4873,7 @@
 
                     // Nếu vẫn ở giai đoạn nhạy cảm và chưa đủ số lần giữ lửa
                     if (!autoLuyenDan) {
-                        return 10000; // Đồng hồ sync/check UI lấy 10s thay vì 5s
+                        return 5000;
                     }
                     const autoTune = localStorage.getItem('luyenDanAutoTune') !== 'false';
                     if (autoTune && stability <= 68) {
@@ -4904,16 +4898,14 @@
                                 console.error(`${this.logPrefix} Lỗi khi gọi Điều Hỏa lần ${i + 1}:`, err);
                             }
                             if (i < 2) {
-                                // Điều chỉnh khoảng cách giữa các lần điều hỏa là 10s (thêm jitter nhỏ)
-                                const tuneDelay = 10000 + Math.floor(Math.random() * 2000);
-                                await new Promise(resolve => setTimeout(resolve, tuneDelay));
+                                await new Promise(resolve => setTimeout(resolve, 7000));
                             }
                         }
                         showNotification(`🧪 🔥 Hoàn tất Điều Hỏa! Thành công: ${successCount}`, "success");
-                        return 10000; // Đồng hồ sync/check UI lấy 10s thay vì 5s
+                        return 5000;
                     }
 
-                    return 10000; // Định kỳ 10s/lần thay vì 5s/lần
+                    return 5000; // Định kỳ 5s/lần
                 }
 
                 if (furnace === "idle") {
