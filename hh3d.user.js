@@ -1,11 +1,11 @@
 // ==UserScript==
-// @name          HH3D Auto - v2.0
+// @name          HH3D Auto - v2.1
 // @namespace     hh3d-tool
-// @version       v2.0
+// @version       v2.1
 // @updateURL     https://raw.githubusercontent.com/phamquyet47204/tool-automation/main/hh3d.user.js
 // @downloadURL   https://raw.githubusercontent.com/phamquyet47204/tool-automation/main/hh3d.user.js
 // @description   Auto  HH3D
-// @author        Cre: [Unknown] - v2.0
+// @author        Cre: [Unknown] - v2.1
 // @include       *://hoathinh3d.co*/*
 // @exclude       *://hoathinh3d.co/khoang-mach*
 // @require       https://cdn.jsdelivr.net/npm/sweetalert2@11.26.12/dist/sweetalert2.all.min.js
@@ -4740,6 +4740,81 @@
                 }
 
                 const data = stateRes.data;
+
+                // Tự động quét và phân giải đan dược phẩm chất kém trong túi
+                const autoDecompose = localStorage.getItem('luyenDanAutoDecompose') !== 'false';
+                const minStars = parseInt(localStorage.getItem('luyenDanMinStars') || '4', 10);
+                if (autoLuyenDan && autoDecompose) {
+                    let stacks = [];
+                    if (data.pill_stacks && data.pill_stacks.length > 0) {
+                        stacks = data.pill_stacks.map(s => ({
+                            tier: s.tier,
+                            stars: parseInt(s.stars || 0, 10),
+                            count: parseInt(s.count || 0, 10),
+                            stack_id: s.stack_id || `${s.tier}:${s.stars}`
+                        }));
+                    } else if (data.pills && data.pills.length > 0) {
+                        const map = {};
+                        data.pills.forEach(p => {
+                            const stars = parseInt(p.stars || p.star || 0, 10);
+                            const sid = p.id || `${p.tier}:${stars}`;
+                            const key = `${p.tier}-${stars}`;
+                            if (!map[key]) {
+                                map[key] = { tier: p.tier, stars, count: 0, stack_id: sid };
+                            }
+                            map[key].count++;
+                        });
+                        stacks = Object.keys(map).map(k => map[k]);
+                    }
+
+                    // Quét DOM fallback nếu dữ liệu API trống
+                    if (stacks.length === 0 && typeof document !== 'undefined') {
+                        const pillCells = document.querySelectorAll('.ld-cell--pill');
+                        if (pillCells.length > 0) {
+                            console.log(`${this.logPrefix} Quét đan dược từ giao diện hiển thị (DOM fallback)...`);
+                            const map = {};
+                            pillCells.forEach(cell => {
+                                const tier = cell.dataset.tier;
+                                const stars = parseInt(cell.dataset.stars || 0, 10);
+                                const qtyEl = cell.querySelector('.ld-qty');
+                                const count = qtyEl ? parseInt(qtyEl.textContent || 1, 10) : 1;
+                                if (tier) {
+                                    const key = `${tier}-${stars}`;
+                                    if (!map[key]) {
+                                        map[key] = { tier, stars, count: 0, stack_id: `${tier}:${stars}` };
+                                    }
+                                    map[key].count += count;
+                                }
+                            });
+                            stacks = Object.keys(map).map(k => map[k]);
+                        }
+                    }
+
+                    const lowStarStacks = stacks.filter(s => s.stars < minStars && s.count > 0);
+                    if (lowStarStacks.length > 0) {
+                        console.log(`${this.logPrefix} Phát hiện đan dược phẩm chất kém trong túi:`, lowStarStacks);
+                        for (const stack of lowStarStacks) {
+                            for (let i = 0; i < stack.count; i++) {
+                                const pid = stack.stack_id;
+                                showNotification(`🧪 ♻️ Tự động phân giải đan trong túi: ${stack.tier.toUpperCase()} ${stack.stars}★ (Cần >= ${minStars}★)`, "info");
+                                this.updateProgress(`Phân giải ${stack.stars}★...`);
+                                try {
+                                    const decompRes = await this.sendLdRequest("/decompose", "POST", { pill_id: String(pid) });
+                                    if (decompRes && (decompRes.success || decompRes.data)) {
+                                        showNotification(`🧪 ♻️ Đã phân giải thành công đan ${stack.stars}★`, "success");
+                                    } else {
+                                        showNotification(`🧪 ⚠️ Lỗi phân giải: ${decompRes?.message || 'không thành công'}`, "warning");
+                                    }
+                                } catch (err) {
+                                    console.error(`${this.logPrefix} Lỗi khi phân giải đan ${pid}:`, err);
+                                }
+                                await new Promise(resolve => setTimeout(resolve, 1000));
+                            }
+                        }
+                        return 2000; // Quay lại chu kỳ sau 2s để nạp trạng thái mới sạch sẽ
+                    }
+                }
+
                 const furnace = data.furnace || "idle";
                 const craft = data.craft || null;
                 const materials = data.materials || {};
