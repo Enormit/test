@@ -1,11 +1,11 @@
 // ==UserScript==
-// @name          HH3D Auto - v1.9
+// @name          HH3D Auto - v2.0
 // @namespace     hh3d-tool
-// @version       v1.9
+// @version       v2.0
 // @updateURL     https://raw.githubusercontent.com/phamquyet47204/tool-automation/main/hh3d.user.js
 // @downloadURL   https://raw.githubusercontent.com/phamquyet47204/tool-automation/main/hh3d.user.js
 // @description   Auto  HH3D
-// @author        Cre: [Unknown] - v1.9
+// @author        Cre: [Unknown] - v2.0
 // @include       *://hoathinh3d.co*/*
 // @exclude       *://hoathinh3d.co/khoang-mach*
 // @require       https://cdn.jsdelivr.net/npm/sweetalert2@11.26.12/dist/sweetalert2.all.min.js
@@ -4781,7 +4781,14 @@
                             const stars = collectRes.data?.stars || 1;
                             showNotification(`🧪 🏆 Thu hoạch thành công: ${pillName} ${"★".repeat(stars)}`, "success");
 
-                            const pillId = collectRes.data?.pill_id;
+                            // So sánh danh sách pills trước và sau thu hoạch để tìm pill mới
+                            const beforePills = data.pills || [];
+                            const afterPills = collectRes.data?.pills || [];
+                            const beforeIds = new Set(beforePills.map(p => String(p.id)));
+                            const newPill = afterPills.find(p => !beforeIds.has(String(p.id)));
+
+                            const pillId = newPill ? String(newPill.id) : (collectRes.data?.last_collect?.pill_id || `${collectRes.data?.tier || data.tier || "ha"}:${stars}`);
+
                             if (pillId) {
                                 const minStars = parseInt(localStorage.getItem('luyenDanMinStars') || '4', 10);
                                 const autoDecompose = localStorage.getItem('luyenDanAutoDecompose') !== 'false';
