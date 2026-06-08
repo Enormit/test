@@ -4729,6 +4729,12 @@
 
         async doLuyenDan() {
             countdownTimer.remove('luyenDan');
+            const accountId = localStorage.getItem('hh3d_account_id') || '';
+            if (accountId && taskTracker.isTaskDone(accountId, 'luyenDan')) {
+                console.log(`${this.logPrefix} Nhiệm vụ Luyện Đan đã hoàn thành hoặc tạm dừng (hết nguyên liệu). Bỏ qua.`);
+                this.updateProgress("Hết nguyên liệu");
+                return null;
+            }
             // Dùng accountId toàn cục
             const autoLuyenDan = localStorage.getItem('autoLuyenDan') !== '0';
             try {
@@ -9660,116 +9666,127 @@
         * @param {number} interval Chu kỳ lặp lại của nhiệm vụ tính bằng mili giây.
         */
         async scheduleTask(taskName, taskAction, interval) {
-            if (this.timeoutIds[taskName]) clearTimeout(this.timeoutIds[taskName]);
-            
-            // Kiểm tra xem quest này có bị tắt chạy tự động không
-            const quest = QUEST_CONFIG.find(q => q.taskId === taskName);
-            if (quest && quest.autorunEnabled && taskName !== 'luyenDan') {
-                const isEnabled = localStorage.getItem(quest.autorunKey) !== '0';
-                if (!isEnabled) {
-                    console.log(`[Auto] Nhiệm vụ ${taskName} đã bị tắt tự động. Dừng lịch trình.`);
-                    if (this.timeoutIds[taskName]) {
-                        clearTimeout(this.timeoutIds[taskName]);
-                        this.timeoutIds[taskName] = null;
-                    }
-                    countdownTimer.remove(taskName);
-                    return;
-                }
-            }
-
-            let isTaskDone;
-            if (taskName === 'bicanh' && await bicanh.isDailyLimit()) {
-                isTaskDone = true;
-            } else if (taskName === 'luyenDan') {
-                isTaskDone = false; // Luyện đan luôn chạy ngầm để hiển thị UI đếm ngược
-            } else {
-                isTaskDone = taskTracker.isTaskDone(this.accountId, taskName);
-            }
-            // Kiểm tra và dừng lịch trình nếu nhiệm vụ đã hoàn thành
-            if (isTaskDone) {
-                loadHH3DProfile().catch(() => { });
+            if (!this.executingTasks) this.executingTasks = new Set();
+            if (this.executingTasks.has(taskName)) {
+                console.log(`[Auto] Nhiệm vụ ${taskName} đang thực hiện chạy, bỏ qua cuộc gọi trùng lặp.`);
                 return;
             }
+            this.executingTasks.add(taskName);
 
-            const now = Date.now();
-            const nextTime = taskTracker.getNextTime(this.accountId, taskName);
-            let timeToNextCheck;
-
-            if (nextTime === null || now >= nextTime) {
-                // Trễ phản ứng ngẫu nhiên mô phỏng hành vi người dùng thật (2s - 7s, riêng luyenDan chỉ 0.5s - 2s để đảm bảo lò đan ổn định)
-                const humanDelay = taskName === 'luyenDan' ? (500 + Math.floor(Math.random() * 1500)) : (2000 + Math.floor(Math.random() * 5000));
-                console.log(`[Auto] Đã đến giờ làm nhiệm vụ: ${taskName}. Chờ trễ mô phỏng hành vi người dùng: ${humanDelay}ms...`);
-                await new Promise(r => setTimeout(r, humanDelay));
-
-                console.log(`[Auto] Đang thực hiện nhiệm vụ: ${taskName}...`);
-                try {
-                    // Cho phép taskAction trả về delay thực tế (ms hoặc chuỗi thời gian)
-                    let result = await taskAction();
-                    // Cập nhật trạng thái UI sau khi task chạy xong
-                    // updateAllQuestButtons().catch(() => {});
-                    loadHH3DProfile().catch(() => { });
-
-                    // Lấy nextTime mới nhất từ tracker đề phòng taskAction đã thay đổi nó trực tiếp
-                    const updatedNextTime = taskTracker.getNextTime(this.accountId, taskName);
-                    const nowPostRun = Date.now();
-
-                    if (updatedNextTime !== null && updatedNextTime > nowPostRun) {
-                        timeToNextCheck = updatedNextTime - nowPostRun;
-                        console.log(`[Auto] Nhiệm vụ ${taskName} đã cập nhật thời gian chạy tiếp theo trong tracker: +${Math.round(timeToNextCheck / 1000)}s.`);
-                    } else if (typeof result === 'number' && !isNaN(result) && result > 0) {
-                        timeToNextCheck = result;
-                    } else if (typeof result === 'string') {
-                        // Nếu trả về chuỗi, parse ra ms
-                        const ms = parseDelayString(result);
-                        timeToNextCheck = ms > 0 ? ms : interval;
-                    } else {
-                        timeToNextCheck = interval;
-                    }
-
-                    // Thêm jitter ngẫu nhiên vào chu kỳ kiểm tra (tránh các nhiệm vụ không phải luyenDan chạy đều đặn tuyệt đối)
-                    // Chỉ áp dụng jitter nếu nhiệm vụ không phải chờ một mốc thời gian cụ thể vừa được cập nhật trong tracker
-                    if (taskName !== 'luyenDan' && (updatedNextTime === null || updatedNextTime <= nowPostRun)) {
-                        // Jitter từ -15s đến +45s
-                        const checkJitter = Math.floor(Math.random() * 60000) - 15000;
-                        timeToNextCheck = Math.max(10000, timeToNextCheck + checkJitter);
-                        console.log(`[Auto] Đã thêm jitter vào chu kỳ kiểm tra của ${taskName}. Thời gian check tiếp theo: ${Math.round(timeToNextCheck / 1000)}s.`);
-                    }
-                } catch (error) {
-                    console.error(`[Auto] Lỗi khi thực hiện nhiệm vụ ${taskName}:`, error);
-                    // Có thể đặt thời gian chờ ngắn hơn khi có lỗi để thử lại
-                    timeToNextCheck = 3 * 60 * 1000; // Thử lại sau 3 phút
-                }
-            } else {
-                timeToNextCheck = Math.max(nextTime - now, 0);
-                console.log(`[Auto] Nhiệm vụ ${taskName} chưa đến giờ, sẽ chờ ${timeToNextCheck}ms.`);
-            }
-
-            // Hẹn giờ cho lần chạy tiếp theo
-            if (this.timeoutIds[taskName]) clearTimeout(this.timeoutIds[taskName]);
-            if (taskName === 'luyenDan' || !taskTracker.isTaskDone(accountId, taskName)) {
-                const taskFullName = {
-                    hoangvuc: "Hoang Vực",
-                    phucloi: "Phúc Lợi",
-                    thiluyen: "Thí Luyện",
-                    bicanh: "Bí Cảnh",
-                    khoangmach: "Khoáng Mạch",
-                    luyenDan: "Luyện Đan"
-                }[taskName];
-                //showNotification
-                if (taskName === 'bicanh') {
-                    const isReserveHold = await bicanh.isReserveHold();
-                    if (isReserveHold) {
-                        //createUI.updateStatusBar(`🛑 ${taskFullName}: đang giữ lượt, không hẹn giờ`, 'info', 0);
-                        return; // dừng hẳn, không hẹn giờ
+            try {
+                if (this.timeoutIds[taskName]) clearTimeout(this.timeoutIds[taskName]);
+                
+                // Kiểm tra xem quest này có bị tắt chạy tự động không
+                const quest = QUEST_CONFIG.find(q => q.taskId === taskName);
+                if (quest && quest.autorunEnabled && taskName !== 'luyenDan') {
+                    const isEnabled = localStorage.getItem(quest.autorunKey) !== '0';
+                    if (!isEnabled) {
+                        console.log(`[Auto] Nhiệm vụ ${taskName} đã bị tắt tự động. Dừng lịch trình.`);
+                        if (this.timeoutIds[taskName]) {
+                            clearTimeout(this.timeoutIds[taskName]);
+                            this.timeoutIds[taskName] = null;
+                        }
+                        countdownTimer.remove(taskName);
+                        return;
                     }
                 }
-                // Cập nhật countdown vào từng nhiệm vụ (dùng 1 vòng lặp chung)
-                if (taskName === 'luyenDan') {
-                    countdownTimer.set('luyenDanCheck', timeToNextCheck);
+
+                let isTaskDone;
+                if (taskName === 'bicanh' && await bicanh.isDailyLimit()) {
+                    isTaskDone = true;
+                } else if (taskName === 'luyenDan') {
+                    isTaskDone = false; // Luyện đan luôn chạy ngầm để hiển thị UI đếm ngược
                 } else {
-                    countdownTimer.set(taskName, timeToNextCheck);
+                    isTaskDone = taskTracker.isTaskDone(this.accountId, taskName);
                 }
-                this.timeoutIds[taskName] = setTimeout(() => this.scheduleTask(taskName, taskAction, interval), timeToNextCheck);
+                // Kiểm tra và dừng lịch trình nếu nhiệm vụ đã hoàn thành
+                if (isTaskDone) {
+                    loadHH3DProfile().catch(() => { });
+                    return;
+                }
+
+                const now = Date.now();
+                const nextTime = taskTracker.getNextTime(this.accountId, taskName);
+                let timeToNextCheck;
+
+                if (nextTime === null || now >= nextTime) {
+                    // Trễ phản ứng ngẫu nhiên mô phỏng hành vi người dùng thật (2s - 7s, riêng luyenDan chỉ 0.5s - 2s để đảm bảo lò đan ổn định)
+                    const humanDelay = taskName === 'luyenDan' ? (500 + Math.floor(Math.random() * 1500)) : (2000 + Math.floor(Math.random() * 5000));
+                    console.log(`[Auto] Đã đến giờ làm nhiệm vụ: ${taskName}. Chờ trễ mô phỏng hành vi người dùng: ${humanDelay}ms...`);
+                    await new Promise(r => setTimeout(r, humanDelay));
+
+                    console.log(`[Auto] Đang thực hiện nhiệm vụ: ${taskName}...`);
+                    try {
+                        // Cho phép taskAction trả về delay thực tế (ms hoặc chuỗi thời gian)
+                        let result = await taskAction();
+                        // Cập nhật trạng thái UI sau khi task chạy xong
+                        // updateAllQuestButtons().catch(() => {});
+                        loadHH3DProfile().catch(() => { });
+
+                        // Lấy nextTime mới nhất từ tracker đề phòng taskAction đã thay đổi nó trực tiếp
+                        const updatedNextTime = taskTracker.getNextTime(this.accountId, taskName);
+                        const nowPostRun = Date.now();
+
+                        if (updatedNextTime !== null && updatedNextTime > nowPostRun) {
+                            timeToNextCheck = updatedNextTime - nowPostRun;
+                            console.log(`[Auto] Nhiệm vụ ${taskName} đã cập nhật thời gian chạy tiếp theo trong tracker: +${Math.round(timeToNextCheck / 1000)}s.`);
+                        } else if (typeof result === 'number' && !isNaN(result) && result > 0) {
+                            timeToNextCheck = result;
+                        } else if (typeof result === 'string') {
+                            // Nếu trả về chuỗi, parse ra ms
+                            const ms = parseDelayString(result);
+                            timeToNextCheck = ms > 0 ? ms : interval;
+                        } else {
+                            timeToNextCheck = interval;
+                        }
+
+                        // Thêm jitter ngẫu nhiên vào chu kỳ kiểm tra (tránh các nhiệm vụ không phải luyenDan chạy đều đặn tuyệt đối)
+                        // Chỉ áp dụng jitter nếu nhiệm vụ không phải chờ một mốc thời gian cụ thể vừa được cập nhật trong tracker
+                        if (taskName !== 'luyenDan' && (updatedNextTime === null || updatedNextTime <= nowPostRun)) {
+                            // Jitter từ -15s đến +45s
+                            const checkJitter = Math.floor(Math.random() * 60000) - 15000;
+                            timeToNextCheck = Math.max(10000, timeToNextCheck + checkJitter);
+                            console.log(`[Auto] Đã thêm jitter vào chu kỳ kiểm tra của ${taskName}. Thời gian check tiếp theo: ${Math.round(timeToNextCheck / 1000)}s.`);
+                        }
+                    } catch (error) {
+                        console.error(`[Auto] Lỗi khi thực hiện nhiệm vụ ${taskName}:`, error);
+                        // Có thể đặt thời gian chờ ngắn hơn khi có lỗi để thử lại
+                        timeToNextCheck = 3 * 60 * 1000; // Thử lại sau 3 phút
+                    }
+                } else {
+                    timeToNextCheck = Math.max(nextTime - now, 0);
+                    console.log(`[Auto] Nhiệm vụ ${taskName} chưa đến giờ, sẽ chờ ${timeToNextCheck}ms.`);
+                }
+
+                // Hẹn giờ cho lần chạy tiếp theo
+                if (this.timeoutIds[taskName]) clearTimeout(this.timeoutIds[taskName]);
+                if (taskName === 'luyenDan' || !taskTracker.isTaskDone(accountId, taskName)) {
+                    const taskFullName = {
+                        hoangvuc: "Hoang Vực",
+                        phucloi: "Phúc Lợi",
+                        thiluyen: "Thí Luyện",
+                        bicanh: "Bí Cảnh",
+                        khoangmach: "Khoáng Mạch",
+                        luyenDan: "Luyện Đan"
+                    }[taskName];
+                    //showNotification
+                    if (taskName === 'bicanh') {
+                        const isReserveHold = await bicanh.isReserveHold();
+                        if (isReserveHold) {
+                            //createUI.updateStatusBar(`🛑 ${taskFullName}: đang giữ lượt, không hẹn giờ`, 'info', 0);
+                            return; // dừng hẳn, không hẹn giờ
+                        }
+                    }
+                    // Cập nhật countdown vào từng nhiệm vụ (dùng 1 vòng lặp chung)
+                    if (taskName === 'luyenDan') {
+                        countdownTimer.set('luyenDanCheck', timeToNextCheck);
+                    } else {
+                        countdownTimer.set(taskName, timeToNextCheck);
+                    }
+                    this.timeoutIds[taskName] = setTimeout(() => this.scheduleTask(taskName, taskAction, interval), timeToNextCheck);
+                }
+            } finally {
+                this.executingTasks.delete(taskName);
             }
         }
 
