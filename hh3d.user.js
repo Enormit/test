@@ -1,11 +1,11 @@
 // ==UserScript==
-// @name          HH3D Auto - v2.1
+// @name          HH3D Auto - v2.2
 // @namespace     hh3d-tool
-// @version       v2.1
+// @version       v2.2
 // @updateURL     https://raw.githubusercontent.com/phamquyet47204/tool-automation/main/hh3d.user.js
 // @downloadURL   https://raw.githubusercontent.com/phamquyet47204/tool-automation/main/hh3d.user.js
 // @description   Auto  HH3D
-// @author        Cre: [Unknown] - v2.1
+// @author        Cre: [Unknown] - v2.2
 // @include       *://hoathinh3d.co*/*
 // @exclude       *://hoathinh3d.co/khoang-mach*
 // @require       https://cdn.jsdelivr.net/npm/sweetalert2@11.26.12/dist/sweetalert2.all.min.js
@@ -4728,12 +4728,13 @@
         }
 
         async doLuyenDan() {
-            countdownTimer.remove('luyenDan');
-            // Dùng accountId toàn cục
-            const autoLuyenDan = localStorage.getItem('autoLuyenDan') !== '0';
+            this.isProcessing = true;
             try {
+                // Dùng accountId toàn cục
+                const autoLuyenDan = localStorage.getItem('autoLuyenDan') !== '0';
                 const stateRes = await this.sendLdRequest("/state?fresh=1", "GET");
                 if (!stateRes || !stateRes.data) {
+                    countdownTimer.remove('luyenDan');
                     showNotification("❌ Không lấy được trạng thái Lò Đan", "warning");
                     this.updateProgress("Lỗi kết nối");
                     return 15000;
@@ -4772,21 +4773,22 @@
                         const pillCells = document.querySelectorAll('.ld-cell--pill');
                         if (pillCells.length > 0) {
                             console.log(`${this.logPrefix} Quét đan dược từ giao diện hiển thị (DOM fallback)...`);
-                            const map = {};
                             pillCells.forEach(cell => {
                                 const tier = cell.dataset.tier;
                                 const stars = parseInt(cell.dataset.stars || 0, 10);
                                 const qtyEl = cell.querySelector('.ld-qty');
                                 const count = qtyEl ? parseInt(qtyEl.textContent || 1, 10) : 1;
-                                if (tier) {
-                                    const key = `${tier}-${stars}`;
-                                    if (!map[key]) {
-                                        map[key] = { tier, stars, count: 0, stack_id: `${tier}:${stars}` };
-                                    }
-                                    map[key].count += count;
+                                if (tier && stars < minStars) {
+                                    stacks.push({
+                                        tier,
+                                        stars,
+                                        count,
+                                        stack_id: `${tier}:${stars}`,
+                                        isDomFallback: true,
+                                        cell: cell
+                                    });
                                 }
                             });
-                            stacks = Object.keys(map).map(k => map[k]);
                         }
                     }
 
@@ -4802,6 +4804,17 @@
                                     const decompRes = await this.sendLdRequest("/decompose", "POST", { pill_id: String(pid) });
                                     if (decompRes && (decompRes.success || decompRes.data)) {
                                         showNotification(`🧪 ♻️ Đã phân giải thành công đan ${stack.stars}★`, "success");
+                                        
+                                        // Cập nhật DOM ngay lập tức để đồng bộ và tránh lặp lại quét
+                                        if (stack.isDomFallback && stack.cell) {
+                                            const qtyEl = stack.cell.querySelector('.ld-qty');
+                                            const currentQty = qtyEl ? parseInt(qtyEl.textContent || 1, 10) : 1;
+                                            if (currentQty <= 1) {
+                                                stack.cell.remove();
+                                            } else {
+                                                qtyEl.textContent = String(currentQty - 1);
+                                            }
+                                        }
                                     } else {
                                         showNotification(`🧪 ⚠️ Lỗi phân giải: ${decompRes?.message || 'không thành công'}`, "warning");
                                     }
@@ -4811,7 +4824,7 @@
                                 await new Promise(resolve => setTimeout(resolve, 1000));
                             }
                         }
-                        return 2000; // Quay lại chu kỳ sau 2s để nạp trạng thái mới sạch sẽ
+                        return 10000; // Quay lại chu kỳ sau 10s để nạp trạng thái mới sạch sẽ và tránh nhấp nháy UI
                     }
                 }
 
@@ -4823,6 +4836,7 @@
                 console.log(`${this.logPrefix} Trạng thái Lò Đan: ${furnace.toUpperCase()}`);
 
                 if (furnace === "exploded") {
+                    countdownTimer.remove('luyenDan');
                     this.updateProgress("💥 Bị nổ lò");
                     if (!autoLuyenDan) {
                         return 15000;
@@ -4843,6 +4857,7 @@
                 }
 
                 if (furnace === "ready") {
+                    countdownTimer.remove('luyenDan');
                     this.updateProgress("Chờ thu hoạch");
                     if (!autoLuyenDan) {
                         return 15000;
@@ -4970,6 +4985,7 @@
                 }
 
                 if (furnace === "idle") {
+                    countdownTimer.remove('luyenDan');
                     this.updateProgress("Lò trống");
                     if (!autoLuyenDan) {
                         return 15000;
@@ -5025,6 +5041,7 @@
                                 return 10000;
                             }
                         } else {
+                            countdownTimer.remove('luyenDan');
                             showNotification("🧪 ❌ Hết nguyên liệu và gói linh dược. Dừng Luyện Đan.", "warning");
                             this.updateProgress("Hết nguyên liệu");
                             const accountId = await getAccountId();
@@ -5037,10 +5054,13 @@
                     }
                 }
             } catch (e) {
+                countdownTimer.remove('luyenDan');
                 console.error(`${this.logPrefix} Lỗi trong doLuyenDan:`, e);
                 this.updateProgress("Lỗi");
                 showNotification(`🧪 ❌ Lỗi Luyện Đan: ${e.message}`, "error");
                 return 15000;
+            } finally {
+                this.isProcessing = false;
             }
         }
     }
