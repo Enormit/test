@@ -1681,6 +1681,47 @@
         showNotification(`${questConfig.taskName}: Đã ${statusText} chạy tự động`, newState ? 'success' : 'info', 2000);
 
         console.log(`[Quest Autorun] ${taskId}: ${newState ? 'Enabled' : 'Disabled'}`);
+
+        // Dừng hoặc bắt đầu tác vụ ngay lập tức mà không cần tải lại trang
+        if (!newState) {
+            if (typeof automatic !== 'undefined' && automatic) {
+                if (automatic.timeoutIds && automatic.timeoutIds[taskId]) {
+                    clearTimeout(automatic.timeoutIds[taskId]);
+                    automatic.timeoutIds[taskId] = null;
+                }
+                if (taskId === 'tienduyen' && automatic.tienduyenTimeout) {
+                    clearTimeout(automatic.tienduyenTimeout);
+                    automatic.tienduyenTimeout = null;
+                }
+                if (taskId === 'dothach' && automatic.dothachTimeout) {
+                    clearTimeout(automatic.dothachTimeout);
+                    automatic.dothachTimeout = null;
+                }
+            }
+            countdownTimer.remove(taskId);
+        } else {
+            if (typeof automatic !== 'undefined' && automatic && automatic.isRunning) {
+                if (taskId === 'luyenDan') {
+                    automatic.scheduleTask('luyenDan', () => luyendan.doLuyenDan(), automatic.INTERVAL_LUYEN_DAN);
+                } else if (taskId === 'hoangvuc') {
+                    automatic.scheduleTask('hoangvuc', () => hoangvuc.doHoangVuc(), automatic.INTERVAL_HOANG_VUC);
+                } else if (taskId === 'thiluyen') {
+                    automatic.scheduleTask('thiluyen', () => doThiLuyenTongMon(), automatic.INTERVAL_THI_LUYEN);
+                } else if (taskId === 'phucloi') {
+                    automatic.scheduleTask('phucloi', () => doPhucLoiDuong(), automatic.INTERVAL_PHUC_LOI);
+                } else if (taskId === 'khoangmach') {
+                    automatic.scheduleTask('khoangmach', () => khoangmach.doKhoangMach(), automatic.INTERVAL_KHOANG_MACH);
+                } else if (taskId === 'bicanh') {
+                    automatic.scheduleTask('bicanh', async () => {
+                        await bicanh.doBiCanh();
+                    }, automatic.INTERVAL_BI_CANH);
+                } else if (taskId === 'tienduyen') {
+                    automatic.scheduleTienDuyenCheck();
+                } else if (taskId === 'dothach') {
+                    automatic.scheduleDoThach();
+                }
+            }
+        }
     }
 
     // ===============================================
@@ -1877,6 +1918,14 @@
                         <button id="general-reset-tasks-btn" class="settings-save-btn" style="background:rgba(239,68,68,0.2);color:#ef4444;border:1px solid rgba(239,68,68,0.3);margin-top:6px;width:100%">
                             🔄 Reset trạng thái hoàn thành
                         </button>
+                    </div>
+
+                    <div class="settings-option" style="margin-top:12px">
+                        <label class="settings-checkbox-label" style="display:flex;align-items:center;gap:6px;cursor:pointer">
+                            <input type="checkbox" id="general-vip-mode" ${localStorage.getItem('generalVipMode') === 'true' ? 'checked' : ''} style="cursor:pointer">
+                            <span style="color:#f59e0b;font-weight:bold">👑 Chế độ VIP</span>
+                        </label>
+                        <p class="settings-description">Khi bật VIP:<br>• Hoang Vực: thời gian hồi lượt đổi thành 7.55 phút.<br>• Phúc Lợi: giãn cách check rương tiếp theo đổi thành 7.55 phút.</p>
                     </div>
 
                     <div class="settings-option" style="margin-top:10px">
@@ -2221,8 +2270,10 @@
                 case 'general': {
                     const h = parseInt(document.getElementById('general-restart-hour')?.value ?? '0', 10) || 0;
                     const m = parseInt(document.getElementById('general-restart-minute')?.value ?? '30', 10);
+                    const vipMode = document.getElementById('general-vip-mode')?.checked || false;
                     localStorage.setItem('selfSchedule_h', String(h));
                     localStorage.setItem('selfSchedule_m', String(m));
+                    localStorage.setItem('generalVipMode', String(vipMode));
                     saved = true;
                     break;
                 }
@@ -3482,7 +3533,9 @@
                         if (message.includes('đã hoàn thành Phúc Lợi ngày hôm nay')) {
                             taskTracker.markTaskDone(accountId, 'phucloi');
                         } else {
-                            taskTracker.adjustTaskTime(accountId, 'phucloi', timePlus('30:00'));
+                            const isVip = localStorage.getItem('generalVipMode') === 'true';
+                            const nextDelay = isVip ? '07:33' : '30:00';
+                            taskTracker.adjustTaskTime(accountId, 'phucloi', timePlus(nextDelay));
                         }
                     } else {
                         const errorMessage = dataOpen.data && dataOpen.data.message ? dataOpen.data.message : 'Lỗi không xác định khi mở rương.';
@@ -3490,7 +3543,16 @@
                     }
                 } else {
                     showNotification(`Vui lòng đợi ${time} để mở rương tiếp theo.`, 'warn');
-                    taskTracker.adjustTaskTime(accountId, 'phucloi', timePlus(time));
+                    const isVip = localStorage.getItem('generalVipMode') === 'true';
+                    if (isVip) {
+                        const parts = time.split(':').map(Number);
+                        const serverWaitMs = parts.length === 2 ? (parts[0] * 60 + parts[1]) * 1000 : 0;
+                        const vipWaitMs = 7 * 60 * 1000 + 33 * 1000; // 7.55 minutes
+                        const waitMs = (serverWaitMs > 0 && serverWaitMs < vipWaitMs) ? serverWaitMs : vipWaitMs;
+                        taskTracker.adjustTaskTime(accountId, 'phucloi', Date.now() + waitMs);
+                    } else {
+                        taskTracker.adjustTaskTime(accountId, 'phucloi', timePlus(time));
+                    }
                 }
             } else {
                 const errorMessage = dataTime.data && dataTime.data.message ? dataTime.data.message : 'Lỗi không xác định khi lấy thời gian.';
@@ -4322,7 +4384,9 @@
                         // Thực hiện tấn công boss Hoang Vực, nếu thành công và còn 1 lượt tấn công thì đánh dấu nhiệm vụ hoàn thành
                         await new Promise(resolve => setTimeout(resolve, 500));
                         if (await this.attackHoangVucBoss(boss.id, nonce)) {
-                            taskTracker.adjustTaskTime(accountId, 'hoangvuc', timePlus('15:02'));   //--------- 15 phút cho lần sau -----------//
+                            const isVip = localStorage.getItem('generalVipMode') === 'true';
+                            const nextAttackDelay = isVip ? '07:33' : '15:02';
+                            taskTracker.adjustTaskTime(accountId, 'hoangvuc', timePlus(nextAttackDelay));   //--------- 15 phút (VIP: 7.55 phút) cho lần sau -----------//
                             if (remainingAttacks <= 1) {
                                 taskTracker.markTaskDone(accountId, 'hoangvuc');
                             };
@@ -4653,31 +4717,32 @@
                     const tuneCount = craft ? (craft.tune_count | 0) : 0;
                     const tuneSurvivalMin = (data.danMaster && data.danMaster.rng && data.danMaster.rng.tuneSurvivalMin) ? (data.danMaster.rng.tuneSurvivalMin | 0) : 3;
                     const isSurvival = tuneCount >= tuneSurvivalMin;
+                    const isSafe = unstableLeftSec <= 0 || isSurvival;
 
-                    // Xác định thời gian đã trôi qua kể từ khi bắt đầu lò luyện hiện tại
-                    const craftJobId = craft?.id || data.craftJobId || "unknown";
-                    let jobStartTime = localStorage.getItem(`luyenDanJobStart_${craftJobId}`);
-                    if (!jobStartTime) {
-                        jobStartTime = Date.now().toString();
-                        localStorage.setItem(`luyenDanJobStart_${craftJobId}`, jobStartTime);
-                    }
-                    const elapsedMs = Date.now() - parseInt(jobStartTime, 10);
-                    const elapsedMin = elapsedMs / 60000;
-
-                    console.log(`${this.logPrefix} Đang luyện. Trôi qua: ${elapsedMin.toFixed(1)}p/5p. Còn: ${timerLeftSec}s. Giai đoạn nhạy cảm: ${unstableLeftSec}s. Độ ổn định: ${stability.toFixed(1)}%. Giữ lửa: ${tuneCount}/${tuneSurvivalMin}`);
+                    console.log(`${this.logPrefix} Đang luyện. Còn: ${timerLeftSec}s. Giai đoạn nhạy cảm: ${unstableLeftSec}s. Độ ổn định: ${stability.toFixed(1)}%. Giữ lửa: ${tuneCount}/${tuneSurvivalMin}`);
                     localStorage.setItem(`luyenDanStability_${accountId}`, String(stability.toFixed(0)));
+                    localStorage.setItem(`luyenDanTuneCount_${accountId}`, String(tuneCount));
+                    localStorage.setItem(`luyenDanTuneSurvivalMin_${accountId}`, String(tuneSurvivalMin));
+                    localStorage.setItem(`luyenDanIsSafe_${accountId}`, isSafe ? 'true' : 'false');
                     countdownTimer.set('luyenDan', timerLeftSec * 1000);
 
-                    if (elapsedMin > 5) {
-                        console.log(`${this.logPrefix} Đã qua 5 phút luyện. Dừng vòng lặp kiểm tra Điều Hỏa. Chờ hoàn thành sau ${timerLeftSec}s...`);
-                        localStorage.setItem(`luyenDanStability_${accountId}`, String(stability.toFixed(0)));
+                    // Cập nhật tiến trình hiển thị trên UI kèm số lần Điều Hỏa
+                    this.updateProgress(`Đang luyện (${stability.toFixed(0)}% - ${tuneCount}/${tuneSurvivalMin})`);
+
+                    // Nếu giai đoạn nhạy cảm đã qua hoặc đã đủ số lần giữ lửa (đã an toàn)
+                    if (isSafe) {
+                        console.log(`${this.logPrefix} Lò đan đã an toàn tuyệt đối. Chờ hoàn thành sau ${timerLeftSec}s...`);
+                        const m = Math.floor(timerLeftSec / 60);
+                        const s = timerLeftSec % 60;
+                        const timeStr = `${m}:${String(s).padStart(2, '0')}`;
+                        this.updateProgress(`đã điều hoả ${tuneCount} lần thời gian ${timeStr}`);
                         countdownTimer.set('luyenDan', timerLeftSec * 1000);
-                        return Math.min(timerLeftSec * 1000 + 3000, 30000);
+                        return timerLeftSec * 1000 + 3000;
                     }
 
-                    // Trong 5 phút đầu: vòng lặp định kỳ 10s/lần
+                    // Nếu vẫn ở giai đoạn nhạy cảm và chưa đủ số lần giữ lửa
                     const autoTune = localStorage.getItem('luyenDanAutoTune') !== 'false';
-                    if (autoTune && stability <= 68 && unstableLeftSec > 0 && !isSurvival) {
+                    if (autoTune && stability <= 68) {
                         let successCount = 0;
                         for (let i = 0; i < 3; i++) {
                             showNotification(`🧪 🔥 Điều Hỏa lần ${i + 1}/3...`, "warning");
@@ -4687,6 +4752,11 @@
                                 if (tuneRes && (tuneRes.success || tuneRes.data)) {
                                     successCount++;
                                     console.log(`${this.logPrefix} Điều Hỏa lần ${i + 1} thành công.`);
+                                    const updatedTuneCount = tuneRes.data?.craft?.tune_count || tuneRes.data?.tune_count;
+                                    if (updatedTuneCount != null && updatedTuneCount >= tuneSurvivalMin) {
+                                        console.log(`${this.logPrefix} Đã đạt đủ số lần giữ lửa sau lần tune ${i + 1}.`);
+                                        break;
+                                    }
                                 } else {
                                     console.log(`${this.logPrefix} Điều Hỏa lần ${i + 1} thất bại: ${tuneRes?.message || 'lỗi Rest'}`);
                                 }
@@ -4697,7 +4767,8 @@
                                 await new Promise(resolve => setTimeout(resolve, 7000));
                             }
                         }
-                        showNotification(`🧪 🔥 Hoàn tất 3 lần Điều Hỏa! Thành công: ${successCount}/3`, "success");
+                        showNotification(`🧪 🔥 Hoàn tất Điều Hỏa! Thành công: ${successCount}`, "success");
+                        return 10000;
                     }
 
                     return 10000; // Định kỳ 10s/lần
@@ -9151,6 +9222,10 @@
             if (taskName !== 'luyenDan') {
                 const el = document.querySelector(`.quest-next-time[data-task="${taskName}"]`);
                 if (el) { el.textContent = ''; el.classList.remove('active'); }
+            } else {
+                const el = document.querySelector('.nv-quest-item[data-task-id="luyenDan"] .quest-progress');
+                if (el) el.textContent = '';
+                localStorage.removeItem(`luyenDanLastProgress_${accountId}`);
             }
             if (Object.keys(this.tasks).length === 0) this._stop();
         }
@@ -9180,12 +9255,22 @@
                             el.textContent = '';
                             delete this.tasks[taskName];
                         } else {
+                            const isSafe = localStorage.getItem(`luyenDanIsSafe_${accountId}`) === 'true';
+                            const tuneCount = localStorage.getItem(`luyenDanTuneCount_${accountId}`) || '0';
+                            const tuneSurvivalMin = localStorage.getItem(`luyenDanTuneSurvivalMin_${accountId}`) || '3';
                             const stab = localStorage.getItem(`luyenDanStability_${accountId}`) || '100';
+
                             const totalSec = Math.max(0, Math.floor(remaining / 1000));
                             const minVal = Math.floor(totalSec / 60);
                             const secVal = totalSec % 60;
                             const timeStr = `${String(minVal).padStart(2, '0')}:${String(secVal).padStart(2, '0')}`;
-                            const text = `Độ ổn định: ${stab}% - Còn: ${timeStr}`;
+                            
+                            let text;
+                            if (isSafe) {
+                                text = `đã điều hoả ${tuneCount} lần thời gian ${timeStr}`;
+                            } else {
+                                text = `Đang luyện (${stab}% - ${tuneCount}/${tuneSurvivalMin})`;
+                            }
                             el.textContent = ` (${text})`;
                             localStorage.setItem(`luyenDanLastProgress_${accountId}`, text);
                         }
@@ -9253,36 +9338,45 @@
             const autoLuyenDan = localStorage.getItem('autoLuyenDan') !== '0';
 
             if (autoLuyenDan) {
-                await new Promise(resolve => setTimeout(resolve, 1000));
+                await new Promise(resolve => setTimeout(resolve, 4000));
                 await this.scheduleTask('luyenDan', () => luyendan.doLuyenDan(), this.INTERVAL_LUYEN_DAN);
             }
 
-            if (autoDiemDanh) { await this.doInitialTasks(); }
+            if (autoDiemDanh) {
+                await new Promise(resolve => setTimeout(resolve, 4000));
+                await this.doInitialTasks();
+            }
             // Bắt đầu chu kỳ hẹn giờ cho Tiên Duyên
-            if (autoTienDuyen) { await this.scheduleTienDuyenCheck() }
+            if (autoTienDuyen) {
+                await new Promise(resolve => setTimeout(resolve, 4000));
+                await this.scheduleTienDuyenCheck();
+            }
             // Đổ thạch
-            if (autoDoThach) { await this.scheduleDoThach() }
+            if (autoDoThach) {
+                await new Promise(resolve => setTimeout(resolve, 4000));
+                await this.scheduleDoThach();
+            }
             // Lên lịch các tác vụ định kỳ
             if (autoHoangVuc) {
-                await new Promise(resolve => setTimeout(resolve, 1000));
+                await new Promise(resolve => setTimeout(resolve, 4000));
                 this.scheduleTask('hoangvuc', () => hoangvuc.doHoangVuc(), this.INTERVAL_HOANG_VUC);
             }
             if (autoThiLuyen) {
-                await new Promise(resolve => setTimeout(resolve, 1000));
+                await new Promise(resolve => setTimeout(resolve, 4000));
                 this.scheduleTask('thiluyen', () => doThiLuyenTongMon(), this.INTERVAL_THI_LUYEN);
             }
             if (autoPhucLoi) {
-                await new Promise(resolve => setTimeout(resolve, 1000));
+                await new Promise(resolve => setTimeout(resolve, 4000));
                 await this.scheduleTask('phucloi', () => doPhucLoiDuong(), this.INTERVAL_PHUC_LOI);
             }
             if (autoKhoangMach) {
-                await new Promise(resolve => setTimeout(resolve, 1000));
+                await new Promise(resolve => setTimeout(resolve, 4000));
                 this.INTERVAL_KHOANG_MACH = localStorage.getItem('khoangmach_check_interval') ? parseInt(localStorage.getItem('khoangmach_check_interval')) * 60 * 1000 + this.delay : 5 * 60 * 1000 + this.delay;
                 await this.scheduleTask('khoangmach', () => khoangmach.doKhoangMach(), this.INTERVAL_KHOANG_MACH);
             }
 
             if (autoBiCanh) {
-                await new Promise(resolve => setTimeout(resolve, 1000));
+                await new Promise(resolve => setTimeout(resolve, 4000));
                 await this.scheduleTask("bicanh", async () => {
                     // Đọc giữ lượt đánh bí cảnh
                     const reserve = Number(localStorage.getItem("reserveBiCanhAttacks") || "0");
@@ -9291,14 +9385,17 @@
                 }, this.INTERVAL_BI_CANH);
             }
 
-            if (autoCauNguyen) { await this.caunguyentienduyen() }
+            if (autoCauNguyen) {
+                await new Promise(resolve => setTimeout(resolve, 4000));
+                await this.caunguyentienduyen();
+            }
 
             // if (autoLuanVo) {
-            //     await new Promise(resolve => setTimeout(resolve,  1000));
+            //     await new Promise(resolve => setTimeout(resolve,  4000));
             //     await this.scheduleLuanVo();
             // }
 
-            await new Promise(resolve => setTimeout(resolve, 1000));
+            await new Promise(resolve => setTimeout(resolve, 4000));
             this.scheduleHoatDongNgay();
             const _sh = parseInt(localStorage.getItem('selfSchedule_h') ?? '0', 10) || 0;
             const _sm = parseInt(localStorage.getItem('selfSchedule_m') ?? '30', 10);
@@ -9392,6 +9489,15 @@
         }
 
         async scheduleTienDuyenCheck() {
+            const isEnabled = localStorage.getItem('autoTienDuyen') !== '0';
+            if (!isEnabled) {
+                if (this.tienduyenTimeout) {
+                    clearTimeout(this.tienduyenTimeout);
+                    this.tienduyenTimeout = null;
+                }
+                countdownTimer.remove('tienduyen');
+                return;
+            }
             const now = Date.now();
             const lastCheckTienDuyen = taskTracker.getLastCheckTienDuyen(this.accountId);
             let timeToNextCheck;
@@ -9424,6 +9530,22 @@
         */
         async scheduleTask(taskName, taskAction, interval) {
             if (this.timeoutIds[taskName]) clearTimeout(this.timeoutIds[taskName]);
+            
+            // Kiểm tra xem quest này có bị tắt chạy tự động không
+            const quest = QUEST_CONFIG.find(q => q.taskId === taskName);
+            if (quest && quest.autorunEnabled) {
+                const isEnabled = localStorage.getItem(quest.autorunKey) !== '0';
+                if (!isEnabled) {
+                    console.log(`[Auto] Nhiệm vụ ${taskName} đã bị tắt tự động. Dừng lịch trình.`);
+                    if (this.timeoutIds[taskName]) {
+                        clearTimeout(this.timeoutIds[taskName]);
+                        this.timeoutIds[taskName] = null;
+                    }
+                    countdownTimer.remove(taskName);
+                    return;
+                }
+            }
+
             let isTaskDone;
             if (taskName === 'bicanh' && await bicanh.isDailyLimit()) {
                 isTaskDone = true;
@@ -9529,6 +9651,15 @@
         }
 
         async scheduleDoThach() {
+            const isEnabled = localStorage.getItem('autoDoThach') !== '0';
+            if (!isEnabled) {
+                if (this.dothachTimeout) {
+                    clearTimeout(this.dothachTimeout);
+                    this.dothachTimeout = null;
+                }
+                countdownTimer.remove('dothach');
+                return;
+            }
             const status = taskTracker.getTaskStatus(accountId, 'dothach');
             const isBetPlaced = status.betplaced;
             const isRewardClaimed = status.reward_claimed;
@@ -10470,7 +10601,8 @@
 
     const luyendan = new LuyenDan();
 
-    if (securityToken) {
+    const autoLuyenDan = localStorage.getItem('autoLuyenDan') !== '0';
+    if (securityToken && autoLuyenDan) {
         console.log("[HH3D Auto] Đã lấy thành công token, tự động chạy luyện đan ngay lập tức...");
         luyendan.doLuyenDan().catch(err => {
             console.error("[HH3D Auto] Lỗi khi tự động chạy luyện đan:", err);
