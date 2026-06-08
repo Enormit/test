@@ -4563,7 +4563,6 @@
         }
 
         async doLuyenDan() {
-            countdownTimer.remove('luyenDan');
             console.log(`${this.logPrefix} ▶️ Bắt đầu kiểm tra Lò Đan...`);
             const autoLuyenDan = localStorage.getItem('autoLuyenDan') !== '0';
             try {
@@ -4581,6 +4580,10 @@
                 const recipes = data.recipes || {};
 
                 console.log(`${this.logPrefix} Trạng thái Lò Đan: ${furnace.toUpperCase()}`);
+
+                if (furnace !== "crafting") {
+                    countdownTimer.remove('luyenDan');
+                }
 
                 if (furnace === "exploded") {
                     this.updateProgress("💥 Bị nổ lò");
@@ -9510,8 +9513,10 @@
                         return; // dừng hẳn, không hẹn giờ
                     }
                 }
-                // Cập nhật countdown vào từng nhiệm vụ (dùng 1 vòng lặp chung)
-                countdownTimer.set(taskName, timeToNextCheck);
+                // Cập nhật countdown vào từng nhiệm vụ (dùng 1 vòng lặp chung), trừ Luyện Đan sử dụng countdown riêng của nó
+                if (taskName !== 'luyenDan') {
+                    countdownTimer.set(taskName, timeToNextCheck);
+                }
                 this.timeoutIds[taskName] = setTimeout(() => this.scheduleTask(taskName, taskAction, interval), timeToNextCheck);
             }
         }
