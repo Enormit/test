@@ -1,11 +1,11 @@
 // ==UserScript==
-// @name          HH3D Auto - v1.6
+// @name          HH3D Auto - v1.7
 // @namespace     hh3d-tool
-// @version       v1.6
+// @version       v1.7
 // @updateURL     https://raw.githubusercontent.com/phamquyet47204/tool-automation/main/hh3d.user.js
 // @downloadURL   https://raw.githubusercontent.com/phamquyet47204/tool-automation/main/hh3d.user.js
 // @description   Auto  HH3D
-// @author        Cre: [Unknown] - v1.6
+// @author        Cre: [Unknown] - v1.7
 // @include       *://hoathinh3d.co*/*
 // @exclude       *://hoathinh3d.co/khoang-mach*
 // @require       https://cdn.jsdelivr.net/npm/sweetalert2@11.26.12/dist/sweetalert2.all.min.js
@@ -9627,6 +9627,8 @@
             let isTaskDone;
             if (taskName === 'bicanh' && await bicanh.isDailyLimit()) {
                 isTaskDone = true;
+            } else if (taskName === 'luyenDan') {
+                isTaskDone = false; // Luyện đan luôn chạy ngầm để hiển thị UI đếm ngược
             } else {
                 isTaskDone = taskTracker.isTaskDone(this.accountId, taskName);
             }
@@ -9670,7 +9672,7 @@
 
             // Hẹn giờ cho lần chạy tiếp theo
             if (this.timeoutIds[taskName]) clearTimeout(this.timeoutIds[taskName]);
-            if (!taskTracker.isTaskDone(accountId, taskName)) {
+            if (taskName === 'luyenDan' || !taskTracker.isTaskDone(accountId, taskName)) {
                 const taskFullName = {
                     hoangvuc: "Hoang Vực",
                     phucloi: "Phúc Lợi",
