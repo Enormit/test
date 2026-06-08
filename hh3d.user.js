@@ -9224,11 +9224,6 @@
             if (taskName !== 'luyenDan') {
                 const el = document.querySelector(`.quest-next-time[data-task="${taskName}"]`);
                 if (el) { el.textContent = ''; el.classList.remove('active'); }
-            } else {
-                const el = document.querySelector('.nv-quest-item[data-task-id="luyenDan"] .quest-progress');
-                if (el) el.textContent = '';
-                const accountId = localStorage.getItem('hh3d_account_id') || '';
-                localStorage.removeItem(`luyenDanLastProgress_${accountId}`);
             }
             if (Object.keys(this.tasks).length === 0) this._stop();
         }
