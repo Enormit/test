@@ -18,6 +18,58 @@
 (async function () {
     'use strict';
 
+    // ===============================================
+    // ANTI-BOT FETCH WRAPPER
+    // ===============================================
+    const originalFetch = window.fetch;
+    let lastRequestTime = 0;
+    const minRequestGap = 1000; // Ít nhất 1s giữa các request từ script này
+
+    async function sleep(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    async function antiBotFetch(url, options = {}, retryCount = 0) {
+        const MAX_RETRIES = 3;
+        const RETRY_DELAY = 3000;
+
+        // Đảm bảo khoảng cách tối thiểu giữa các request
+        const now = Date.now();
+        const elapsed = now - lastRequestTime;
+        if (elapsed < minRequestGap) {
+            const delay = minRequestGap - elapsed + Math.floor(Math.random() * 1000);
+            await sleep(delay);
+        }
+        lastRequestTime = Date.now();
+
+        // Thêm trễ ngẫu nhiên trước mỗi request (500ms - 1500ms) để tránh bot detection
+        await sleep(500 + Math.floor(Math.random() * 1000));
+
+        try {
+            const res = await originalFetch(url, options);
+
+            // Tự động retry nếu gặp lỗi 429 hoặc 503
+            if ((res.status === 429 || res.status === 503) && retryCount < MAX_RETRIES) {
+                const backoff = RETRY_DELAY * (retryCount + 1) + Math.floor(Math.random() * 2000);
+                console.warn(`[Anti-Bot] Gặp lỗi ${res.status}. Thử lại lần ${retryCount + 1}/${MAX_RETRIES} sau ${backoff}ms...`);
+                await sleep(backoff);
+                return antiBotFetch(url, options, retryCount + 1);
+            }
+
+            return res;
+        } catch (err) {
+            if (retryCount < MAX_RETRIES && (err.message.includes('Failed to fetch') || err.message.includes('NetworkError'))) {
+                const backoff = RETRY_DELAY * (retryCount + 1) + Math.floor(Math.random() * 2000);
+                console.warn(`[Anti-Bot] Lỗi mạng. Thử lại lần ${retryCount + 1}/${MAX_RETRIES} sau ${backoff}ms...`);
+                await sleep(backoff);
+                return antiBotFetch(url, options, retryCount + 1);
+            }
+            throw err;
+        }
+    }
+
+    const fetch = antiBotFetch;
+
     console.log('%c[HH3D Script] Tải thành công. Đang khởi tạo UI tùy chỉnh.',
         'background: #222; color: #bada55; padding: 2px 5px; border-radius: 3px;');
 
@@ -4799,7 +4851,7 @@
 
                     // Nếu vẫn ở giai đoạn nhạy cảm và chưa đủ số lần giữ lửa
                     if (!autoLuyenDan) {
-                        return 5000;
+                        return 10000; // Đồng hồ sync/check UI lấy 10s thay vì 5s
                     }
                     const autoTune = localStorage.getItem('luyenDanAutoTune') !== 'false';
                     if (autoTune && stability <= 68) {
@@ -4824,14 +4876,16 @@
                                 console.error(`${this.logPrefix} Lỗi khi gọi Điều Hỏa lần ${i + 1}:`, err);
                             }
                             if (i < 2) {
-                                await new Promise(resolve => setTimeout(resolve, 7000));
+                                // Điều chỉnh khoảng cách giữa các lần điều hỏa là 10s (thêm jitter nhỏ)
+                                const tuneDelay = 10000 + Math.floor(Math.random() * 2000);
+                                await new Promise(resolve => setTimeout(resolve, tuneDelay));
                             }
                         }
                         showNotification(`🧪 🔥 Hoàn tất Điều Hỏa! Thành công: ${successCount}`, "success");
-                        return 5000;
+                        return 10000; // Đồng hồ sync/check UI lấy 10s thay vì 5s
                     }
 
-                    return 5000; // Định kỳ 5s/lần
+                    return 10000; // Định kỳ 10s/lần thay vì 5s/lần
                 }
 
                 if (furnace === "idle") {
@@ -9642,7 +9696,12 @@
             let timeToNextCheck;
 
             if (nextTime === null || now >= nextTime) {
-                console.log(`[Auto] Đã đến giờ làm nhiệm vụ: ${taskName}. Đang thực hiện...`);
+                // Trễ phản ứng ngẫu nhiên mô phỏng hành vi người dùng thật (2s - 7s, riêng luyenDan chỉ 0.5s - 2s để đảm bảo lò đan ổn định)
+                const humanDelay = taskName === 'luyenDan' ? (500 + Math.floor(Math.random() * 1500)) : (2000 + Math.floor(Math.random() * 5000));
+                console.log(`[Auto] Đã đến giờ làm nhiệm vụ: ${taskName}. Chờ trễ mô phỏng hành vi người dùng: ${humanDelay}ms...`);
+                await new Promise(r => setTimeout(r, humanDelay));
+
+                console.log(`[Auto] Đang thực hiện nhiệm vụ: ${taskName}...`);
                 try {
                     // Cho phép taskAction trả về delay thực tế (ms hoặc chuỗi thời gian)
                     let result = await taskAction();
@@ -9658,6 +9717,14 @@
                         timeToNextCheck = ms > 0 ? ms : interval;
                     } else {
                         timeToNextCheck = interval;
+                    }
+
+                    // Thêm jitter ngẫu nhiên vào chu kỳ kiểm tra (tránh các nhiệm vụ không phải luyenDan chạy đều đặn tuyệt đối)
+                    if (taskName !== 'luyenDan') {
+                        // Jitter từ -15s đến +45s
+                        const checkJitter = Math.floor(Math.random() * 60000) - 15000;
+                        timeToNextCheck = Math.max(10000, timeToNextCheck + checkJitter);
+                        console.log(`[Auto] Đã thêm jitter vào chu kỳ kiểm tra của ${taskName}. Thời gian check tiếp theo: ${Math.round(timeToNextCheck / 1000)}s.`);
                     }
                 } catch (error) {
                     console.error(`[Auto] Lỗi khi thực hiện nhiệm vụ ${taskName}:`, error);
