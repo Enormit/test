@@ -1,11 +1,11 @@
 // ==UserScript==
-// @name          HH3D Auto - v2.3
+// @name          HH3D Auto - v2.3.1
 // @namespace     hh3d-tool
-// @version       v2.3
+// @version       v2.3.1
 // @updateURL     https://raw.githubusercontent.com/phamquyet47204/tool-automation/main/hh3d.user.js
 // @downloadURL   https://raw.githubusercontent.com/phamquyet47204/tool-automation/main/hh3d.user.js
 // @description   Auto  HH3D
-// @author        Cre: [Unknown] - v2.3
+// @author        Cre: [Unknown] - v2.3.1
 // @include       *://hoathinh3d.co*/*
 // @exclude       *://hoathinh3d.co/khoang-mach*
 // @require       https://cdn.jsdelivr.net/npm/sweetalert2@11.26.12/dist/sweetalert2.all.min.js
@@ -1567,13 +1567,18 @@
 
                 try {
                     await questConfig.action();
-                    await loadHH3DProfile(); // Refresh data sau khi hoàn thành
+                    // Với luyenDan: không gọi loadHH3DProfile() vì nó sẽ kích hoạt
+                    // updateAllQuestButtons → countdownTimer.remove → xóa span progress
+                    if (taskId !== 'luyenDan') {
+                        await loadHH3DProfile();
+                    } else {
+                        await updateAllQuestButtons();
+                    }
                 } catch (error) {
                     console.error(`[Quest ${taskId}] Error:`, error);
                     showNotification(`Lỗi khi thực hiện ${questConfig.taskName}`, 'error');
                 } finally {
                     button.textContent = originalText;
-                    await updateAllQuestButtons();
                     button.disabled = false;
                 }
             });
@@ -9468,13 +9473,8 @@
         remove(taskName) {
             delete this.tasks[taskName];
             if (taskName === 'luyenDan') {
-                // Chỉ xóa span khi KHÔNG có crafting timer đang chạy và KHÔNG đang xử lý
-                const isCrafting = !!this.tasks['luyenDan']; // đã bị xóa ở trên, luôn false
-                const isActive = (typeof luyendan !== 'undefined' && luyendan && luyendan.isProcessing);
-                if (!isActive) {
-                    const el = document.querySelector('.nv-quest-item[data-task-id="luyenDan"] .quest-progress');
-                    if (el) { el.textContent = ''; }
-                }
+                // KHÔNG xóa DOM span — span chỉ được điều khiển bởi updateProgress()
+                // Việc remove() chỉ dừng đếm ngược, không can thiệp vào text hiển thị
             } else if (taskName === 'luyenDanCheck') {
                 const el = document.querySelector('.quest-next-time[data-task="luyenDan"]');
                 if (el) { el.textContent = ''; el.classList.remove('active'); }
