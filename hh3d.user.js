@@ -1,11 +1,11 @@
 // ==UserScript==
-// @name          HH3D Auto - v2.3.1
+// @name          HH3D Auto - v2.3.2
 // @namespace     hh3d-tool
-// @version       v2.3.1
+// @version       v2.3.2
 // @updateURL     https://raw.githubusercontent.com/phamquyet47204/tool-automation/main/hh3d.user.js
 // @downloadURL   https://raw.githubusercontent.com/phamquyet47204/tool-automation/main/hh3d.user.js
 // @description   Auto  HH3D
-// @author        Cre: [Unknown] - v2.3.1
+// @author        Cre: [Unknown] - v2.3.2
 // @include       *://hoathinh3d.co*/*
 // @exclude       *://hoathinh3d.co/khoang-mach*
 // @require       https://cdn.jsdelivr.net/npm/sweetalert2@11.26.12/dist/sweetalert2.all.min.js
@@ -4745,6 +4745,11 @@
         }
 
         async doLuyenDan() {
+            // Mutex guard: tránh 2 luồng chạy đồng thời (click thủ công + scheduleTask cùng lúc)
+            if (this.isProcessing) {
+                console.warn(`${this.logPrefix} Đang xử lý, bỏ qua lần gọi trùng lặp.`);
+                return 10000;
+            }
             this.isProcessing = true;
             try {
                 // Dùng accountId toàn cục
