@@ -4481,6 +4481,7 @@
 
         updateProgress(text) {
             try {
+                const accountId = localStorage.getItem('hh3d_account_id') || '';
                 const localStorageKey = `luyenDanLastProgress_${accountId}`;
                 if (text) {
                     localStorage.setItem(localStorageKey, text);
@@ -4564,6 +4565,7 @@
         async doLuyenDan() {
             countdownTimer.remove('luyenDan');
             console.log(`${this.logPrefix} ▶️ Bắt đầu kiểm tra Lò Đan...`);
+            const accountId = localStorage.getItem('hh3d_account_id') || await getAccountId() || '';
             try {
                 const stateRes = await this.sendLdRequest("/state?fresh=1", "GET");
                 if (!stateRes || !stateRes.data) {
@@ -9171,6 +9173,7 @@
 
         _tick() {
             const now = Date.now();
+            const accountId = localStorage.getItem('hh3d_account_id') || '';
             for (const taskName in this.tasks) {
                 const remaining = this.tasks[taskName] - now;
                 if (taskName === 'luyenDan') {
