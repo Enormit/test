@@ -36,6 +36,7 @@
     // lấy chuỗi và bỏ khoảng trắng thừa
 
     const ajaxUrl = weburl + 'wp-content/themes/halimmovies-child/hh3d-ajax.php';
+    let accountId = '';
     let questionDataCache = null;
     let isCssInjected = false;
     let userBetCount = 0;
@@ -90,6 +91,10 @@
     //   lotteryHistory: '7b227116'
     //   hdnReward: 'b82f4d91'
     // }
+    let cachedSecurityToken = null;
+    const fetchedUrlsCache = new Set();
+    fetchedUrlsCache.add(window.location.href);
+    fetchedUrlsCache.add(window.location.origin + window.location.pathname);
     let hData = null; // Biến toàn cục lưu trữ hh3dData đã được parse và decode       
     /**
      * Parse và decode hh3dData từ HTML
@@ -272,13 +277,20 @@
 
     async function getSecurityToken(url) {
         const logPrefix = "[SecurityTokenFetcher]";
-        console.log(`${logPrefix} ▶️ Bắt đầu lấy security token từ ${url || 'trang hiện tại'}...`);
+        const targetUrl = url ? url.trim() : null;
+
+        if (cachedSecurityToken && (!targetUrl || fetchedUrlsCache.has(targetUrl))) {
+            console.log(`${logPrefix} ⚡ Sử dụng Security Token đã cache: ${cachedSecurityToken.substring(0, 8)}... (URL: ${targetUrl || 'trang hiện tại'})`);
+            return cachedSecurityToken;
+        }
+
+        console.log(`${logPrefix} ▶️ Bắt đầu lấy security token từ ${targetUrl || 'trang hiện tại'}...`);
         let htmlContent = null;
 
         try {
             // 1. Lấy nội dung HTML (Fetch hoặc quét trang hiện tại)
-            if (url) {
-                const response = await fetch(url);
+            if (targetUrl) {
+                const response = await fetch(targetUrl);
                 if (!response.ok) return null;
                 htmlContent = await response.text();
             } else {
@@ -292,11 +304,15 @@
 
             if (match && match[1]) {
                 const token = match[1];
+                cachedSecurityToken = token;
+                if (targetUrl) {
+                    fetchedUrlsCache.add(targetUrl);
+                }
 
                 // 🔥 LOGIC MỚI: Kiểm tra xem URL yêu cầu có phải là trang hiện tại không
                 // Nếu không truyền URL (!url) -> Mặc định là trang hiện tại
                 // Nếu có URL -> Phải trùng khớp tuyệt đối với window.location.href
-                const isCurrentPage = !url || (url === window.location.href);
+                const isCurrentPage = !targetUrl || (targetUrl === window.location.href);
 
                 if (isCurrentPage) {
                     console.log(`${logPrefix} 🎯 URL trùng khớp trang hiện tại. Tiến hành cập nhật Global State...`);
@@ -322,8 +338,8 @@
                         script.textContent = `
                             try {
                                 if (typeof hh3dData !== 'undefined') {
-                                    hh3dData.securityToken = "${token}";
-                                    console.log('✅ [Inject] Token đã được cập nhật từ bên trong trang web.');
+                                     hh3dData.securityToken = "${token}";
+                                     console.log('✅ [Inject] Token đã được cập nhật từ bên trong trang web.');
                                 }
                             } catch(e) {}
                         `;
@@ -335,7 +351,7 @@
                     // ============================================================
                 } else {
                     //  - Token chỉ được trả về cho hàm gọi, không ảnh hưởng trang hiện tại
-                    console.log(`${logPrefix} 🛑 Token lấy từ URL khác (${url}).`);
+                    console.log(`${logPrefix} 🛑 Token lấy từ URL khác (${targetUrl}).`);
                 }
 
                 return token;
@@ -416,6 +432,7 @@
             if (tokenMatch && tokenMatch[1]) {
                 const token = tokenMatch[1];
                 console.log(`${logPrefix} 🔑 Phát hiện securityToken mới trong HTML, đang cập nhật...`);
+                cachedSecurityToken = token;
 
                 // Kiểm tra URL có phải trang hiện tại không
                 const isCurrentPage = window.location.href.includes(url);
@@ -2468,16 +2485,43 @@
          * Tải dữ liệu đáp án và lưu vào cache.
          */
         async loadAnswersFromHub() {
+            const cacheKey = "hh3d_vandap_cache";
+            const cacheTimeKey = "hh3d_vandap_cache_time";
+            const ONE_HOUR = 60 * 60 * 1000; // 1 hour in ms
+
             try {
+                const cachedData = localStorage.getItem(cacheKey);
+                const cachedTime = localStorage.getItem(cacheTimeKey);
+                const now = Date.now();
+
+                if (cachedData && cachedTime && (now - parseInt(cachedTime, 10) < ONE_HOUR)) {
+                    try {
+                        this.questionDataCache = JSON.parse(cachedData);
+                        console.log("[Vấn Đáp] ⚡ Đã tải dữ liệu đáp án từ LocalStorage Cache.");
+                        return;
+                    } catch (err) {
+                        console.warn("[Vấn Đáp] Lỗi parse JSON từ cache LocalStorage, tiến hành tải mới:", err);
+                    }
+                }
+
                 // ép tải mới bằng cách thêm timestamp
-                const urlWithBypass = this.QUESTION_DATA_URL + "?t=" + Date.now();
+                const urlWithBypass = this.QUESTION_DATA_URL + "?t=" + now;
                 const response = await fetch(urlWithBypass, { cache: "no-store" });
                 if (!response.ok) {
                     throw new Error(`HTTP error! Status: ${response.status}`);
                 }
-                this.questionDataCache = await response.json();
+                const data = await response.json();
+                this.questionDataCache = data;
+                
+                // Lưu lại cache
+                try {
+                    localStorage.setItem(cacheKey, JSON.stringify(data));
+                    localStorage.setItem(cacheTimeKey, now.toString());
+                } catch (storageErr) {
+                    console.warn("[Vấn Đáp] Không thể lưu cache vào LocalStorage:", storageErr);
+                }
 
-                console.log("[Vấn Đáp] ✅ Đã tải dữ liệu mới từ hub:", urlWithBypass);
+                console.log("[Vấn Đáp] ✅ Đã tải dữ liệu mới từ hub và lưu vào cache:", urlWithBypass);
             } catch (e) {
                 showNotification('Lỗi khi tải đáp án. Vui lòng thử lại.', 'error');
                 throw e;
@@ -4630,8 +4674,7 @@
 
         async doLuyenDan() {
             countdownTimer.remove('luyenDan');
-            console.log(`${this.logPrefix} ▶️ Bắt đầu kiểm tra Lò Đan...`);
-            const accountId = localStorage.getItem('hh3d_account_id') || await getAccountId() || '';
+            // Dùng accountId toàn cục
             const autoLuyenDan = localStorage.getItem('autoLuyenDan') !== '0';
             try {
                 const stateRes = await this.sendLdRequest("/state?fresh=1", "GET");
@@ -5511,6 +5554,8 @@
             this.getUsersInMineNonce = null;
             this.securityToken = null;
             this.buffBought = false;
+            this.lastOuterUserIds = '';
+            this.lastOuterNotificationTime = 0;
         }
 
         delay(ms) {
@@ -5730,11 +5775,7 @@
 
                 // Kiểm tra ngoại tông
                 const outerUsers = users.filter(u => !u.lien_minh && !u.dong_mon);
-                const outerNotification = localStorage.getItem('khoangmach_outer_notification') === 'true';
-                if (outerUsers.length > 0 && outerNotification) {
-                    showNotification(`Có <b>${outerUsers.length}</b> người chơi ngoại tông trong mỏ!`, 'warn');
-                    this.showOuterEnemyModal(outerUsers, mineId);
-                }
+                this.checkAndNotifyOuterEnemies(outerUsers, mineId);
                 return false;
 
             } catch (e) {
@@ -5763,7 +5804,7 @@
                 return null;
             }
         }
-        async getIdfromAvatar(avatarUrl) {
+        getIdfromAvatar(avatarUrl) {
             // ⭐ Validate input
             if (!avatarUrl || typeof avatarUrl !== 'string') {
                 return null;
@@ -6014,7 +6055,7 @@
                 for (let i = 0; i < users.length; i++) {
                     const u = users[i];
                     const avatarUrl = u.avatar || await this.decodeAvatar(u.avatar, accountId);
-                    const realId = u.profile_id || (await this.getIdfromAvatar(avatarUrl)) || u.id;
+                    const realId = u.profile_id || this.getIdfromAvatar(avatarUrl) || u.id;
                     // console.log(`[Khoáng mạch] User ${i}: id = ${u.id}, avatar=${u.avatar}, decodedAvatar=${avatarUrl}, realId=${realId}, accountId=${accountId}`);
                     if (realId && realId.toString() === accountId.toString()) {
                         myIndex = i;
@@ -6029,10 +6070,7 @@
 
                 // Kiểm tra ngoại tông
                 const outerUsers = users.filter(u => !u.lien_minh && !u.dong_mon);
-                if (outerUsers.length > 0 && outerNotification) {
-                    showNotification(`Có <b>${outerUsers.length}</b> người chơi ngoại tông trong mỏ!`, 'warn');
-                    this.showOuterEnemyModal(outerUsers, targetMine);
-                }
+                this.checkAndNotifyOuterEnemies(outerUsers, targetMine);
 
 
                 let myInfo = users[myIndex];
@@ -6234,22 +6272,45 @@
 
 
         /**
+         * Kiểm tra và hiển thị cảnh báo người chơi ngoại tông kèm cơ chế chống spam (cooldown 3 phút hoặc khi đổi danh sách)
+         * @param {Array} outerUsers Danh sách user ngoại tông
+         * @param {Object|string|number} mine Thông tin mỏ hoặc ID mỏ
+         */
+        checkAndNotifyOuterEnemies(outerUsers, mine) {
+            const outerNotification = localStorage.getItem('khoangmach_outer_notification') === 'true';
+            if (!outerNotification || outerUsers.length === 0) return;
+
+            const mineObj = typeof mine === 'object' && mine !== null ? mine : { id: mine, name: 'Mỏ ' + mine };
+            const currentIds = outerUsers.map(u => u.profile_id || u.id).sort().join(',');
+            const now = Date.now();
+            const cooldown = 3 * 60 * 1000; // 3 phút
+
+            if (currentIds !== this.lastOuterUserIds || (now - this.lastOuterNotificationTime > cooldown)) {
+                this.lastOuterUserIds = currentIds;
+                this.lastOuterNotificationTime = now;
+                showNotification(`Có <b>${outerUsers.length}</b> người chơi ngoại tông trong mỏ!`, 'warn');
+                this.showOuterEnemyModal(outerUsers, mineObj);
+            }
+        }
+
+        /**
          * Hiển thị modal cảnh báo ngoại tông trong mỏ hiện tại
          * @param {Array} outerUsers Danh sách user ngoại tông
-         * @param {Object} mine Thông tin mỏ hiện tại
+         * @param {Object|string|number} mine Thông tin mỏ hiện tại
          */
         async showOuterEnemyModal(outerUsers, mine) {
             const PANEL_ID = 'outerEnemyModal';
             const oldPanel = document.getElementById(PANEL_ID);
             if (oldPanel) oldPanel.remove();
 
+            const mineObj = typeof mine === 'object' && mine !== null ? mine : { id: mine, name: 'Mỏ ' + mine };
             const accountId = await getAccountId();
             const esc = (v) => String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
             const usersHtml = (await Promise.all(outerUsers.map(async (u) => {
                 const attackToken = u.attack_token || u.att || u.id;
                 const avatarUrl = u.avatar || await this.decodeAvatar(u.avatar, accountId);
-                const id = u.profile_id || (await this.getIdfromAvatar(avatarUrl)) || u.id;
+                const id = u.profile_id || this.getIdfromAvatar(avatarUrl) || u.id;
                 const { tongMonName: group = null, role: _role = null } = u.group_role_html ? this.parseGroupRoleHtml(u.group_role_html) : {};
                 const groupDisplay = group || 'Vô phái';
                 const roleDisplay = _role || 'Thành viên';
@@ -6268,7 +6329,7 @@
                         <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex-shrink: 0;">
                             <div style="display: flex; gap: 5px;">
                                 <button class="oe-btn-tuvi" data-uid="${id}" data-attack-token="${attackToken}" style="border:none; background:#039be5; color:white; border-radius:3px; padding:3px 8px; font-size:11px; cursor:pointer; font-weight:bold;">👁</button>
-                                <button class="oe-btn-attack" data-uid="${id}" data-attack-token="${attackToken}" data-mid="${mine.id}" style="border:none; background:#d32f2f; color:white; border-radius:3px; padding:3px 8px; font-size:11px; cursor:pointer; font-weight:bold;">👊</button>
+                                <button class="oe-btn-attack" data-uid="${id}" data-attack-token="${attackToken}" data-mid="${mineObj.id}" style="border:none; background:#d32f2f; color:white; border-radius:3px; padding:3px 8px; font-size:11px; cursor:pointer; font-weight:bold;">👊</button>
                             </div>
                             <div id="oe-info-${id}" style="font-size:10px; color:#b0bec5; min-height:14px;"></div>
                         </div>
@@ -6300,7 +6361,7 @@
                             <button id="oe-close" style="background:#333; border:none; color:#fff; width:28px; height:28px; border-radius:4px; cursor:pointer;">✕</button>
                         </div>
                     </div>
-                    <div style="font-size:11px; color:#ffcdd2; margin-top:3px;">⛏ ${esc(mine.name)}</div>
+                    <div style="font-size:11px; color:#ffcdd2; margin-top:3px;">⛏ ${esc(mineObj.name)}</div>
                 </div>
                 <div style="padding: 8px 12px; max-height: 55vh; overflow-y: auto; background: #1a1a1a;">
                     ${usersHtml}
@@ -6425,8 +6486,7 @@
                     const attackToken = u.attack_token || u.att || u.id;
                     const avatarUrl = u.avatar || await this.decodeAvatar(u.avatar, accountId);
                     // console.log(`Avatar URL for user ${u.name} (ID: ${u.id}): ${avatarUrl} (avatar: ${u.avatar})`);
-                    // ⭐ THÊM AWAIT cho getIdfromAvatar vì nó là async function
-                    const id = (await this.getIdfromAvatar(avatarUrl)) || u.id;
+                    const id = this.getIdfromAvatar(avatarUrl) || u.id;
                     // console.log(`User: ${u.name}, ID: ${id}, Đồng Môn: ${u.dong_mon}, Liên Minh: ${u.lien_minh}`);
                     const allyLabel = u.dong_mon ? '☯️ Đồng Môn' : (u.lien_minh ? '🤝 Liên Minh' : '');
                     const nameColor = isAlly ? '#4caf50' : '#ff6b6b';
@@ -9273,7 +9333,6 @@
                             const tuneCount = localStorage.getItem(`luyenDanTuneCount_${accountId}`) || '0';
                             const tuneSurvivalMin = localStorage.getItem(`luyenDanTuneSurvivalMin_${accountId}`) || '3';
                             const stab = localStorage.getItem(`luyenDanStability_${accountId}`) || '100';
-
                             const totalSec = Math.max(0, Math.floor(remaining / 1000));
                             const minVal = Math.floor(totalSec / 60);
                             const secVal = totalSec % 60;
@@ -9351,65 +9410,49 @@
             const autoKhoangMach = localStorage.getItem('autoKhoangMach') !== '0';
             const autoLuyenDan = localStorage.getItem('autoLuyenDan') !== '0';
 
-            // Luôn lên lịch Luyện Đan để tự động cập nhật tiến độ lên UI (nếu tắt auto sẽ chỉ đọc trạng thái)
-            await new Promise(resolve => setTimeout(resolve, 4000));
-            await this.scheduleTask('luyenDan', () => luyendan.doLuyenDan(), this.INTERVAL_LUYEN_DAN);
+            let offset = 0;
+            const runStaggered = (fn) => {
+                setTimeout(fn, offset);
+                offset += 200;
+            };
 
-            if (autoDiemDanh) {
-                await new Promise(resolve => setTimeout(resolve, 4000));
-                await this.doInitialTasks();
-            }
+            // Luôn lên lịch Luyện Đan để tự động cập nhật tiến độ lên UI (nếu tắt auto sẽ chỉ đọc trạng thái)
+            runStaggered(() => this.scheduleTask('luyenDan', () => luyendan.doLuyenDan(), this.INTERVAL_LUYEN_DAN));
+
+            if (autoDiemDanh) { runStaggered(() => this.doInitialTasks()); }
             // Bắt đầu chu kỳ hẹn giờ cho Tiên Duyên
-            if (autoTienDuyen) {
-                await new Promise(resolve => setTimeout(resolve, 4000));
-                await this.scheduleTienDuyenCheck();
-            }
+            if (autoTienDuyen) { runStaggered(() => this.scheduleTienDuyenCheck()); }
             // Đổ thạch
-            if (autoDoThach) {
-                await new Promise(resolve => setTimeout(resolve, 4000));
-                await this.scheduleDoThach();
-            }
+            if (autoDoThach) { runStaggered(() => this.scheduleDoThach()); }
             // Lên lịch các tác vụ định kỳ
             if (autoHoangVuc) {
-                await new Promise(resolve => setTimeout(resolve, 4000));
-                this.scheduleTask('hoangvuc', () => hoangvuc.doHoangVuc(), this.INTERVAL_HOANG_VUC);
+                runStaggered(() => this.scheduleTask('hoangvuc', () => hoangvuc.doHoangVuc(), this.INTERVAL_HOANG_VUC));
             }
             if (autoThiLuyen) {
-                await new Promise(resolve => setTimeout(resolve, 4000));
-                this.scheduleTask('thiluyen', () => doThiLuyenTongMon(), this.INTERVAL_THI_LUYEN);
+                runStaggered(() => this.scheduleTask('thiluyen', () => doThiLuyenTongMon(), this.INTERVAL_THI_LUYEN));
             }
             if (autoPhucLoi) {
-                await new Promise(resolve => setTimeout(resolve, 4000));
-                await this.scheduleTask('phucloi', () => doPhucLoiDuong(), this.INTERVAL_PHUC_LOI);
+                runStaggered(() => this.scheduleTask('phucloi', () => doPhucLoiDuong(), this.INTERVAL_PHUC_LOI));
             }
             if (autoKhoangMach) {
-                await new Promise(resolve => setTimeout(resolve, 4000));
-                this.INTERVAL_KHOANG_MACH = localStorage.getItem('khoangmach_check_interval') ? parseInt(localStorage.getItem('khoangmach_check_interval')) * 60 * 1000 + this.delay : 5 * 60 * 1000 + this.delay;
-                await this.scheduleTask('khoangmach', () => khoangmach.doKhoangMach(), this.INTERVAL_KHOANG_MACH);
+                runStaggered(() => {
+                    this.INTERVAL_KHOANG_MACH = localStorage.getItem('khoangmach_check_interval') ? parseInt(localStorage.getItem('khoangmach_check_interval')) * 60 * 1000 + this.delay : 5 * 60 * 1000 + this.delay;
+                    this.scheduleTask('khoangmach', () => khoangmach.doKhoangMach(), this.INTERVAL_KHOANG_MACH);
+                });
             }
 
             if (autoBiCanh) {
-                await new Promise(resolve => setTimeout(resolve, 4000));
-                await this.scheduleTask("bicanh", async () => {
+                runStaggered(() => this.scheduleTask("bicanh", async () => {
                     // Đọc giữ lượt đánh bí cảnh
                     const reserve = Number(localStorage.getItem("reserveBiCanhAttacks") || "0");
                     console.log("Giá trị reserveBiCanhAttacks trong autobicanh:", reserve);
                     await bicanh.doBiCanh();
-                }, this.INTERVAL_BI_CANH);
+                }, this.INTERVAL_BI_CANH));
             }
 
-            if (autoCauNguyen) {
-                await new Promise(resolve => setTimeout(resolve, 4000));
-                await this.caunguyentienduyen();
-            }
+            if (autoCauNguyen) { runStaggered(() => this.caunguyentienduyen()); }
 
-            // if (autoLuanVo) {
-            //     await new Promise(resolve => setTimeout(resolve,  4000));
-            //     await this.scheduleLuanVo();
-            // }
-
-            await new Promise(resolve => setTimeout(resolve, 4000));
-            this.scheduleHoatDongNgay();
+            runStaggered(() => this.scheduleHoatDongNgay());
             const _sh = parseInt(localStorage.getItem('selfSchedule_h') ?? '0', 10) || 0;
             const _sm = parseInt(localStorage.getItem('selfSchedule_m') ?? '30', 10);
             this.selfSchedule(_sh, _sm, 0); // Lên lịch tự động chạy theo cài đặt (mặc định 00:30 hàng ngày)
@@ -10583,7 +10626,7 @@
     // KHỞI TẠO SCRIPT
     // ===============================================
     const taskTracker = new TaskTracker();
-    const accountId = await getAccountId();
+    accountId = await getAccountId();
     if (accountId) {
         let accountData = taskTracker.getAccountData(accountId);
         // console.log(`[HH3D] ✅ Account ID: ${accountId}`);
