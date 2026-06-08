@@ -9708,8 +9708,15 @@
                     // Cập nhật trạng thái UI sau khi task chạy xong
                     // updateAllQuestButtons().catch(() => {});
                     loadHH3DProfile().catch(() => { });
-                    // Nếu trả về số, dùng làm delay
-                    if (typeof result === 'number' && !isNaN(result) && result > 0) {
+
+                    // Lấy nextTime mới nhất từ tracker đề phòng taskAction đã thay đổi nó trực tiếp
+                    const updatedNextTime = taskTracker.getNextTime(this.accountId, taskName);
+                    const nowPostRun = Date.now();
+
+                    if (updatedNextTime !== null && updatedNextTime > nowPostRun) {
+                        timeToNextCheck = updatedNextTime - nowPostRun;
+                        console.log(`[Auto] Nhiệm vụ ${taskName} đã cập nhật thời gian chạy tiếp theo trong tracker: +${Math.round(timeToNextCheck / 1000)}s.`);
+                    } else if (typeof result === 'number' && !isNaN(result) && result > 0) {
                         timeToNextCheck = result;
                     } else if (typeof result === 'string') {
                         // Nếu trả về chuỗi, parse ra ms
@@ -9720,7 +9727,8 @@
                     }
 
                     // Thêm jitter ngẫu nhiên vào chu kỳ kiểm tra (tránh các nhiệm vụ không phải luyenDan chạy đều đặn tuyệt đối)
-                    if (taskName !== 'luyenDan') {
+                    // Chỉ áp dụng jitter nếu nhiệm vụ không phải chờ một mốc thời gian cụ thể vừa được cập nhật trong tracker
+                    if (taskName !== 'luyenDan' && (updatedNextTime === null || updatedNextTime <= nowPostRun)) {
                         // Jitter từ -15s đến +45s
                         const checkJitter = Math.floor(Math.random() * 60000) - 15000;
                         timeToNextCheck = Math.max(10000, timeToNextCheck + checkJitter);
