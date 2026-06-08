@@ -1,11 +1,11 @@
 // ==UserScript==
-// @name          HH3D Auto - v1.3
+// @name          HH3D Auto - v1.4
 // @namespace     hh3d-tool
-// @version       v1.3
+// @version       v1.4
 // @updateURL     https://raw.githubusercontent.com/phamquyet47204/tool-automation/main/hh3d.user.js
 // @downloadURL   https://raw.githubusercontent.com/phamquyet47204/tool-automation/main/hh3d.user.js
 // @description   Auto  HH3D
-// @author        Cre: [Unknown] - v1.3
+// @author        Cre: [Unknown] - v1.4
 // @include       *://hoathinh3d.co*/*
 // @exclude       *://hoathinh3d.co/khoang-mach*
 // @require       https://cdn.jsdelivr.net/npm/sweetalert2@11.26.12/dist/sweetalert2.all.min.js
