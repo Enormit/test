@@ -3247,6 +3247,15 @@
             for (const room of list.data) {
                 console.log(`👉 Kiểm tra phòng ${room.wedding_room_id}`);
                 try {
+                    // Kiểm tra trường hợp phòng đã phát lì xì nhưng chưa chúc thì bỏ qua không chúc nữa
+                    const isDistributed = room.is_distributed || room.distributed || room.has_distributed || 
+                                          room.is_released || room.released || room.lixi_status === 'distributed' || 
+                                          room.is_lixi_distributed || room.lixi_distributed;
+                    if (isDistributed && !room.has_blessed) {
+                        console.log(`[HH3D Tiên Duyên] Phòng ${room.wedding_room_id} đã phát lì xì nhưng chưa chúc -> Bỏ qua không chúc nữa.`);
+                        continue;
+                    }
+
                     // Sử dụng kiểm tra phủ định/khẳng định lỏng (loose checks) tránh lỗi kiểu dữ liệu số/chuỗi từ API
                     if (!room.has_blessed) {
                         const bless = await this.addBlessing(room.wedding_room_id);
