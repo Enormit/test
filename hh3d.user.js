@@ -1,11 +1,11 @@
 // ==UserScript==
-// @name          HH3D Auto - v1.7
+// @name          HH3D Auto - v1.8
 // @namespace     hh3d-tool
-// @version       v1.7
+// @version       v1.8
 // @updateURL     https://raw.githubusercontent.com/phamquyet47204/tool-automation/main/hh3d.user.js
 // @downloadURL   https://raw.githubusercontent.com/phamquyet47204/tool-automation/main/hh3d.user.js
 // @description   Auto  HH3D
-// @author        Cre: [Unknown] - v1.7
+// @author        Cre: [Unknown] - v1.8
 // @include       *://hoathinh3d.co*/*
 // @exclude       *://hoathinh3d.co/khoang-mach*
 // @require       https://cdn.jsdelivr.net/npm/sweetalert2@11.26.12/dist/sweetalert2.all.min.js
@@ -1440,6 +1440,9 @@
                         button.textContent = '✓ Xong';
                         // nếu đã hoàn thành thì dừng countdown timer
                         countdownTimer.remove(quest.taskId);
+                        if (quest.taskId === 'luyenDan') {
+                            countdownTimer.remove('luyenDanCheck');
+                        }
                         if (questItem) questItem.classList.add('done');
                     } else {
                         // button.disabled = false;
@@ -9297,14 +9300,10 @@
 
         remove(taskName) {
             delete this.tasks[taskName];
-            if (taskName === 'luyenDan') {
-                delete this.tasks['luyenDanCheck'];
+            if (taskName === 'luyenDanCheck') {
                 const el = document.querySelector('.quest-next-time[data-task="luyenDan"]');
                 if (el) { el.textContent = ''; el.classList.remove('active'); }
-            } else if (taskName === 'luyenDanCheck') {
-                const el = document.querySelector('.quest-next-time[data-task="luyenDan"]');
-                if (el) { el.textContent = ''; el.classList.remove('active'); }
-            } else {
+            } else if (taskName !== 'luyenDan') {
                 const el = document.querySelector(`.quest-next-time[data-task="${taskName}"]`);
                 if (el) { el.textContent = ''; el.classList.remove('active'); }
             }
