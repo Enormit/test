@@ -1685,7 +1685,7 @@
         // Dừng hoặc bắt đầu tác vụ ngay lập tức mà không cần tải lại trang
         if (!newState) {
             if (typeof automatic !== 'undefined' && automatic) {
-                if (automatic.timeoutIds && automatic.timeoutIds[taskId]) {
+                if (taskId !== 'luyenDan' && automatic.timeoutIds && automatic.timeoutIds[taskId]) {
                     clearTimeout(automatic.timeoutIds[taskId]);
                     automatic.timeoutIds[taskId] = null;
                 }
@@ -1698,7 +1698,9 @@
                     automatic.dothachTimeout = null;
                 }
             }
-            countdownTimer.remove(taskId);
+            if (taskId !== 'luyenDan') {
+                countdownTimer.remove(taskId);
+            }
         } else {
             if (typeof automatic !== 'undefined' && automatic && automatic.isRunning) {
                 if (taskId === 'luyenDan') {
@@ -4630,6 +4632,7 @@
             countdownTimer.remove('luyenDan');
             console.log(`${this.logPrefix} ▶️ Bắt đầu kiểm tra Lò Đan...`);
             const accountId = localStorage.getItem('hh3d_account_id') || await getAccountId() || '';
+            const autoLuyenDan = localStorage.getItem('autoLuyenDan') !== '0';
             try {
                 const stateRes = await this.sendLdRequest("/state?fresh=1", "GET");
                 if (!stateRes || !stateRes.data) {
@@ -4648,6 +4651,9 @@
 
                 if (furnace === "exploded") {
                     this.updateProgress("💥 Bị nổ lò");
+                    if (!autoLuyenDan) {
+                        return 15000;
+                    }
                     showNotification("🧪 💥 Đan Lô bị nổ! Đang dọn dẹp lò...", "warning");
                     const jobId = craft?.id || data.craftJobId;
                     if (jobId) {
@@ -4665,6 +4671,9 @@
 
                 if (furnace === "ready") {
                     this.updateProgress("Chờ thu hoạch");
+                    if (!autoLuyenDan) {
+                        return 15000;
+                    }
                     showNotification("🧪 🎉 Luyện đan hoàn tất! Thu hoạch...", "info");
                     const jobId = craft?.id || data.craftJobId;
                     if (jobId) {
@@ -4743,6 +4752,9 @@
                     }
 
                     // Nếu vẫn ở giai đoạn nhạy cảm và chưa đủ số lần giữ lửa
+                    if (!autoLuyenDan) {
+                        return 5000;
+                    }
                     const autoTune = localStorage.getItem('luyenDanAutoTune') !== 'false';
                     if (autoTune && stability <= 68) {
                         let successCount = 0;
@@ -4778,6 +4790,9 @@
 
                 if (furnace === "idle") {
                     this.updateProgress("Lò trống");
+                    if (!autoLuyenDan) {
+                        return 15000;
+                    }
                     const TiersOrder = ["cuc", "thuong", "trung", "ha"];
                     let selectedTier = null;
 
@@ -9336,10 +9351,9 @@
             const autoKhoangMach = localStorage.getItem('autoKhoangMach') !== '0';
             const autoLuyenDan = localStorage.getItem('autoLuyenDan') !== '0';
 
-            if (autoLuyenDan) {
-                await new Promise(resolve => setTimeout(resolve, 4000));
-                await this.scheduleTask('luyenDan', () => luyendan.doLuyenDan(), this.INTERVAL_LUYEN_DAN);
-            }
+            // Luôn lên lịch Luyện Đan để tự động cập nhật tiến độ lên UI (nếu tắt auto sẽ chỉ đọc trạng thái)
+            await new Promise(resolve => setTimeout(resolve, 4000));
+            await this.scheduleTask('luyenDan', () => luyendan.doLuyenDan(), this.INTERVAL_LUYEN_DAN);
 
             if (autoDiemDanh) {
                 await new Promise(resolve => setTimeout(resolve, 4000));
@@ -9532,7 +9546,7 @@
             
             // Kiểm tra xem quest này có bị tắt chạy tự động không
             const quest = QUEST_CONFIG.find(q => q.taskId === taskName);
-            if (quest && quest.autorunEnabled) {
+            if (quest && quest.autorunEnabled && taskName !== 'luyenDan') {
                 const isEnabled = localStorage.getItem(quest.autorunKey) !== '0';
                 if (!isEnabled) {
                     console.log(`[Auto] Nhiệm vụ ${taskName} đã bị tắt tự động. Dừng lịch trình.`);
@@ -10600,11 +10614,10 @@
 
     const luyendan = new LuyenDan();
 
-    const autoLuyenDan = localStorage.getItem('autoLuyenDan') !== '0';
-    if (securityToken && autoLuyenDan) {
-        console.log("[HH3D Auto] Đã lấy thành công token, tự động chạy luyện đan ngay lập tức...");
+    if (securityToken) {
+        console.log("[HH3D Auto] Đã lấy thành công token, tự động kiểm tra tiến độ luyện đan...");
         luyendan.doLuyenDan().catch(err => {
-            console.error("[HH3D Auto] Lỗi khi tự động chạy luyện đan:", err);
+            console.error("[HH3D Auto] Lỗi khi chạy luyện đan ban đầu:", err);
         });
     }
 
