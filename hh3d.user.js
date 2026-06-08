@@ -973,6 +973,9 @@
             hasSettings: true,
             async action() {
                 await luyendan.doLuyenDan();
+                if (typeof automatic !== 'undefined' && automatic && automatic.isRunning) {
+                    automatic.scheduleTask('luyenDan', () => luyendan.doLuyenDan(), automatic.INTERVAL_LUYEN_DAN);
+                }
             }
         }
     ];
@@ -9174,7 +9177,11 @@
 
         remove(taskName) {
             delete this.tasks[taskName];
-            if (taskName !== 'luyenDan') {
+            if (taskName === 'luyenDan') {
+                delete this.tasks['luyenDanCheck'];
+                const elCheck = document.querySelector('.quest-next-time[data-task="luyenDan"]');
+                if (elCheck) { elCheck.textContent = ''; elCheck.classList.remove('active'); }
+            } else if (taskName !== 'luyenDanCheck') {
                 const el = document.querySelector(`.quest-next-time[data-task="${taskName}"]`);
                 if (el) { el.textContent = ''; el.classList.remove('active'); }
             }
@@ -9199,6 +9206,20 @@
             const now = Date.now();
             for (const taskName in this.tasks) {
                 const remaining = this.tasks[taskName] - now;
+                if (taskName === 'luyenDanCheck') {
+                    const el = document.querySelector('.quest-next-time[data-task="luyenDan"]');
+                    if (el) {
+                        if (remaining <= 0) {
+                            el.textContent = ''; el.classList.remove('active');
+                            delete this.tasks[taskName];
+                        } else {
+                            const s = Math.floor(remaining / 1000);
+                            el.textContent = `⏳ ${s}s`;
+                            el.classList.add('active');
+                        }
+                    }
+                    continue;
+                }
                 if (taskName === 'luyenDan') {
                     const el = document.querySelector('.nv-quest-item[data-task-id="luyenDan"] .quest-progress');
                     if (el) {
@@ -9450,11 +9471,13 @@
         */
         async scheduleTask(taskName, taskAction, interval) {
             if (this.timeoutIds[taskName]) clearTimeout(this.timeoutIds[taskName]);
-            let isTaskDone;
-            if (taskName === 'bicanh' && await bicanh.isDailyLimit()) {
-                isTaskDone = true;
-            } else {
-                isTaskDone = taskTracker.isTaskDone(this.accountId, taskName);
+            let isTaskDone = false;
+            if (taskName !== 'luyenDan') {
+                if (taskName === 'bicanh' && await bicanh.isDailyLimit()) {
+                    isTaskDone = true;
+                } else {
+                    isTaskDone = taskTracker.isTaskDone(this.accountId, taskName);
+                }
             }
             // Kiểm tra và dừng lịch trình nếu nhiệm vụ đã hoàn thành
             if (isTaskDone) {
@@ -9496,7 +9519,7 @@
 
             // Hẹn giờ cho lần chạy tiếp theo
             if (this.timeoutIds[taskName]) clearTimeout(this.timeoutIds[taskName]);
-            if (!taskTracker.isTaskDone(accountId, taskName)) {
+            if (taskName === 'luyenDan' || !taskTracker.isTaskDone(accountId, taskName)) {
                 const taskFullName = {
                     hoangvuc: "Hoang Vực",
                     phucloi: "Phúc Lợi",
@@ -9513,8 +9536,10 @@
                         return; // dừng hẳn, không hẹn giờ
                     }
                 }
-                // Cập nhật countdown vào từng nhiệm vụ (dùng 1 vòng lặp chung), trừ Luyện Đan sử dụng countdown riêng của nó
-                if (taskName !== 'luyenDan') {
+                // Cập nhật countdown vào từng nhiệm vụ
+                if (taskName === 'luyenDan') {
+                    countdownTimer.set('luyenDanCheck', timeToNextCheck);
+                } else {
                     countdownTimer.set(taskName, timeToNextCheck);
                 }
                 this.timeoutIds[taskName] = setTimeout(() => this.scheduleTask(taskName, taskAction, interval), timeToNextCheck);
