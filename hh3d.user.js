@@ -1,11 +1,11 @@
 // ==UserScript==
-// @name          HH3D Auto - v2.1
+// @name          HH3D Auto - v1.8
 // @namespace     hh3d-tool
-// @version       v2.1
+// @version       v1.8
 // @updateURL     https://raw.githubusercontent.com/phamquyet47204/tool-automation/main/hh3d.user.js
 // @downloadURL   https://raw.githubusercontent.com/phamquyet47204/tool-automation/main/hh3d.user.js
 // @description   Auto  HH3D
-// @author        Cre: [Unknown] - v2.1
+// @author        Cre: [Unknown] - v1.8
 // @include       *://hoathinh3d.co*/*
 // @exclude       *://hoathinh3d.co/khoang-mach*
 // @require       https://cdn.jsdelivr.net/npm/sweetalert2@11.26.12/dist/sweetalert2.all.min.js
@@ -17,58 +17,6 @@
 // ==/UserScript==
 (async function () {
     'use strict';
-
-    // ===============================================
-    // ANTI-BOT FETCH WRAPPER
-    // ===============================================
-    const originalFetch = window.fetch;
-    let lastRequestTime = 0;
-    const minRequestGap = 1000; // Ít nhất 1s giữa các request từ script này
-
-    async function sleep(ms) {
-        return new Promise(resolve => setTimeout(resolve, ms));
-    }
-
-    async function antiBotFetch(url, options = {}, retryCount = 0) {
-        const MAX_RETRIES = 3;
-        const RETRY_DELAY = 3000;
-
-        // Đảm bảo khoảng cách tối thiểu giữa các request
-        const now = Date.now();
-        const elapsed = now - lastRequestTime;
-        if (elapsed < minRequestGap) {
-            const delay = minRequestGap - elapsed + Math.floor(Math.random() * 1000);
-            await sleep(delay);
-        }
-        lastRequestTime = Date.now();
-
-        // Thêm trễ ngẫu nhiên trước mỗi request (500ms - 1500ms) để tránh bot detection
-        await sleep(500 + Math.floor(Math.random() * 1000));
-
-        try {
-            const res = await originalFetch(url, options);
-
-            // Tự động retry nếu gặp lỗi 429 hoặc 503
-            if ((res.status === 429 || res.status === 503) && retryCount < MAX_RETRIES) {
-                const backoff = RETRY_DELAY * (retryCount + 1) + Math.floor(Math.random() * 2000);
-                console.warn(`[Anti-Bot] Gặp lỗi ${res.status}. Thử lại lần ${retryCount + 1}/${MAX_RETRIES} sau ${backoff}ms...`);
-                await sleep(backoff);
-                return antiBotFetch(url, options, retryCount + 1);
-            }
-
-            return res;
-        } catch (err) {
-            if (retryCount < MAX_RETRIES && (err.message.includes('Failed to fetch') || err.message.includes('NetworkError'))) {
-                const backoff = RETRY_DELAY * (retryCount + 1) + Math.floor(Math.random() * 2000);
-                console.warn(`[Anti-Bot] Lỗi mạng. Thử lại lần ${retryCount + 1}/${MAX_RETRIES} sau ${backoff}ms...`);
-                await sleep(backoff);
-                return antiBotFetch(url, options, retryCount + 1);
-            }
-            throw err;
-        }
-    }
-
-    const fetch = antiBotFetch;
 
     console.log('%c[HH3D Script] Tải thành công. Đang khởi tạo UI tùy chỉnh.',
         'background: #222; color: #bada55; padding: 2px 5px; border-radius: 3px;');
@@ -3233,7 +3181,7 @@
             }
 
             const lastCheck = taskTracker.getLastCheckTienDuyen(accountId);
-            const now = Date.now();
+            const now = new Date();
             if (now - lastCheck < 1800000) return;
 
             const list = await this.getWeddingRooms();
@@ -3242,55 +3190,33 @@
                 return;
             }
 
-            console.log(`[HH3D Tiên Duyên] Bắt đầu quét danh sách phòng cưới (${list.data.length} phòng)...`);
-
             for (const room of list.data) {
+                taskTracker.setLastCheckTienDuyen(accountId, now);
                 console.log(`👉 Kiểm tra phòng ${room.wedding_room_id}`);
-                try {
-                    // Kiểm tra trường hợp phòng đã phát lì xì nhưng chưa chúc thì bỏ qua không chúc nữa
-                    const isDistributed = room.is_distributed || room.distributed || room.has_distributed || 
-                                          room.is_released || room.released || room.lixi_status === 'distributed' || 
-                                          room.is_lixi_distributed || room.lixi_distributed;
-                    if (isDistributed && !room.has_blessed) {
-                        console.log(`[HH3D Tiên Duyên] Phòng ${room.wedding_room_id} đã phát lì xì nhưng chưa chúc -> Bỏ qua không chúc nữa.`);
-                        continue;
-                    }
 
-                    // Sử dụng kiểm tra phủ định/khẳng định lỏng (loose checks) tránh lỗi kiểu dữ liệu số/chuỗi từ API
-                    if (!room.has_blessed) {
-                        const bless = await this.addBlessing(room.wedding_room_id);
-                        if (bless && bless.success) {
-                            showNotification(
-                                `Bạn đã gửi lời chúc phúc cho cặp đôi <br><b>${room.user1_name} 💞 ${room.user2_name}</b>`,
-                                "success"
-                            );
-                        } else {
-                            console.log(`[HH3D Tiên Duyên] Chúc phúc phòng ${room.wedding_room_id} không thành công:`, bless?.message || 'Lỗi không xác định');
-                        }
+                if (room.has_blessed === false) {
+                    const bless = await this.addBlessing(room.wedding_room_id);
+                    if (bless && bless.success === true) {
+                        showNotification(
+                            `Bạn đã gửi lời chúc phúc cho cặp đôi <br><b>${room.user1_name} 💞 ${room.user2_name}</b>`,
+                            "success"
+                        );
                     }
-
-                    if (room.has_li_xi) {
-                        const liXi = await this.receiveLiXi(room.wedding_room_id);
-                        if (liXi && liXi.success) {
-                            showNotification(
-                                `Nhận lì xì phòng cưới ${room.wedding_room_id} được <b>${liXi.data.amount} ${liXi.data.name}</b>!`,
-                                "success"
-                            );
-                        } else {
-                            console.log(`[HH3D Tiên Duyên] Nhận lì xì phòng ${room.wedding_room_id} không thành công:`, liXi?.message || 'Lỗi không xác định');
-                        }
-                    }
-                } catch (err) {
-                    console.error(`[HH3D Tiên Duyên] Lỗi khi xử lý phòng ${room.wedding_room_id}:`, err);
                 }
 
-                // ⏳ Chờ 1.5 giây tránh spam (được bọc thêm jitter bởi fetch wrapper)
-                await new Promise(r => setTimeout(r, 1500));
-            }
+                if (room.has_li_xi === true) {
+                    const liXi = await this.receiveLiXi(room.wedding_room_id);
+                    if (liXi && liXi.success === true) {
+                        showNotification(
+                            `Nhận lì xì phòng cưới ${room.wedding_room_id} được <b>${liXi.data.amount} ${liXi.data.name}</b>!`,
+                            "success"
+                        );
+                    }
+                }
 
-            // Chỉ cập nhật thời gian check sau khi đã quét xong toàn bộ danh sách phòng
-            taskTracker.setLastCheckTienDuyen(accountId, now);
-            console.log(`[HH3D Tiên Duyên] Đã hoàn thành quét toàn bộ phòng cưới.`);
+                // ⏳ Chờ 1 giây tránh spam
+                await new Promise(r => setTimeout(r, 1000));
+            }
         }
     }
 
@@ -9374,10 +9300,13 @@
 
         remove(taskName) {
             delete this.tasks[taskName];
-            if (taskName === 'luyenDanCheck') {
+            if (taskName === 'luyenDan') {
+                const el = document.querySelector('.nv-quest-item[data-task-id="luyenDan"] .quest-progress');
+                if (el) { el.textContent = ''; }
+            } else if (taskName === 'luyenDanCheck') {
                 const el = document.querySelector('.quest-next-time[data-task="luyenDan"]');
                 if (el) { el.textContent = ''; el.classList.remove('active'); }
-            } else if (taskName !== 'luyenDan') {
+            } else {
                 const el = document.querySelector(`.quest-next-time[data-task="${taskName}"]`);
                 if (el) { el.textContent = ''; el.classList.remove('active'); }
             }
@@ -9680,127 +9609,95 @@
         * @param {number} interval Chu kỳ lặp lại của nhiệm vụ tính bằng mili giây.
         */
         async scheduleTask(taskName, taskAction, interval) {
-            if (!this.executingTasks) this.executingTasks = new Set();
-            if (this.executingTasks.has(taskName)) {
-                console.log(`[Auto] Nhiệm vụ ${taskName} đang thực hiện chạy, bỏ qua cuộc gọi trùng lặp.`);
-                return;
-            }
-            this.executingTasks.add(taskName);
-
-            try {
-                if (this.timeoutIds[taskName]) clearTimeout(this.timeoutIds[taskName]);
-                
-                // Kiểm tra xem quest này có bị tắt chạy tự động không
-                const quest = QUEST_CONFIG.find(q => q.taskId === taskName);
-                if (quest && quest.autorunEnabled && taskName !== 'luyenDan') {
-                    const isEnabled = localStorage.getItem(quest.autorunKey) !== '0';
-                    if (!isEnabled) {
-                        console.log(`[Auto] Nhiệm vụ ${taskName} đã bị tắt tự động. Dừng lịch trình.`);
-                        if (this.timeoutIds[taskName]) {
-                            clearTimeout(this.timeoutIds[taskName]);
-                            this.timeoutIds[taskName] = null;
-                        }
-                        countdownTimer.remove(taskName);
-                        return;
+            if (this.timeoutIds[taskName]) clearTimeout(this.timeoutIds[taskName]);
+            
+            // Kiểm tra xem quest này có bị tắt chạy tự động không
+            const quest = QUEST_CONFIG.find(q => q.taskId === taskName);
+            if (quest && quest.autorunEnabled && taskName !== 'luyenDan') {
+                const isEnabled = localStorage.getItem(quest.autorunKey) !== '0';
+                if (!isEnabled) {
+                    console.log(`[Auto] Nhiệm vụ ${taskName} đã bị tắt tự động. Dừng lịch trình.`);
+                    if (this.timeoutIds[taskName]) {
+                        clearTimeout(this.timeoutIds[taskName]);
+                        this.timeoutIds[taskName] = null;
                     }
-                }
-
-                let isTaskDone;
-                if (taskName === 'bicanh' && await bicanh.isDailyLimit()) {
-                    isTaskDone = true;
-                } else if (taskName === 'luyenDan') {
-                    isTaskDone = false; // Luyện đan luôn chạy ngầm để hiển thị UI đếm ngược
-                } else {
-                    isTaskDone = taskTracker.isTaskDone(this.accountId, taskName);
-                }
-                // Kiểm tra và dừng lịch trình nếu nhiệm vụ đã hoàn thành
-                if (isTaskDone) {
-                    loadHH3DProfile().catch(() => { });
+                    countdownTimer.remove(taskName);
                     return;
                 }
+            }
 
-                const now = Date.now();
-                const nextTime = taskTracker.getNextTime(this.accountId, taskName);
-                let timeToNextCheck;
+            let isTaskDone;
+            if (taskName === 'bicanh' && await bicanh.isDailyLimit()) {
+                isTaskDone = true;
+            } else if (taskName === 'luyenDan') {
+                isTaskDone = false; // Luyện đan luôn chạy ngầm để hiển thị UI đếm ngược
+            } else {
+                isTaskDone = taskTracker.isTaskDone(this.accountId, taskName);
+            }
+            // Kiểm tra và dừng lịch trình nếu nhiệm vụ đã hoàn thành
+            if (isTaskDone) {
+                loadHH3DProfile().catch(() => { });
+                return;
+            }
 
-                if (nextTime === null || now >= nextTime) {
-                    // Trễ phản ứng ngẫu nhiên mô phỏng hành vi người dùng thật (2s - 7s, riêng luyenDan chỉ 0.5s - 2s để đảm bảo lò đan ổn định)
-                    const humanDelay = taskName === 'luyenDan' ? (500 + Math.floor(Math.random() * 1500)) : (2000 + Math.floor(Math.random() * 5000));
-                    console.log(`[Auto] Đã đến giờ làm nhiệm vụ: ${taskName}. Chờ trễ mô phỏng hành vi người dùng: ${humanDelay}ms...`);
-                    await new Promise(r => setTimeout(r, humanDelay));
+            const now = Date.now();
+            const nextTime = taskTracker.getNextTime(this.accountId, taskName);
+            let timeToNextCheck;
 
-                    console.log(`[Auto] Đang thực hiện nhiệm vụ: ${taskName}...`);
-                    try {
-                        // Cho phép taskAction trả về delay thực tế (ms hoặc chuỗi thời gian)
-                        let result = await taskAction();
-                        // Cập nhật trạng thái UI sau khi task chạy xong
-                        // updateAllQuestButtons().catch(() => {});
-                        loadHH3DProfile().catch(() => { });
-
-                        // Lấy nextTime mới nhất từ tracker đề phòng taskAction đã thay đổi nó trực tiếp
-                        const updatedNextTime = taskTracker.getNextTime(this.accountId, taskName);
-                        const nowPostRun = Date.now();
-
-                        if (updatedNextTime !== null && updatedNextTime > nowPostRun) {
-                            timeToNextCheck = updatedNextTime - nowPostRun;
-                            console.log(`[Auto] Nhiệm vụ ${taskName} đã cập nhật thời gian chạy tiếp theo trong tracker: +${Math.round(timeToNextCheck / 1000)}s.`);
-                        } else if (typeof result === 'number' && !isNaN(result) && result > 0) {
-                            timeToNextCheck = result;
-                        } else if (typeof result === 'string') {
-                            // Nếu trả về chuỗi, parse ra ms
-                            const ms = parseDelayString(result);
-                            timeToNextCheck = ms > 0 ? ms : interval;
-                        } else {
-                            timeToNextCheck = interval;
-                        }
-
-                        // Thêm jitter ngẫu nhiên vào chu kỳ kiểm tra (tránh các nhiệm vụ không phải luyenDan chạy đều đặn tuyệt đối)
-                        // Chỉ áp dụng jitter nếu nhiệm vụ không phải chờ một mốc thời gian cụ thể vừa được cập nhật trong tracker
-                        if (taskName !== 'luyenDan' && (updatedNextTime === null || updatedNextTime <= nowPostRun)) {
-                            // Jitter từ -15s đến +45s
-                            const checkJitter = Math.floor(Math.random() * 60000) - 15000;
-                            timeToNextCheck = Math.max(10000, timeToNextCheck + checkJitter);
-                            console.log(`[Auto] Đã thêm jitter vào chu kỳ kiểm tra của ${taskName}. Thời gian check tiếp theo: ${Math.round(timeToNextCheck / 1000)}s.`);
-                        }
-                    } catch (error) {
-                        console.error(`[Auto] Lỗi khi thực hiện nhiệm vụ ${taskName}:`, error);
-                        // Có thể đặt thời gian chờ ngắn hơn khi có lỗi để thử lại
-                        timeToNextCheck = 3 * 60 * 1000; // Thử lại sau 3 phút
-                    }
-                } else {
-                    timeToNextCheck = Math.max(nextTime - now, 0);
-                    console.log(`[Auto] Nhiệm vụ ${taskName} chưa đến giờ, sẽ chờ ${timeToNextCheck}ms.`);
-                }
-
-                // Hẹn giờ cho lần chạy tiếp theo
-                if (this.timeoutIds[taskName]) clearTimeout(this.timeoutIds[taskName]);
-                if (taskName === 'luyenDan' || !taskTracker.isTaskDone(accountId, taskName)) {
-                    const taskFullName = {
-                        hoangvuc: "Hoang Vực",
-                        phucloi: "Phúc Lợi",
-                        thiluyen: "Thí Luyện",
-                        bicanh: "Bí Cảnh",
-                        khoangmach: "Khoáng Mạch",
-                        luyenDan: "Luyện Đan"
-                    }[taskName];
-                    //showNotification
-                    if (taskName === 'bicanh') {
-                        const isReserveHold = await bicanh.isReserveHold();
-                        if (isReserveHold) {
-                            //createUI.updateStatusBar(`🛑 ${taskFullName}: đang giữ lượt, không hẹn giờ`, 'info', 0);
-                            return; // dừng hẳn, không hẹn giờ
-                        }
-                    }
-                    // Cập nhật countdown vào từng nhiệm vụ (dùng 1 vòng lặp chung)
-                    if (taskName === 'luyenDan') {
-                        countdownTimer.set('luyenDanCheck', timeToNextCheck);
+            if (nextTime === null || now >= nextTime) {
+                console.log(`[Auto] Đã đến giờ làm nhiệm vụ: ${taskName}. Đang thực hiện...`);
+                try {
+                    // Cho phép taskAction trả về delay thực tế (ms hoặc chuỗi thời gian)
+                    let result = await taskAction();
+                    // Cập nhật trạng thái UI sau khi task chạy xong
+                    // updateAllQuestButtons().catch(() => {});
+                    loadHH3DProfile().catch(() => { });
+                    // Nếu trả về số, dùng làm delay
+                    if (typeof result === 'number' && !isNaN(result) && result > 0) {
+                        timeToNextCheck = result;
+                    } else if (typeof result === 'string') {
+                        // Nếu trả về chuỗi, parse ra ms
+                        const ms = parseDelayString(result);
+                        timeToNextCheck = ms > 0 ? ms : interval;
                     } else {
-                        countdownTimer.set(taskName, timeToNextCheck);
+                        timeToNextCheck = interval;
                     }
-                    this.timeoutIds[taskName] = setTimeout(() => this.scheduleTask(taskName, taskAction, interval), timeToNextCheck);
+                } catch (error) {
+                    console.error(`[Auto] Lỗi khi thực hiện nhiệm vụ ${taskName}:`, error);
+                    // Có thể đặt thời gian chờ ngắn hơn khi có lỗi để thử lại
+                    timeToNextCheck = 3 * 60 * 1000; // Thử lại sau 3 phút
                 }
-            } finally {
-                this.executingTasks.delete(taskName);
+            } else {
+                timeToNextCheck = Math.max(nextTime - now, 0);
+                console.log(`[Auto] Nhiệm vụ ${taskName} chưa đến giờ, sẽ chờ ${timeToNextCheck}ms.`);
+            }
+
+            // Hẹn giờ cho lần chạy tiếp theo
+            if (this.timeoutIds[taskName]) clearTimeout(this.timeoutIds[taskName]);
+            if (taskName === 'luyenDan' || !taskTracker.isTaskDone(accountId, taskName)) {
+                const taskFullName = {
+                    hoangvuc: "Hoang Vực",
+                    phucloi: "Phúc Lợi",
+                    thiluyen: "Thí Luyện",
+                    bicanh: "Bí Cảnh",
+                    khoangmach: "Khoáng Mạch",
+                    luyenDan: "Luyện Đan"
+                }[taskName];
+                //showNotification
+                if (taskName === 'bicanh') {
+                    const isReserveHold = await bicanh.isReserveHold();
+                    if (isReserveHold) {
+                        //createUI.updateStatusBar(`🛑 ${taskFullName}: đang giữ lượt, không hẹn giờ`, 'info', 0);
+                        return; // dừng hẳn, không hẹn giờ
+                    }
+                }
+                // Cập nhật countdown vào từng nhiệm vụ (dùng 1 vòng lặp chung)
+                if (taskName === 'luyenDan') {
+                    countdownTimer.set('luyenDanCheck', timeToNextCheck);
+                } else {
+                    countdownTimer.set(taskName, timeToNextCheck);
+                }
+                this.timeoutIds[taskName] = setTimeout(() => this.scheduleTask(taskName, taskAction, interval), timeToNextCheck);
             }
         }
 
