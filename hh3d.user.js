@@ -1,11 +1,11 @@
 // ==UserScript==
-// @name          HH3D Auto - v2.3.2
+// @name          HH3D Auto - v2.4
 // @namespace     hh3d-tool
-// @version       v2.3.2
+// @version       v2.4
 // @updateURL     https://raw.githubusercontent.com/phamquyet47204/tool-automation/main/hh3d.user.js
 // @downloadURL   https://raw.githubusercontent.com/phamquyet47204/tool-automation/main/hh3d.user.js
 // @description   Auto  HH3D
-// @author        Cre: [Unknown] - v2.3.2
+// @author        Cre: [Unknown] - v2.4
 // @include       *://hoathinh3d.co*/*
 // @exclude       *://hoathinh3d.co/khoang-mach*
 // @require       https://cdn.jsdelivr.net/npm/sweetalert2@11.26.12/dist/sweetalert2.all.min.js
@@ -1774,7 +1774,8 @@
         // Dừng hoặc bắt đầu tác vụ ngay lập tức mà không cần tải lại trang
         if (!newState) {
             if (typeof automatic !== 'undefined' && automatic) {
-                if (taskId !== 'luyenDan' && automatic.timeoutIds && automatic.timeoutIds[taskId]) {
+                // Dừng timeout của task này (bao gồm cả luyenDan)
+                if (automatic.timeoutIds && automatic.timeoutIds[taskId]) {
                     clearTimeout(automatic.timeoutIds[taskId]);
                     automatic.timeoutIds[taskId] = null;
                 }
@@ -1787,8 +1788,11 @@
                     automatic.dothachTimeout = null;
                 }
             }
-            if (taskId !== 'luyenDan') {
-                countdownTimer.remove(taskId);
+            // Xóa countdown timer (kể cả luyenDan và luyenDanCheck)
+            countdownTimer.remove(taskId);
+            if (taskId === 'luyenDan') {
+                countdownTimer.remove('luyenDanCheck');
+                luyendan.updateProgress(''); // xóa text progress
             }
         } else {
             if (typeof automatic !== 'undefined' && automatic && automatic.isRunning) {
@@ -9808,9 +9812,9 @@
         async scheduleTask(taskName, taskAction, interval) {
             if (this.timeoutIds[taskName]) clearTimeout(this.timeoutIds[taskName]);
             
-            // Kiểm tra xem quest này có bị tắt chạy tự động không
+            // Kiểm tra xem quest này có bị tắt chạy tự động không (bao gồm cả luyenDan)
             const quest = QUEST_CONFIG.find(q => q.taskId === taskName);
-            if (quest && quest.autorunEnabled && taskName !== 'luyenDan') {
+            if (quest && quest.autorunEnabled) {
                 const isEnabled = localStorage.getItem(quest.autorunKey) !== '0';
                 if (!isEnabled) {
                     console.log(`[Auto] Nhiệm vụ ${taskName} đã bị tắt tự động. Dừng lịch trình.`);
@@ -9819,6 +9823,7 @@
                         this.timeoutIds[taskName] = null;
                     }
                     countdownTimer.remove(taskName);
+                    if (taskName === 'luyenDan') countdownTimer.remove('luyenDanCheck');
                     return;
                 }
             }
@@ -9838,7 +9843,9 @@
             }
 
             const now = Date.now();
-            const nextTime = taskTracker.getNextTime(this.accountId, taskName);
+            // luyenDan luôn chạy ngay khi scheduleTask được gọi (timeout đã xử lý delay rồi)
+            // Không dùng nextTime của taskTracker cho luyenDan để tránh bị kẹt ở trạng thái cũ
+            const nextTime = taskName === 'luyenDan' ? null : taskTracker.getNextTime(this.accountId, taskName);
             let timeToNextCheck;
 
             if (nextTime === null || now >= nextTime) {
