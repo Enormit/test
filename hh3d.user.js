@@ -1,11 +1,11 @@
 // ==UserScript==
-// @name          HH3D Auto - v1.5
+// @name          HH3D Auto - v1.6
 // @namespace     hh3d-tool
-// @version       v1.5
+// @version       v1.6
 // @updateURL     https://raw.githubusercontent.com/phamquyet47204/tool-automation/main/hh3d.user.js
 // @downloadURL   https://raw.githubusercontent.com/phamquyet47204/tool-automation/main/hh3d.user.js
 // @description   Auto  HH3D
-// @author        Cre: [Unknown] - v1.5
+// @author        Cre: [Unknown] - v1.6
 // @include       *://hoathinh3d.co*/*
 // @exclude       *://hoathinh3d.co/khoang-mach*
 // @require       https://cdn.jsdelivr.net/npm/sweetalert2@11.26.12/dist/sweetalert2.all.min.js
@@ -9289,14 +9289,22 @@
 
         set(taskName, delayMs) {
             this.tasks[taskName] = Date.now() + delayMs;
-            const el = document.querySelector(`.quest-next-time[data-task="${taskName}"]`);
+            const targetName = taskName === 'luyenDanCheck' ? 'luyenDan' : taskName;
+            const el = document.querySelector(`.quest-next-time[data-task="${targetName}"]`);
             if (el) el.classList.add('active');
             if (!this.intervalId) this._start();
         }
 
         remove(taskName) {
             delete this.tasks[taskName];
-            if (taskName !== 'luyenDan') {
+            if (taskName === 'luyenDan') {
+                delete this.tasks['luyenDanCheck'];
+                const el = document.querySelector('.quest-next-time[data-task="luyenDan"]');
+                if (el) { el.textContent = ''; el.classList.remove('active'); }
+            } else if (taskName === 'luyenDanCheck') {
+                const el = document.querySelector('.quest-next-time[data-task="luyenDan"]');
+                if (el) { el.textContent = ''; el.classList.remove('active'); }
+            } else {
                 const el = document.querySelector(`.quest-next-time[data-task="${taskName}"]`);
                 if (el) { el.textContent = ''; el.classList.remove('active'); }
             }
@@ -9321,6 +9329,20 @@
             const now = Date.now();
             for (const taskName in this.tasks) {
                 const remaining = this.tasks[taskName] - now;
+                if (taskName === 'luyenDanCheck') {
+                    const el = document.querySelector('.quest-next-time[data-task="luyenDan"]');
+                    if (el) {
+                        if (remaining <= 0) {
+                            el.textContent = ''; el.classList.remove('active');
+                            delete this.tasks[taskName];
+                        } else {
+                            const s = Math.max(0, Math.floor(remaining / 1000));
+                            el.textContent = `⏳ ${s}s`;
+                            el.classList.add('active');
+                        }
+                    }
+                    continue;
+                }
                 if (taskName === 'luyenDan') {
                     const el = document.querySelector('.nv-quest-item[data-task-id="luyenDan"] .quest-progress');
                     if (el) {
@@ -9666,7 +9688,11 @@
                     }
                 }
                 // Cập nhật countdown vào từng nhiệm vụ (dùng 1 vòng lặp chung)
-                countdownTimer.set(taskName, timeToNextCheck);
+                if (taskName === 'luyenDan') {
+                    countdownTimer.set('luyenDanCheck', timeToNextCheck);
+                } else {
+                    countdownTimer.set(taskName, timeToNextCheck);
+                }
                 this.timeoutIds[taskName] = setTimeout(() => this.scheduleTask(taskName, taskAction, interval), timeToNextCheck);
             }
         }
