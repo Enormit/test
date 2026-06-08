@@ -4770,10 +4770,10 @@
                             }
                         }
                         showNotification(`🧪 🔥 Hoàn tất Điều Hỏa! Thành công: ${successCount}`, "success");
-                        return 10000;
+                        return 5000;
                     }
 
-                    return 10000; // Định kỳ 10s/lần
+                    return 5000; // Định kỳ 5s/lần
                 }
 
                 if (furnace === "idle") {
