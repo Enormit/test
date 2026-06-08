@@ -9490,21 +9490,32 @@
                     const el = document.querySelector('.quest-next-time[data-task="luyenDan"]');
                     if (el) {
                         if (remaining <= 0) {
-                            el.textContent = ''; el.classList.remove('active');
+                            if (el.textContent !== '') {
+                                el.textContent = '';
+                            }
+                            el.classList.remove('active');
                             delete this.tasks[taskName];
                         } else {
                             const s = Math.max(0, Math.floor(remaining / 1000));
-                            el.textContent = `⏳ ${s}s`;
+                            const newText = `⏳ ${s}s`;
+                            if (el.textContent !== newText) {
+                                el.textContent = newText;
+                            }
                             el.classList.add('active');
                         }
                     }
                     continue;
                 }
                 if (taskName === 'luyenDan') {
+                    if (typeof luyendan !== 'undefined' && luyendan && luyendan.isProcessing) {
+                        continue;
+                    }
                     const el = document.querySelector('.nv-quest-item[data-task-id="luyenDan"] .quest-progress');
                     if (el) {
                         if (remaining <= 0) {
-                            el.textContent = '';
+                            if (el.textContent !== '') {
+                                el.textContent = '';
+                            }
                             delete this.tasks[taskName];
                         } else {
                             const accountId = localStorage.getItem('hh3d_account_id') || '';
@@ -9523,7 +9534,10 @@
                             } else {
                                 text = `Đang luyện (${stab}% - ${tuneCount}/${tuneSurvivalMin})`;
                             }
-                            el.textContent = ` (${text})`;
+                            const newText = ` (${text})`;
+                            if (el.textContent !== newText) {
+                                el.textContent = newText;
+                            }
                             localStorage.setItem(`luyenDanLastProgress_${accountId}`, text);
                         }
                     }
@@ -9532,13 +9546,19 @@
                 const el = document.querySelector(`.quest-next-time[data-task="${taskName}"]`);
                 if (!el) continue;
                 if (remaining <= 0) {
-                    el.textContent = ''; el.classList.remove('active');
+                    if (el.textContent !== '') {
+                        el.textContent = '';
+                    }
+                    el.classList.remove('active');
                     delete this.tasks[taskName];
                 } else {
                     const h = Math.floor(remaining / 3600000);
                     const m = Math.floor((remaining % 3600000) / 60000);
                     const s = Math.floor((remaining % 60000) / 1000);
-                    el.textContent = h > 0 ? `⏳ ${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}` : `⏳ ${m}:${String(s).padStart(2, '0')}`;
+                    const newText = h > 0 ? `⏳ ${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}` : `⏳ ${m}:${String(s).padStart(2, '0')}`;
+                    if (el.textContent !== newText) {
+                        el.textContent = newText;
+                    }
                 }
             }
             if (Object.keys(this.tasks).length === 0) this._stop();
