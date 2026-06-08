@@ -4565,6 +4565,7 @@
         async doLuyenDan() {
             countdownTimer.remove('luyenDan');
             console.log(`${this.logPrefix} ▶️ Bắt đầu kiểm tra Lò Đan...`);
+            const autoLuyenDan = localStorage.getItem('autoLuyenDan') !== '0';
             try {
                 const stateRes = await this.sendLdRequest("/state?fresh=1", "GET");
                 if (!stateRes || !stateRes.data) {
@@ -4583,6 +4584,9 @@
 
                 if (furnace === "exploded") {
                     this.updateProgress("💥 Bị nổ lò");
+                    if (!autoLuyenDan) {
+                        return 15000;
+                    }
                     showNotification("🧪 💥 Đan Lô bị nổ! Đang dọn dẹp lò...", "warning");
                     const jobId = craft?.id || data.craftJobId;
                     if (jobId) {
@@ -4600,6 +4604,9 @@
 
                 if (furnace === "ready") {
                     this.updateProgress("Chờ thu hoạch");
+                    if (!autoLuyenDan) {
+                        return 15000;
+                    }
                     showNotification("🧪 🎉 Luyện đan hoàn tất! Thu hoạch...", "info");
                     const jobId = craft?.id || data.craftJobId;
                     if (jobId) {
@@ -4676,7 +4683,11 @@
                         return Math.min(timerLeftSec * 1000 + 3000, 30000);
                     }
 
-                    // Trong 5 phút đầu: vòng lặp định kỳ 10s/lần
+                    if (!autoLuyenDan) {
+                        return 5000; // Cập nhật tiến độ 5s/lần
+                    }
+
+                    // Trong 5 phút đầu: vòng lặp định kỳ 5s/lần
                     const autoTune = localStorage.getItem('luyenDanAutoTune') !== 'false';
                     if (autoTune && stability <= 68 && unstableLeftSec > 0 && !isSurvival) {
                         let successCount = 0;
@@ -4701,11 +4712,14 @@
                         showNotification(`🧪 🔥 Hoàn tất 3 lần Điều Hỏa! Thành công: ${successCount}/3`, "success");
                     }
 
-                    return 10000; // Định kỳ 10s/lần
+                    return 5000; // Định kỳ 5s/lần
                 }
 
                 if (furnace === "idle") {
                     this.updateProgress("Lò trống");
+                    if (!autoLuyenDan) {
+                        return 15000;
+                    }
                     const TiersOrder = ["cuc", "thuong", "trung", "ha"];
                     let selectedTier = null;
 
@@ -9253,10 +9267,9 @@
             const autoKhoangMach = localStorage.getItem('autoKhoangMach') !== '0';
             const autoLuyenDan = localStorage.getItem('autoLuyenDan') !== '0';
 
-            if (autoLuyenDan) {
-                await new Promise(resolve => setTimeout(resolve, 1000));
-                await this.scheduleTask('luyenDan', () => luyendan.doLuyenDan(), this.INTERVAL_LUYEN_DAN);
-            }
+            // Luôn lên lịch Luyện Đan để tự động cập nhật tiến độ lên UI (nếu tắt auto sẽ chỉ đọc trạng thái)
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            await this.scheduleTask('luyenDan', () => luyendan.doLuyenDan(), this.INTERVAL_LUYEN_DAN);
 
             if (autoDiemDanh) { await this.doInitialTasks(); }
             // Bắt đầu chu kỳ hẹn giờ cho Tiên Duyên
