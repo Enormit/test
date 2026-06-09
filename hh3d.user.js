@@ -1,11 +1,11 @@
 // ==UserScript==
-// @name          HH3D Auto - v2.4
+// @name          HH3D Auto - v2.5
 // @namespace     hh3d-tool
-// @version       v2.4
+// @version       v2.5
 // @updateURL     https://raw.githubusercontent.com/phamquyet47204/tool-automation/main/hh3d.user.js
 // @downloadURL   https://raw.githubusercontent.com/phamquyet47204/tool-automation/main/hh3d.user.js
 // @description   Auto  HH3D
-// @author        Cre: [Unknown] - v2.4
+// @author        Cre: [Unknown] - v2.5
 // @include       *://hoathinh3d.co*/*
 // @exclude       *://hoathinh3d.co/khoang-mach*
 // @require       https://cdn.jsdelivr.net/npm/sweetalert2@11.26.12/dist/sweetalert2.all.min.js
@@ -3265,6 +3265,10 @@
 
             for (const room of list.data) {
                 taskTracker.setLastCheckTienDuyen(accountId, now);
+                // Tối ưu: Nếu đã chúc phúc và không có lì xì để nhận -> Bỏ qua phòng này
+                if (room.has_blessed === true && !room.has_li_xi) {
+                    continue;
+                }
                 console.log(`👉 Kiểm tra phòng ${room.wedding_room_id}`);
 
                 if (room.has_blessed === false) {
