@@ -1,11 +1,11 @@
 // ==UserScript==
-// @name          HH3D Auto - v2.11
+// @name          HH3D Auto - v2.12
 // @namespace     hh3d-tool
-// @version       v2.11
+// @version       v2.12
 // @updateURL     https://raw.githubusercontent.com/phamquyet47204/tool-automation/main/hh3d.user.js
 // @downloadURL   https://raw.githubusercontent.com/phamquyet47204/tool-automation/main/hh3d.user.js
 // @description   Auto  HH3D
-// @author        Cre: [Unknown] - v2.11
+// @author        Cre: [Unknown] - v2.12
 // @include       *://hoathinh3d.co*/*
 // @exclude       *://hoathinh3d.co/khoang-mach*
 // @require       https://cdn.jsdelivr.net/npm/sweetalert2@11.26.12/dist/sweetalert2.all.min.js
@@ -5325,7 +5325,14 @@
                         return 10000;
                     }
                     const autoTune = localStorage.getItem('luyenDanAutoTune') !== 'false';
+                    const slots = data.dong_slots || [];
+                    const hasCompanion = slots.some(s => s != null);
+
                     if (autoTune && stability <= 68) {
+                        if (hasCompanion) {
+                            console.log(`${this.logPrefix} Có Đan Đồng hỗ trợ trong lò, nhường Đan Đồng điều hỏa.`);
+                            return 10000;
+                        }
                         let successCount = 0;
                         for (let i = 0; i < 3; i++) {
                             showNotification(`🧪 🔥 Điều Hỏa lần ${i + 1}/3...`, "warning");
