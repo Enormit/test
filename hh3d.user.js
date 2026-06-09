@@ -1,11 +1,11 @@
 // ==UserScript==
-// @name          HH3D Auto - v2.12
+// @name          HH3D Auto - v2.13
 // @namespace     hh3d-tool
-// @version       v2.12
+// @version       v2.13
 // @updateURL     https://raw.githubusercontent.com/phamquyet47204/tool-automation/main/hh3d.user.js
 // @downloadURL   https://raw.githubusercontent.com/phamquyet47204/tool-automation/main/hh3d.user.js
 // @description   Auto  HH3D
-// @author        Cre: [Unknown] - v2.12
+// @author        Cre: [Unknown] - v2.13
 // @include       *://hoathinh3d.co*/*
 // @exclude       *://hoathinh3d.co/khoang-mach*
 // @require       https://cdn.jsdelivr.net/npm/sweetalert2@11.26.12/dist/sweetalert2.all.min.js
@@ -5197,6 +5197,22 @@
                     countdownTimer.remove('luyenDan');
                     const tuneCount = craft ? (craft.tune_count | 0) : 0;
                     this.updateProgress(`Đan đồng (${tuneCount}/3)`);
+
+                    // Tự động điều hỏa hộ Đan Chủ nếu độ ổn định thấp
+                    const autoTune = localStorage.getItem('luyenDanAutoTune') !== 'false';
+                    const stability = craft ? (craft.stability_pct != null ? parseFloat(craft.stability_pct) : 100) : 100;
+                    if (autoTune && stability <= 68) {
+                        console.log(`${this.logPrefix} Đan Đồng tự động điều hỏa hộ Đan Chủ (Độ ổn định: ${stability.toFixed(1)}%)...`);
+                        try {
+                            const tuneRes = await this.sendLdRequest("/tune", "POST", {});
+                            if (tuneRes && (tuneRes.success || tuneRes.data)) {
+                                showNotification(`🧪 🔥 Đan Đồng đã tự động Điều Hỏa hộ Đan Chủ!`, "success");
+                                return 10000;
+                            }
+                        } catch (err) {
+                            console.error(`${this.logPrefix} Lỗi khi Đan Đồng điều hỏa:`, err);
+                        }
+                    }
                     return 15000;
                 }
 
