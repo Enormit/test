@@ -1,11 +1,11 @@
 // ==UserScript==
-// @name          HH3D Auto - v2.8
+// @name          HH3D Auto - v2.9
 // @namespace     hh3d-tool
-// @version       v2.8
+// @version       v2.9
 // @updateURL     https://raw.githubusercontent.com/phamquyet47204/tool-automation/main/hh3d.user.js
 // @downloadURL   https://raw.githubusercontent.com/phamquyet47204/tool-automation/main/hh3d.user.js
 // @description   Auto  HH3D
-// @author        Cre: [Unknown] - v2.8
+// @author        Cre: [Unknown] - v2.9
 // @include       *://hoathinh3d.co*/*
 // @exclude       *://hoathinh3d.co/khoang-mach*
 // @require       https://cdn.jsdelivr.net/npm/sweetalert2@11.26.12/dist/sweetalert2.all.min.js
@@ -2169,6 +2169,14 @@
                 const autoDecompose = localStorage.getItem('luyenDanAutoDecompose') !== 'false';
                 const autoTune = localStorage.getItem('luyenDanAutoTune') !== 'false';
                 const autoUse = localStorage.getItem('luyenDanAutoUse') !== 'false';
+                
+                // Cấu hình Đan Đồng
+                const autoInvite = localStorage.getItem('luyenDanAutoInvite') === 'true';
+                const waitSeconds = localStorage.getItem('luyenDanWaitInviteSeconds') || '60';
+                const autoAccept = localStorage.getItem('luyenDanAutoAcceptInvite') === 'true';
+                const acceptAll = localStorage.getItem('luyenDanAcceptAllInvites') !== 'false';
+                const autoLeave = localStorage.getItem('luyenDanAutoLeave') === 'true';
+
                 return `
                 <div class="settings-section">
                     <h3>Cài đặt Luyện Đan</h3>
@@ -2206,6 +2214,59 @@
                             <span>Tự động điều hoà (giữ độ ổn định)</span>
                         </label>
                         <p class="settings-description">Tự động bấm "Điều Hoả" để giữ ổn định cho lò đan khi độ ổn định xuống thấp (<= 68%).</p>
+                    </div>
+                </div>
+
+                <div class="settings-section" style="border-top: 1px solid rgba(255,255,255,0.08); padding-top: 15px; margin-top: 15px;">
+                    <h3>Cài đặt Đan Đồng (Hỗ trợ Luyện Đan)</h3>
+
+                    <div class="settings-option">
+                        <label class="settings-checkbox-label">
+                            <input type="checkbox" id="luyendan-auto-invite" ${autoInvite ? 'checked' : ''}>
+                            <span>Tự động mời Đan Đồng khi lò trống</span>
+                        </label>
+                        <p class="settings-description">Tự động gửi lời mời tới bạn bè được chọn trước khi tiến hành Khai lò.</p>
+                    </div>
+
+                    <div class="settings-option" id="luyendan-wait-time-option" style="display: ${autoInvite ? 'block' : 'none'};">
+                        <label for="luyendan-wait-seconds">Thời gian tối đa chờ Đan Đồng vào phòng (giây):</label>
+                        <input type="number" id="luyendan-wait-seconds" class="settings-input-number"
+                               value="${waitSeconds}" min="10" max="300" style="width:70px; margin-top:4px;">
+                        <p class="settings-description">Quá thời gian này mà Đan Đồng chưa vào đủ, tool sẽ tự động Khai lò đan.</p>
+                    </div>
+
+                    <div class="settings-option">
+                        <label class="settings-checkbox-label">
+                            <input type="checkbox" id="luyendan-auto-accept" ${autoAccept ? 'checked' : ''}>
+                            <span>Tự động nhận làm Đan Đồng</span>
+                        </label>
+                        <p class="settings-description">Tự động chấp nhận khi có Đan Chủ gửi lời mời hỗ trợ luyện đan.</p>
+                    </div>
+
+                    <div class="settings-option" id="luyendan-accept-all-option" style="display: ${autoAccept ? 'block' : 'none'};">
+                        <label class="settings-checkbox-label">
+                            <input type="checkbox" id="luyendan-accept-all" ${acceptAll ? 'checked' : ''}>
+                            <span>Nhận lời mời từ bất kỳ ai</span>
+                        </label>
+                        <p class="settings-description">Nếu tắt, chỉ tự động nhận lời mời từ những người được tích chọn trong danh sách bạn bè phía dưới.</p>
+                    </div>
+
+                    <div class="settings-option">
+                        <label class="settings-checkbox-label">
+                            <input type="checkbox" id="luyendan-auto-leave" ${autoLeave ? 'checked' : ''}>
+                            <span>Tự động rời Đan Đồng sau 5 phút</span>
+                        </label>
+                        <p class="settings-description">Sau khi hỗ trợ Điều Hỏa xong (hết 5 phút đầu) hoặc khi lò nổ, tool sẽ tự rời vị trí Đan Đồng.</p>
+                    </div>
+
+                    <div class="settings-option" id="luyendan-friends-list-section" style="margin-top:12px; display: ${(autoInvite || autoAccept) ? 'block' : 'none'};">
+                        <label style="font-weight:bold; color:#d0d8f0;">Chọn bạn bè hỗ trợ (Mời / Nhận lời mời):</label>
+                        <div style="margin-top:6px; display:flex; gap:6px;">
+                            <input type="text" id="luyendan-friend-search" class="settings-input" placeholder="Tìm tên bạn bè..." style="flex:1; padding:4px 8px; font-size:11px; background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.1); border-radius:4px; color:#fff;">
+                        </div>
+                        <div id="luyendan-friends-container" style="max-height:160px; overflow-y:auto; background:rgba(0,0,0,0.25); border:1px solid rgba(255,255,255,0.08); border-radius:4px; margin-top:6px; padding:6px; display:flex; flex-direction:column; gap:4px;">
+                            <p style="font-size:11px; color:#888; text-align:center; padding:10px 0; margin:0;">⏳ Đang tải danh sách bạn bè...</p>
+                        </div>
                     </div>
                 </div>
             `;
@@ -2320,9 +2381,79 @@
 
 
 
+            case 'luyenDan': {
+                const autoInviteCheck = document.getElementById('luyendan-auto-invite');
+                const autoAcceptCheck = document.getElementById('luyendan-auto-accept');
+                const waitOption = document.getElementById('luyendan-wait-time-option');
+                const acceptAllOption = document.getElementById('luyendan-accept-all-option');
+                const friendsListSection = document.getElementById('luyendan-friends-list-section');
+                
+                const updateFriendsVisibility = () => {
+                    const inviteVal = autoInviteCheck?.checked || false;
+                    const acceptVal = autoAcceptCheck?.checked || false;
+                    
+                    if (waitOption) waitOption.style.display = inviteVal ? 'block' : 'none';
+                    if (acceptAllOption) acceptAllOption.style.display = acceptVal ? 'block' : 'none';
+                    if (friendsListSection) friendsListSection.style.display = (inviteVal || acceptVal) ? 'block' : 'none';
+                };
+
+                if (autoInviteCheck) autoInviteCheck.addEventListener('change', updateFriendsVisibility);
+                if (autoAcceptCheck) autoAcceptCheck.addEventListener('change', updateFriendsVisibility);
+
+                // Tải danh sách bạn bè bất đồng bộ
+                const friendsContainer = document.getElementById('luyendan-friends-container');
+                const searchInput = document.getElementById('luyendan-friend-search');
+                
+                if (friendsContainer) {
+                    luyendan.sendLdRequest("/friends", "GET").then(friendsRes => {
+                        const friends = friendsRes?.data?.friends || [];
+                        if (!friends.length) {
+                            friendsContainer.innerHTML = '<p style="font-size:11px; color:#888; text-align:center; padding:10px 0; margin:0;">📭 Không tìm thấy đạo hữu nào</p>';
+                            return;
+                        }
+                        
+                        const savedIds = (localStorage.getItem('luyenDanSelectedFriendIds') || '').split(',').filter(Boolean);
+                        
+                        const renderFriends = (filterText = '') => {
+                            const normalizedFilter = filterText.toLowerCase().trim();
+                            const filtered = friends.filter(f => !normalizedFilter || (f.name || '').toLowerCase().includes(normalizedFilter));
+                            
+                            if (!filtered.length) {
+                                friendsContainer.innerHTML = '<p style="font-size:11px; color:#888; text-align:center; padding:10px 0; margin:0;">🔍 Không khớp tên bạn bè</p>';
+                                return;
+                            }
+                            
+                            friendsContainer.innerHTML = filtered.map(f => {
+                                const uid = String(f.userId != null ? f.userId : f.id);
+                                const isChecked = savedIds.includes(uid);
+                                const lvlName = f.rank_level_name || (f.rank_level ? `Bậc ${f.rank_level}` : '');
+                                return `
+                                    <label style="display:flex; align-items:center; gap:6px; font-size:11px; padding:2px 4px; cursor:pointer;">
+                                        <input type="checkbox" class="luyendan-friend-checkbox" value="${uid}" ${isChecked ? 'checked' : ''} style="margin:0;">
+                                        <span style="color:#d0d8f0;">${f.name || `Đạo hữu #${uid}`}</span>
+                                        ${lvlName ? `<span style="color:#10b981; font-size:9px;">(${lvlName})</span>` : ''}
+                                    </label>
+                                `;
+                            }).join('');
+                        };
+
+                        renderFriends();
+                        
+                        if (searchInput) {
+                            searchInput.addEventListener('input', (e) => {
+                                renderFriends(e.target.value);
+                            });
+                        }
+                    }).catch(err => {
+                        console.error('Error fetching friends list:', err);
+                        friendsContainer.innerHTML = '<p style="font-size:11px; color:#ef4444; text-align:center; padding:10px 0; margin:0;">⚠️ Lỗi tải danh sách bạn bè</p>';
+                    });
+                }
+                break;
+            }
+
             case 'bicanh':
             case 'general':
-            case 'luyenDan':
                 // No special events
                 break;
 
@@ -2447,10 +2578,27 @@
                     const autoDecompose = document.getElementById('luyendan-auto-decompose')?.checked ?? true;
                     const autoTune = document.getElementById('luyendan-auto-tune')?.checked ?? true;
 
+                    const autoInvite = document.getElementById('luyendan-auto-invite')?.checked ?? false;
+                    const waitSeconds = document.getElementById('luyendan-wait-seconds')?.value || '60';
+                    const autoAccept = document.getElementById('luyendan-auto-accept')?.checked ?? false;
+                    const acceptAll = document.getElementById('luyendan-accept-all')?.checked ?? true;
+                    const autoLeave = document.getElementById('luyendan-auto-leave')?.checked ?? false;
+
+                    const checkedCheckboxes = document.querySelectorAll('.luyendan-friend-checkbox:checked');
+                    const selectedIds = Array.from(checkedCheckboxes).map(cb => cb.value).join(',');
+
                     localStorage.setItem('luyenDanMinStars', minStars);
                     localStorage.setItem('luyenDanAutoUse', String(autoUse));
                     localStorage.setItem('luyenDanAutoDecompose', String(autoDecompose));
                     localStorage.setItem('luyenDanAutoTune', String(autoTune));
+
+                    localStorage.setItem('luyenDanAutoInvite', String(autoInvite));
+                    localStorage.setItem('luyenDanWaitInviteSeconds', waitSeconds);
+                    localStorage.setItem('luyenDanAutoAcceptInvite', String(autoAccept));
+                    localStorage.setItem('luyenDanAcceptAllInvites', String(acceptAll));
+                    localStorage.setItem('luyenDanAutoLeave', String(autoLeave));
+                    localStorage.setItem('luyenDanSelectedFriendIds', selectedIds);
+
                     saved = true;
                     break;
                 }
@@ -4685,6 +4833,7 @@
             this.logPrefix = '[HH3D Luyện Đan]';
             this.luyenDanToken = null;
             this.luyenDanTokenExpires = 0;
+            this.inviteSentTime = null;
         }
 
         updateProgress(text) {
@@ -4702,6 +4851,113 @@
                 }
             } catch (e) {
                 console.error(`${this.logPrefix} Lỗi khi cập nhật UI progress:`, e);
+            }
+        }
+
+        masterLevelCurve(m) {
+            m = m || {};
+            const maxLevel = Math.max(1, m.max_level | 0 || 10);
+            const perLevel = {};
+            const steps = m.level_xp && typeof m.level_xp === 'object';
+            let l;
+            if (steps) {
+                for (l = 1; l < maxLevel; l++) {
+                    const sk = String(l);
+                    const need = m.level_xp[sk] != null ? m.level_xp[sk] : m.level_xp[l];
+                    perLevel[l] = Math.max(1, need | 0);
+                }
+            } else {
+                const flat = Math.max(1, m.xp_per_level | 0 || 1000);
+                for (l = 1; l < maxLevel; l++) perLevel[l] = flat;
+            }
+            const floors = { 1: 0 };
+            let acc = 0;
+            for (l = 1; l < maxLevel; l++) {
+                acc += perLevel[l] || 1000;
+                floors[l + 1] = acc;
+            }
+            return { max_level: maxLevel, per_level: perLevel, floors: floors };
+        }
+
+        computeDanRank(pts, m) {
+            const curve = this.masterLevelCurve(m);
+            const maxLevel = curve.max_level;
+            const floors = curve.floors;
+            const perLevel = curve.per_level;
+            const xp = Math.max(0, pts | 0);
+            let level = 1;
+            for (let lv = maxLevel; lv >= 1; lv--) {
+                if (xp >= (floors[lv] | 0)) {
+                    level = lv;
+                    break;
+                }
+            }
+            const isMax = level >= maxLevel;
+            const floor = floors[level] | 0;
+            let xpIn, per, pct, xpToNext;
+            if (isMax) {
+                per = Math.max(1, perLevel[maxLevel - 1] | 0 || 1);
+                xpIn = Math.max(0, xp - floor);
+                pct = 100;
+                xpToNext = 0;
+            } else {
+                const next = floors[level + 1] | 0;
+                per = Math.max(1, next - floor);
+                xpIn = xp - floor;
+                pct = Math.min(100, Math.max(0, (xpIn / per) * 100));
+                xpToNext = Math.max(0, next - xp);
+            }
+            
+            let levelName = 'Luyện Đan Sư · Bậc ' + level;
+            if (m && m.level_names && m.level_names[String(level)]) {
+                levelName = String(m.level_names[String(level)]).trim();
+            } else if (m && m.level_meta && m.level_meta[String(level)] && m.level_meta[String(level)].display) {
+                levelName = String(m.level_meta[String(level)].display).trim();
+            }
+
+            return {
+                level: level,
+                xp_total: xp,
+                xp_in_level: xpIn,
+                xp_per_level: per,
+                xp_to_next: xpToNext,
+                pct: pct,
+                level_name: levelName,
+                is_max: isMax
+            };
+        }
+
+        updateAlchemistUI(rankXp, danMaster) {
+            try {
+                if (rankXp == null || !danMaster) return;
+                const r = this.computeDanRank(rankXp, danMaster);
+                const questItem = document.querySelector('.nv-quest-item[data-task-id="luyenDan"]');
+                if (!questItem) return;
+
+                let infoDiv = questItem.querySelector('.quest-alchemist-info');
+                if (!infoDiv) {
+                    infoDiv = document.createElement('div');
+                    infoDiv.className = 'quest-alchemist-info';
+                    infoDiv.style.cssText = 'font-size:10px; color:#10b981; margin-top:2px; margin-left:24px; font-weight:500; display:flex; flex-direction:column; gap:1px;';
+                    const nameEl = questItem.querySelector('.nv-quest-name');
+                    if (nameEl) {
+                        nameEl.parentNode.insertBefore(infoDiv, nameEl.nextSibling);
+                    } else {
+                        questItem.appendChild(infoDiv);
+                    }
+                }
+
+                infoDiv.innerHTML = `
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <span>🧪 ${r.level_name} (Cấp ${r.level})</span>
+                        <span>${r.xp_in_level}/${r.xp_per_level} XP (${r.pct.toFixed(0)}%)</span>
+                    </div>
+                    <div style="width:100%; background:rgba(255,255,255,0.08); height:3px; border-radius:2px; overflow:hidden; margin-top:2px;">
+                        <div style="width:${r.pct}%; background:#10b981; height:100%;"></div>
+                    </div>
+                `;
+            } catch (e) {
+                console.error(`${this.logPrefix} Lỗi khi cập nhật UI Đan Sư:`, e);
             }
         }
 
@@ -4789,6 +5045,69 @@
                 }
 
                 const data = stateRes.data;
+
+                // Cập nhật thông tin cấp bậc Đan Sư lên UI
+                this.updateAlchemistUI(data.rank_xp, data.dan_master || data.danMaster);
+
+                // 1. Tự động nhận lời mời làm Đan Đồng (Auto-Accept)
+                const autoAccept = localStorage.getItem('luyenDanAutoAcceptInvite') === 'true';
+                if (autoAccept && data.dong_invites_in && data.dong_invites_in.length > 0) {
+                    const acceptAll = localStorage.getItem('luyenDanAcceptAllInvites') !== 'false';
+                    const selectedIds = (localStorage.getItem('luyenDanSelectedFriendIds') || '').split(',').filter(Boolean);
+                    
+                    for (const inv of data.dong_invites_in) {
+                        const oid = String(inv.owner_id);
+                        if (acceptAll || selectedIds.includes(oid)) {
+                            console.log(`${this.logPrefix} Tự động chấp nhận lời mời Đan Đồng từ Đan Chủ ${inv.owner_name || oid}...`);
+                            this.updateProgress(`Nhận Đan Đồng ${inv.owner_name || oid}`);
+                            try {
+                                const res = await this.sendLdRequest("/dong/respond", "POST", { owner_id: inv.owner_id, accept: true });
+                                if (res && (res.success || res.data)) {
+                                    showNotification(`🧪 ✅ Đã tự động nhận làm Đan Đồng cho Đan Chủ: ${inv.owner_name || oid}`, "success");
+                                    return 3000;
+                                }
+                            } catch (err) {
+                                console.error(`${this.logPrefix} Lỗi khi chấp nhận lời mời Đan Đồng:`, err);
+                            }
+                        }
+                    }
+                }
+
+                // 2. Tự động rời Đan Đồng sau 5 phút (Auto-Leave)
+                const autoLeave = localStorage.getItem('luyenDanAutoLeave') === 'true';
+                const furnaceState = data.furnace || 'idle';
+                if (autoLeave && data.dong_serving) {
+                    const serving = data.dong_serving;
+                    const oid = serving.owner_id | 0;
+                    const unstableLeftSec = data.craft ? (data.craft.unstable_left_sec | 0) : 0;
+                    
+                    let canLeave = false;
+                    if (furnaceState === 'exploded') {
+                        canLeave = true;
+                    } else if (unstableLeftSec <= 0) {
+                        const dongOwnersForMe = data.dong_owners_for_me || [];
+                        const row = dongOwnersForMe.find(o => (o.owner_id | 0) === oid);
+                        if (row) {
+                            canLeave = !!row.can_leave;
+                        } else {
+                            canLeave = furnaceState === 'crafting' || furnaceState === 'ready' || furnaceState === 'idle';
+                        }
+                    }
+
+                    if (canLeave) {
+                        console.log(`${this.logPrefix} Tự động rời vai Đan Đồng của Đan Chủ ${serving.owner_name || oid}...`);
+                        this.updateProgress(`Rời Đan Đồng ${serving.owner_name || oid}`);
+                        try {
+                            const res = await this.sendLdRequest("/dong/leave", "POST", { owner_id: oid });
+                            if (res && (res.success || res.data)) {
+                                showNotification(`🧪 🚪 Đã tự động rời vai Đan Đồng của Đan Chủ ${serving.owner_name || oid}`, "success");
+                                return 3000;
+                            }
+                        } catch (err) {
+                            console.error(`${this.logPrefix} Lỗi khi rời vai Đan Đồng:`, err);
+                        }
+                    }
+                }
 
                 // Tự động quét và phân giải đan dược phẩm chất kém trong túi
                 const autoDecompose = localStorage.getItem('luyenDanAutoDecompose') !== 'false';
@@ -5069,6 +5388,49 @@
                     }
 
                     if (selectedTier) {
+                        // Tự động mời Đan Đồng và chờ họ tham gia
+                        const autoInvite = localStorage.getItem('luyenDanAutoInvite') === 'true';
+                        if (autoInvite) {
+                            const slots = data.dong_slots || [];
+                            const filledSlots = slots.filter(s => s != null);
+                            const isAllFilled = filledSlots.length >= 2;
+                            const waitSeconds = parseInt(localStorage.getItem('luyenDanWaitInviteSeconds') || '60', 10);
+                            
+                            if (!isAllFilled) {
+                                const selectedIds = (localStorage.getItem('luyenDanSelectedFriendIds') || '').split(',').filter(Boolean);
+                                
+                                if (!this.inviteSentTime) {
+                                    console.log(`${this.logPrefix} Bắt đầu mời Đan Đồng...`);
+                                    this.updateProgress("Gửi lời mời Đan Đồng");
+                                    for (const buddyId of selectedIds) {
+                                        showNotification(`🧪 ✉️ Đang gửi lời mời tới Đan Đồng ID: ${buddyId}`, "info");
+                                        try {
+                                            await this.sendLdRequest("/dong/invite", "POST", { buddy_id: parseInt(buddyId, 10) });
+                                        } catch (err) {
+                                            console.error(`${this.logPrefix} Lỗi khi mời Đan Đồng ${buddyId}:`, err);
+                                        }
+                                    }
+                                    this.inviteSentTime = Date.now();
+                                    return 10000; // Quay lại check sau 10s
+                                } else {
+                                    const elapsed = Math.floor((Date.now() - this.inviteSentTime) / 1000);
+                                    if (elapsed < waitSeconds) {
+                                        const remaining = waitSeconds - elapsed;
+                                        console.log(`${this.logPrefix} Đang chờ Đan Đồng tham gia. Đã chờ: ${elapsed}s, còn lại: ${remaining}s.`);
+                                        this.updateProgress(`Chờ Đan Đồng ${filledSlots.length}/2 (${remaining}s)`);
+                                        return 10000; // Quay lại check sau 10s
+                                    } else {
+                                        console.log(`${this.logPrefix} Quá thời gian chờ Đan Đồng (${waitSeconds}s), tiến hành Khai lò...`);
+                                    }
+                                }
+                            } else {
+                                console.log(`${this.logPrefix} Đan Đồng đã tham gia đầy đủ, tiến hành Khai lò...`);
+                            }
+                        }
+
+                        // Reset mốc thời gian chờ
+                        this.inviteSentTime = null;
+
                         showNotification(`🧪 Khai lò luyện đan phẩm: ${selectedTier.toUpperCase()}...`, "info");
                         this.updateProgress(`Khai lò phẩm ${selectedTier.toUpperCase()}`);
                         const startRes = await this.sendLdRequest("/start", "POST", { tier: selectedTier });
