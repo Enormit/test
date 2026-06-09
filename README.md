@@ -1,76 +1,65 @@
-# HH3D Auto Userscript (v2.4)
+# Hướng Dẫn Sử Dụng Tool Tự Động Hoạt Hình 3D (HH3D Auto)
 
-Userscript chạy trên trình duyệt (qua Tampermonkey hoặc Violentmonkey) nhằm tự động hóa các hoạt động, nhiệm vụ hàng ngày trên website phim `hoathinh3d.*`.
-
-> **Lưu ý:** Script được thiết kế chạy trực tiếp dưới dạng Userscript để tối ưu hóa hiệu năng, tương tác trực tiếp với UI của website và tự động thích ứng khi trang đổi domain.
+Tool tự động (Userscript) giúp bạn tự động thực hiện các hoạt động, nhiệm vụ hàng ngày trên trang web `hoathinh3d.*` mà không cần phải click tay tốn thời gian.
 
 ---
 
-## 🌟 Tính năng chính
+## 🌟 Các tính năng tự động hỗ trợ
 
-### 1. Danh sách nhiệm vụ hỗ trợ tự động (Auto Tasks)
+Tool hỗ trợ tự động hóa hầu hết các tính năng trong game của web:
 
-| Tác vụ | Tên Nhiệm Vụ | Mô tả tính năng | Hỗ trợ Auto | Cấu hình & Tùy chọn đi kèm |
-| :--- | :--- | :--- | :---: | :--- |
-| **Điểm Danh** | Điểm Danh, Tế Lễ, Vấn Đáp | Tự động điểm danh hàng ngày, tế lễ tông môn và trả lời câu hỏi vấn đáp tự động. | ✅ | Tự lấy nonce, tự dò đáp án đáp án nhanh chóng. |
-| **Thí Luyện** | Thí Luyện Tông Môn | Tự động khiêu chiến quái Thí Luyện Tông Môn khi đến lượt. | ✅ | Tự động đánh cho đến khi hết lượt. |
-| **Phúc Lợi** | Phúc Lợi Đường | Tự động nhận rương Phúc Lợi Đường theo thời gian và nhận thưởng Bonus. | ✅ | Nút `🎁` nhận nhanh Bonus. |
-| **Hoang Vực** | Boss Hoang Vực | Tự động đánh boss Hoang Vực hàng ngày. | ✅ | Nút `📦` mua nhanh 5 rương Linh Bảo. Nút Toggle tăng sát thương (+15% dame). |
-| **Mê Cung** | Mê Cung | Tự động chuyển hướng nhanh đến trang Mê Cung để thao tác. | ❌ | Bấm nút "Vào" để mở nhanh `/me-cung`. |
-| **Khoáng Mạch** | Khoáng Mạch | Tự động chọn mỏ đào khoáng, vào mỏ và thu hoạch. | ✅ | Nút "Vào" để mở nhanh `/khoang-mach`. Tùy chỉnh chọn loại mỏ đào. |
-| **Đổ Thạch** | Đổ Thạch | Tự động đặt cược Tài/Xỉu theo khung giờ quy định. | ✅ | Tự chọn cược **Tài** hoặc **Xỉu** qua giao diện. Tự chạy trong các khung giờ: `06:00 - 13:00` và `16:00 - 21:00`. |
-| **Bí Cảnh** | Bí Cảnh | Tự động săn boss Bí Cảnh. | ✅ | Nhập số lượt khiêu chiến muốn giữ lại. Nút `🔔`/`🔕` bật/tắt theo dõi Boss qua WebSocket thời gian thực. |
-| **Tiên Duyên** | Tiên Duyên | Tự động tương tác Tiên Duyên, cống hiến Đạo Lữ. | ✅ | Nút `🙏` Cầu nguyện Đạo Lữ nhanh. Nút `🌺` tặng hoa tự động với số lượng chọn (1 - 5 người). |
-| **Hoạt Động Ngày**| Vòng Quay Phúc Vận | Tự động quay vòng quay và nhận rương năng động ngày khi đủ điểm. | ✅ | Nút "Vào" mở nhanh trang `/nhiem-vu-hang-ngay`. |
-| **Luyện Đan** | Luyện Đan | Tự động luyện đan, kiểm tra lò, tự động điều hỏa khi nhiệt độ thay đổi. | ✅ | Tự động canh lò luyện đan, hiển thị tiến độ luyện thời gian thực, tự động dừng/chạy mượt mà. |
-
-### 2. Các tính năng hệ thống
-
-*   **Tự động nhận diện Domain:** Tự nhận biết domain hiện tại (ví dụ: `hoathinh3d.co`, `hoathinh3d.com`, v.v.), không cần thay đổi code thủ công khi trang web đổi tên miền phụ.
-*   **Chống phát hiện Bot (Anti-Bot Fetch Wrapper):**
-    *   Tự động duy trì khoảng cách tối thiểu giữa các yêu cầu (tối thiểu 1 giây).
-    *   Thêm độ trễ ngẫu nhiên (random delay từ `500ms` đến `1500ms`) trước mỗi lượt gửi request để giả lập thao tác người dùng.
-    *   Tự động thử lại (Retry với cơ chế Exponential Backoff) khi gặp sự cố mạng hoặc lỗi `HTTP 429` (Quá nhiều request), `HTTP 503`.
-*   **Bộ nhớ lưu trữ an toàn:** Lưu trạng thái nhiệm vụ, cấu hình bật/tắt của từng nhiệm vụ cục bộ thông qua `localStorage`.
+*   **Điểm Danh, Tế Lễ, Vấn Đáp:** Tự động điểm danh hàng ngày, tế lễ tông môn và tự động trả lời câu hỏi vấn đáp (không cần bạn phải tự tra cứu đáp án).
+*   **Thí Luyện Tông Môn:** Tự động vào đánh quái thí luyện cho đến khi hết lượt.
+*   **Phúc Lợi Đường:** Tự động nhận rương quà miễn phí mỗi khi đến giờ và nhận thêm quà Bonus (nút `🎁`).
+*   **Hoang Vực:** Tự động đánh boss Hoang Vực hàng ngày. Hỗ trợ nút mua nhanh 5 rương Linh Bảo (`📦`) và nút bật/tắt tăng thêm 15% sát thương.
+*   **Khoáng Mạch (Đào mỏ):** Tự động tìm mỏ, vào mỏ đào khoáng và nhận thưởng. Bạn có thể chọn loại mỏ muốn đào trực tiếp trên giao diện tool.
+*   **Đổ Thạch (Tài/Xỉu):** Tự động cược Tài hoặc Xỉu theo lựa chọn của bạn trong các khung giờ: Sáng (`06:00 - 13:00`) và Chiều (`16:00 - 21:00`).
+*   **Bí Cảnh:** Tự động săn boss Bí Cảnh. Bạn có thể chỉnh số lượt muốn giữ lại. Nút hình chuông (`🔔`/`🔕`) giúp bật/tắt nhận thông báo khi có boss xuất hiện.
+*   **Tiên Duyên:** Tự động làm Tiên Duyên, cầu nguyện đạo lữ (`🙏`) và tự động tặng hoa đạo lữ (`🌺`) theo số lượng người chọn.
+*   **Vòng Quay & Quà Năng Động:** Tự động quay Vòng Quay Phúc Vận miễn phí và tự mở rương quà hoạt động ngày khi đủ điểm.
+*   **Luyện Đan:** Tự động bỏ nguyên liệu, canh nhiệt độ, điều lửa cho tới khi đan hoàn thành. Hiển thị tiến độ rõ ràng từng % và số đan đã luyện.
 
 ---
 
-## 💾 Hướng dẫn cài đặt
+## 💾 Hướng dẫn cài đặt (Rất đơn giản)
 
-Để sử dụng tool, bạn cần cài đặt một tiện ích quản lý Userscript trên trình duyệt của mình:
+Để chạy được tool, bạn chỉ cần làm theo 3 bước sau:
 
-### Bước 1: Cài đặt Extension quản lý Userscript
-Chọn một trong hai tiện ích phổ biến bên dưới và cài đặt vào trình duyệt (Chrome, Edge, Firefox, Brave, Opera, ...):
-*   **Tampermonkey:** [Tải cho Chrome/Edge](https://chromewebstore.google.com/detail/tampermonkey/dhdgffkkebhmfjgjjgbiipcnlhgmocsg)
-*   **Violentmonkey:** [Tải cho Chrome/Edge](https://chromewebstore.google.com/detail/violentmonkey/jinjacapnfaceleondegeciifeegkcgo)
+### Bước 1: Cài đặt tiện ích Tampermonkey vào trình duyệt
+Click vào link bên dưới tương ứng với trình duyệt bạn đang dùng để cài đặt tiện ích quản lý script:
+*   Dành cho **Chrome / Cốc Cốc / Edge / Brave / Opera**: [Tải Tampermonkey trên Chrome Web Store](https://chromewebstore.google.com/detail/tampermonkey/dhdgffkkebhmfjgjjgbiipcnlhgmocsg)
 
-### Bước 2: Thêm Script vào tiện ích quản lý
-1.  Click vào icon Tampermonkey/Violentmonkey trên thanh công cụ trình duyệt -> Chọn **Create a new script** (Tạo script mới).
-2.  Xóa toàn bộ nội dung mặc định trong khung soạn thảo.
-3.  Mở file [hh3d.user.js](file:///c:/Users/phamq/Downloads/Tool/hh3d.user.js), sao chép (Copy) toàn bộ nội dung của file này.
-4.  Dán (Paste) nội dung vừa copy vào khung soạn thảo của tiện ích quản lý.
-5.  Nhấn tổ hợp phím **Ctrl + S** (hoặc chọn `File` -> `Save`) để lưu lại.
+*(Sau khi cài đặt xong, bạn sẽ thấy biểu tượng hình vuông màu đen có 2 chấm tròn ở góc trên bên phải trình duyệt).*
 
----
-
-## 🎮 Hướng dẫn sử dụng
-
-1.  Truy cập vào website `hoathinh3d` đang hoạt động (ví dụ: `https://hoathinh3d.co/`).
-2.  Tiến hành **Đăng nhập** tài khoản cá nhân của bạn trên website.
-3.  Vào trang cá nhân hoặc các trang nhiệm vụ, giao diện điều khiển của **HH3D Auto Tool** sẽ được tích hợp trực tiếp trên giao diện của website.
-4.  **Cách điều khiển:**
-    *   **Dấu chấm tròn chỉ thị (Indicator):** Màu xanh lá biểu thị nhiệm vụ đang bật tự động chạy (Autorun), màu đỏ biểu thị nhiệm vụ đang tắt. Bạn có thể bấm vào chấm tròn này để bật/tắt chế độ tự động cho từng nhiệm vụ riêng biệt.
-    *   **Nút bấm thủ công:** Bấm vào nút như "Thực hiện", "Đào", "Đánh", "Luyện" để bắt đầu xử lý nhiệm vụ đó ngay lập tức mà không cần đợi lịch tự động.
-    *   **Nhập số liệu:** Đối với các tác vụ như Bí Cảnh, nhập số lượt muốn giữ lại vào ô input.
-    *   **Chọn cài đặt:** Với tác vụ Đổ Thạch, lựa chọn cửa cược (Tài/Xỉu) từ danh sách thả xuống.
-    *   **Cài đặt riêng:** Bấm nút bánh răng `⚙️` (như ở Luyện Đan) để cấu hình sâu hơn.
+### Bước 2: Thêm Code của Tool vào Tampermonkey
+1.  Click vào biểu tượng **Tampermonkey** ở góc trình duyệt -> Chọn **Cấu hình (Dashboard)** hoặc **Thêm script mới (Create a new script)**.
+2.  Mở file cài đặt [hh3d.user.js](file:///c:/Users/phamq/Downloads/Tool/hh3d.user.js) trên máy tính của bạn.
+3.  **Sao chép (Copy)** toàn bộ nội dung trong file [hh3d.user.js](file:///c:/Users/phamq/Downloads/Tool/hh3d.user.js).
+4.  Quay lại trang tạo script của Tampermonkey, **xóa hết** những chữ đang có sẵn và **Dán (Paste)** toàn bộ nội dung vừa copy vào.
+5.  Nhấn phím **Ctrl + S** (hoặc chọn menu `File` -> `Save`) để lưu lại.
 
 ---
 
-## 🛠️ Nhật ký cập nhật gần đây (Changelog)
+## 🎮 Cách sử dụng tool
 
-### Phiên bản v2.4 (Mới nhất)
-*   **Sửa lỗi dừng/tắt Luyện Đan bằng tay:** Khắc phục triệt để vấn đề không thể dừng tác vụ Luyện Đan. Loại bỏ các ngoại lệ hardcode, cho phép hệ thống giải phóng bộ đếm thời gian, xóa trạng thái hiển thị UI và dừng lập lịch chạy khi người dùng tắt nút.
-*   **Khắc phục lỗi kẹt trạng thái "Khai lò phẩm HA":** Tự động tối ưu hóa việc đặt lịch kiểm tra lại ngay sau khi khai lò thành công thay vì bị hoãn tới lịch định kỳ mặc định tiếp theo.
-*   **Ngăn chặn chạy trùng lặp (Mutex Guard):** Bổ sung cờ bảo vệ `this.isProcessing` ngay đầu luồng xử lý `doLuyenDan()` để tránh việc tác vụ chạy song song hai lần cùng lúc khi người dùng click thủ công trùng thời điểm với tác vụ tự động chạy đến hạn.
-*   **Sửa lỗi UI nhấp nháy:** Loại bỏ xung đột làm mới DOM của khung tiến trình Luyện Đan, bảo vệ dòng chữ hiển thị trạng thái không bị xóa trắng sau 2 giây.
+1.  Truy cập vào trang web phim hoạt hình 3D bạn hay xem (ví dụ: `https://hoathinh3d.co/` hoặc tên miền mới nếu web đổi đuôi).
+2.  Tiến hành **Đăng nhập** tài khoản của bạn.
+3.  Bảng điều khiển của **HH3D Auto Tool** sẽ tự động xuất hiện ngay trên giao diện trang cá nhân của bạn.
+4.  **Cách dùng bảng điều khiển:**
+    *   **Nút tròn Màu Xanh / Đỏ:** Là nút bật/tắt tự động (Autorun).
+        *   **Màu Xanh:** Bật tự động chạy nhiệm vụ đó (Cứ đến giờ tool sẽ tự làm).
+        *   **Màu Đỏ:** Tắt tự động chạy.
+    *   **Nút bấm chữ (Thực hiện, Đào, Đánh, Luyện...):** Bấm vào để chạy nhiệm vụ đó ngay lập tức mà không cần đợi.
+    *   **Ô nhập số / Danh sách chọn:**
+        *   Nhập số lượt muốn giữ lại (ở phần Bí Cảnh).
+        *   Chọn cửa muốn đặt cược (Tài/Xỉu ở phần Đổ Thạch).
+    *   **Nút bánh răng `⚙️`:** Dùng để mở cài đặt chuyên sâu cho nhiệm vụ (như Luyện Đan).
+
+---
+
+## 💡 Lưu ý quan trọng khi dùng
+
+*   **Không tắt tab web:** Bạn cần giữ mở tab website hoạt hình 3D thì tool mới có thể chạy tự động. Nếu tắt tab đi, tool sẽ tạm dừng hoạt động.
+*   **Chạy an toàn:** Tool có cơ chế tự động giãn cách thời gian click (từ 1 đến 2 giây ngẫu nhiên) để mô phỏng giống người thật bấm, giúp tài khoản của bạn an toàn hơn, tránh bị lỗi mạng hoặc lỗi spam từ hệ thống.
+*   **Bảo mật tuyệt đối:** Tool chạy hoàn toàn trên trình duyệt của bạn, không gửi thông tin tài khoản hay mật khẩu đi bất kỳ đâu.
+*   **Luyện Đan mượt mà (Bản v2.4):** Bản cập nhật mới nhất đã sửa triệt để lỗi không tắt được nút luyện đan bằng tay, lỗi nhấp nháy chữ hiển thị tiến trình và không bị chạy lặp thông báo.
