@@ -1,11 +1,11 @@
 // ==UserScript==
-// @name          HH3D Auto - v2.7
+// @name          HH3D Auto - v2.8
 // @namespace     hh3d-tool
-// @version       v2.7
+// @version       v2.8
 // @updateURL     https://raw.githubusercontent.com/phamquyet47204/tool-automation/main/hh3d.user.js
 // @downloadURL   https://raw.githubusercontent.com/phamquyet47204/tool-automation/main/hh3d.user.js
 // @description   Auto  HH3D
-// @author        Cre: [Unknown] - v2.7
+// @author        Cre: [Unknown] - v2.8
 // @include       *://hoathinh3d.co*/*
 // @exclude       *://hoathinh3d.co/khoang-mach*
 // @require       https://cdn.jsdelivr.net/npm/sweetalert2@11.26.12/dist/sweetalert2.all.min.js
@@ -2168,20 +2168,28 @@
                 const minStars = localStorage.getItem('luyenDanMinStars') || '4';
                 const autoDecompose = localStorage.getItem('luyenDanAutoDecompose') !== 'false';
                 const autoTune = localStorage.getItem('luyenDanAutoTune') !== 'false';
+                const autoUse = localStorage.getItem('luyenDanAutoUse') !== 'false';
                 return `
                 <div class="settings-section">
                     <h3>Cài đặt Luyện Đan</h3>
 
                     <div class="settings-option">
-                        <label for="luyendan-min-stars">Sử dụng đan phẩm chất tối thiểu (Sao):</label>
+                        <label for="luyendan-min-stars">Mức sao tối thiểu để giữ/sử dụng (Sao):</label>
                         <select id="luyendan-min-stars" class="settings-select" style="width: 100%; margin-top: 6px;">
-                            <option value="none" ${minStars === 'none' ? 'selected' : ''}>❌ Không tự động sử dụng</option>
                             <option value="1" ${minStars === '1' ? 'selected' : ''}>⭐ 1 Sao trở lên</option>
                             <option value="2" ${minStars === '2' ? 'selected' : ''}>⭐⭐ 2 Sao trở lên</option>
                             <option value="3" ${minStars === '3' ? 'selected' : ''}>⭐⭐⭐ 3 Sao trở lên</option>
                             <option value="4" ${minStars === '4' ? 'selected' : ''}>⭐⭐⭐⭐ 4 Sao trở lên (Mặc định)</option>
                         </select>
-                        <p class="settings-description">Nếu đan dược thu hoạch được bằng hoặc cao hơn số sao này, tool sẽ tự động sử dụng.</p>
+                        <p class="settings-description">Mức sao làm mốc để phân biệt đan dược phẩm chất tốt hay kém.</p>
+                    </div>
+
+                    <div class="settings-option">
+                        <label class="settings-checkbox-label">
+                            <input type="checkbox" id="luyendan-auto-use" ${autoUse ? 'checked' : ''}>
+                            <span>Tự động sử dụng đan phẩm chất cao</span>
+                        </label>
+                        <p class="settings-description">Nếu bật, đan đạt mức sao ở trên trở lên sẽ tự động được sử dụng.</p>
                     </div>
 
                     <div class="settings-option">
@@ -2189,7 +2197,7 @@
                             <input type="checkbox" id="luyendan-auto-decompose" ${autoDecompose ? 'checked' : ''}>
                             <span>Tự động phân giải đan phẩm chất kém</span>
                         </label>
-                        <p class="settings-description">Nếu bật, đan phẩm chất thấp hơn mức sao đã đặt ở trên sẽ tự động bị phân giải để thu nguyên liệu.</p>
+                        <p class="settings-description">Nếu bật, đan có số sao thấp hơn mức sao ở trên sẽ tự động bị phân giải để thu nguyên liệu.</p>
                     </div>
 
                     <div class="settings-option">
@@ -2435,10 +2443,12 @@
 
                 case 'luyenDan': {
                     const minStars = document.getElementById('luyendan-min-stars')?.value || '4';
+                    const autoUse = document.getElementById('luyendan-auto-use')?.checked ?? true;
                     const autoDecompose = document.getElementById('luyendan-auto-decompose')?.checked ?? true;
                     const autoTune = document.getElementById('luyendan-auto-tune')?.checked ?? true;
 
                     localStorage.setItem('luyenDanMinStars', minStars);
+                    localStorage.setItem('luyenDanAutoUse', String(autoUse));
                     localStorage.setItem('luyenDanAutoDecompose', String(autoDecompose));
                     localStorage.setItem('luyenDanAutoTune', String(autoTune));
                     saved = true;
@@ -4782,9 +4792,8 @@
 
                 // Tự động quét và phân giải đan dược phẩm chất kém trong túi
                 const autoDecompose = localStorage.getItem('luyenDanAutoDecompose') !== 'false';
-                const minStarsVal = localStorage.getItem('luyenDanMinStars') || '4';
-                if (autoLuyenDan && autoDecompose && minStarsVal !== 'none') {
-                    const minStars = parseInt(minStarsVal, 10);
+                const minStars = parseInt(localStorage.getItem('luyenDanMinStars') || '4', 10);
+                if (autoLuyenDan && autoDecompose) {
                     let stacks = [];
                     if (data.pill_stacks && data.pill_stacks.length > 0) {
                         stacks = data.pill_stacks.map(s => ({
@@ -4919,20 +4928,27 @@
                             const pillId = newPill ? String(newPill.id) : (collectRes.data?.last_collect?.pill_id || `${collectRes.data?.tier || data.tier || "ha"}:${stars}`);
 
                             if (pillId) {
-                                const minStarsVal = localStorage.getItem('luyenDanMinStars') || '4';
+                                const minStars = parseInt(localStorage.getItem('luyenDanMinStars') || '4', 10);
+                                const autoUse = localStorage.getItem('luyenDanAutoUse') !== 'false';
                                 const autoDecompose = localStorage.getItem('luyenDanAutoDecompose') !== 'false';
 
-                                if (minStarsVal !== 'none' && stars >= parseInt(minStarsVal, 10)) {
-                                    console.log(`${this.logPrefix} Đang tự động sử dụng đan phẩm chất cao (${stars}★)...`);
-                                    this.updateProgress(`Sử dụng đan ${stars}★`);
-                                    const useRes = await this.sendLdRequest("/use-pill", "POST", { pill_id: String(pillId) });
-                                    if (useRes && (useRes.success || useRes.data)) {
-                                        showNotification(`🧪 ✅ Đã sử dụng đan. Tu Vi nhận được: ${useRes.data?.tu_vi_granted || "thành công"}`, "success");
+                                if (stars >= minStars) {
+                                    if (autoUse) {
+                                        console.log(`${this.logPrefix} Đang tự động sử dụng đan phẩm chất cao (${stars}★)...`);
+                                        this.updateProgress(`Sử dụng đan ${stars}★`);
+                                        const useRes = await this.sendLdRequest("/use-pill", "POST", { pill_id: String(pillId) });
+                                        if (useRes && (useRes.success || useRes.data)) {
+                                            showNotification(`🧪 ✅ Đã sử dụng đan. Tu Vi nhận được: ${useRes.data?.tu_vi_granted || "thành công"}`, "success");
+                                        } else {
+                                            showNotification(`🧪 ⚠️ Lỗi sử dụng đan: ${useRes?.message || 'không thành công'}`, "warning");
+                                        }
                                     } else {
-                                        showNotification(`🧪 ⚠️ Lỗi sử dụng đan: ${useRes?.message || 'không thành công'}`, "warning");
+                                        console.log(`${this.logPrefix} Đan phẩm chất tốt (${stars}★ >= ${minStars}★) nhưng tự động sử dụng tắt. Giữ lại túi đồ.`);
+                                        showNotification(`🧪 📦 Nhận đan (${stars}★). Giữ lại trong túi đồ.`, "info");
+                                        this.updateProgress(`Giữ đan ${stars}★`);
                                     }
-                                } else if (minStarsVal !== 'none' && autoDecompose) {
-                                    console.log(`${this.logPrefix} Đang tự động phân giải đan phẩm chất kém (${stars}★ < ${minStarsVal}★)...`);
+                                } else if (autoDecompose) {
+                                    console.log(`${this.logPrefix} Đang tự động phân giải đan phẩm chất kém (${stars}★ < ${minStars}★)...`);
                                     this.updateProgress(`Phân giải đan ${stars}★`);
                                     const decompRes = await this.sendLdRequest("/decompose", "POST", { pill_id: String(pillId) });
                                     if (decompRes && (decompRes.success || decompRes.data)) {
@@ -4941,8 +4957,7 @@
                                         showNotification(`🧪 ⚠️ Lỗi phân giải đan: ${decompRes?.message || 'không thành công'}`, "warning");
                                     }
                                 } else {
-                                    const reason = minStarsVal === 'none' ? "tự động sử dụng tắt" : `độ sao thấp < ${minStarsVal}★`;
-                                    console.log(`${this.logPrefix} Đan phẩm chất (${stars}★), lý do giữ: ${reason}. Giữ lại túi đồ.`);
+                                    console.log(`${this.logPrefix} Đan phẩm chất kém (${stars}★ < ${minStars}★) và tự động phân giải tắt. Giữ lại túi đồ.`);
                                     showNotification(`🧪 📦 Nhận đan (${stars}★). Giữ lại trong túi đồ.`, "info");
                                     this.updateProgress(`Giữ đan ${stars}★`);
                                 }
