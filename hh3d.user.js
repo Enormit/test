@@ -1,11 +1,11 @@
 // ==UserScript==
-// @name          HH3D Auto - v2.5
+// @name          HH3D Auto - v2.5.1
 // @namespace     hh3d-tool
-// @version       v2.5
+// @version       v2.5.1
 // @updateURL     https://raw.githubusercontent.com/phamquyet47204/tool-automation/main/hh3d.user.js
 // @downloadURL   https://raw.githubusercontent.com/phamquyet47204/tool-automation/main/hh3d.user.js
 // @description   Auto  HH3D
-// @author        Cre: [Unknown] - v2.5
+// @author        Cre: [Unknown] - v2.5.1
 // @include       *://hoathinh3d.co*/*
 // @exclude       *://hoathinh3d.co/khoang-mach*
 // @require       https://cdn.jsdelivr.net/npm/sweetalert2@11.26.12/dist/sweetalert2.all.min.js
@@ -1001,7 +1001,7 @@
                 { value: '5', label: 'tặng 5ng' }
             ],
             async action() {
-                await tienduyen.doTienDuyen();
+                await tienduyen.doTienDuyen(true);
             },
             async extraAction() {
                 const accountId = await getAccountId();
@@ -3247,7 +3247,7 @@
         }
 
         // 💞 Duyên: chúc phúc + nhận lì xì
-        async doTienDuyen() {
+        async doTienDuyen(force = false) {
             if (!this.nonce || !this.securityToken) {
                 console.log("▶ Chưa init, đang chạy init trong doTienDuyen...");
                 await this.init();
@@ -3255,7 +3255,8 @@
 
             const lastCheck = taskTracker.getLastCheckTienDuyen(accountId);
             const now = new Date();
-            if (now - lastCheck < 1800000) return;
+            const lastCheckVal = (lastCheck && !isNaN(lastCheck.getTime())) ? lastCheck.getTime() : 0;
+            if (!force && (now.getTime() - lastCheckVal < 1800000)) return;
 
             const list = await this.getWeddingRooms();
             if (!list?.data) {
@@ -3263,8 +3264,8 @@
                 return;
             }
 
+            taskTracker.setLastCheckTienDuyen(accountId, now);
             for (const room of list.data) {
-                taskTracker.setLastCheckTienDuyen(accountId, now);
                 // Tối ưu: Nếu đã chúc phúc và không có lì xì để nhận -> Bỏ qua phòng này
                 if (room.has_blessed === true && !room.has_li_xi) {
                     continue;
