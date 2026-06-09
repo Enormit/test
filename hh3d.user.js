@@ -1040,7 +1040,7 @@
             buttonText: 'Luyện',
             hasSettings: true,
             async action() {
-                await luyendan.doLuyenDan();
+                await luyendan.doLuyenDan(true);
             }
         }
     ];
@@ -4960,7 +4960,7 @@
 
                 infoDiv.innerHTML = `
                     <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <span>🧪 ${r.level_name} (Cấp ${r.level})</span>
+                        <span>🧪 Tiến độ Đan Sư:</span>
                         <span>${r.xp_in_level}/${r.xp_per_level} XP (${r.pct.toFixed(0)}%)</span>
                     </div>
                     <div style="width:100%; background:rgba(255,255,255,0.08); height:3px; border-radius:2px; overflow:hidden; margin-top:2px;">
@@ -5037,7 +5037,7 @@
             return await response.json();
         }
 
-        async doLuyenDan() {
+        async doLuyenDan(isManual = false) {
             // Mutex guard: tránh 2 luồng chạy đồng thời (click thủ công + scheduleTask cùng lúc)
             if (this.isProcessing) {
                 console.warn(`${this.logPrefix} Đang xử lý, bỏ qua lần gọi trùng lặp.`);
@@ -5087,7 +5087,7 @@
                 // 2. Tự động rời Đan Đồng sau 5 phút (Auto-Leave)
                 const autoLeave = localStorage.getItem('luyenDanAutoLeave') === 'true';
                 const furnaceState = data.furnace || 'idle';
-                if (autoLeave && data.dong_serving) {
+                if ((autoLeave || isManual) && data.dong_serving) {
                     const serving = data.dong_serving;
                     const oid = serving.owner_id | 0;
                     const unstableLeftSec = data.craft ? (data.craft.unstable_left_sec | 0) : 0;
@@ -5116,6 +5116,12 @@
                             }
                         } catch (err) {
                             console.error(`${this.logPrefix} Lỗi khi rời vai Đan Đồng:`, err);
+                        }
+                    } else if (isManual) {
+                        if (unstableLeftSec > 0) {
+                            showNotification(`🧪 ⏳ Chưa thể rời vai Đan Đồng. Giai đoạn nhạy cảm còn lại: ${unstableLeftSec} giây.`, "warning");
+                        } else {
+                            showNotification(`🧪 ⏳ Chưa thể rời vai Đan Đồng (chờ máy chủ cập nhật trạng thái).`, "warning");
                         }
                     }
                 }
