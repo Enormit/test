@@ -1,11 +1,11 @@
 // ==UserScript==
-// @name          HH3D Auto - v2.9
+// @name          HH3D Auto - v2.10
 // @namespace     hh3d-tool
-// @version       v2.9
+// @version       v2.10
 // @updateURL     https://raw.githubusercontent.com/phamquyet47204/tool-automation/main/hh3d.user.js
 // @downloadURL   https://raw.githubusercontent.com/phamquyet47204/tool-automation/main/hh3d.user.js
 // @description   Auto  HH3D
-// @author        Cre: [Unknown] - v2.9
+// @author        Cre: [Unknown] - v2.10
 // @include       *://hoathinh3d.co*/*
 // @exclude       *://hoathinh3d.co/khoang-mach*
 // @require       https://cdn.jsdelivr.net/npm/sweetalert2@11.26.12/dist/sweetalert2.all.min.js
@@ -2169,6 +2169,7 @@
                 const autoDecompose = localStorage.getItem('luyenDanAutoDecompose') !== 'false';
                 const autoTune = localStorage.getItem('luyenDanAutoTune') !== 'false';
                 const autoUse = localStorage.getItem('luyenDanAutoUse') !== 'false';
+                const autoStart = localStorage.getItem('luyenDanAutoStart') !== 'false';
                 
                 // Cấu hình Đan Đồng
                 const autoInvite = localStorage.getItem('luyenDanAutoInvite') === 'true';
@@ -2190,6 +2191,14 @@
                             <option value="4" ${minStars === '4' ? 'selected' : ''}>⭐⭐⭐⭐ 4 Sao trở lên (Mặc định)</option>
                         </select>
                         <p class="settings-description">Mức sao làm mốc để phân biệt đan dược phẩm chất tốt hay kém.</p>
+                    </div>
+
+                    <div class="settings-option">
+                        <label class="settings-checkbox-label">
+                            <input type="checkbox" id="luyendan-auto-start" ${autoStart ? 'checked' : ''}>
+                            <span>Tự động Khai lò khi lò trống</span>
+                        </label>
+                        <p class="settings-description">Nếu tắt, tool sẽ không tự dùng nguyên liệu để khai lò mới (thuận tiện cho việc đi làm Đan Đồng).</p>
                     </div>
 
                     <div class="settings-option">
@@ -2575,6 +2584,7 @@
                 case 'luyenDan': {
                     const minStars = document.getElementById('luyendan-min-stars')?.value || '4';
                     const autoUse = document.getElementById('luyendan-auto-use')?.checked ?? true;
+                    const autoStart = document.getElementById('luyendan-auto-start')?.checked ?? true;
                     const autoDecompose = document.getElementById('luyendan-auto-decompose')?.checked ?? true;
                     const autoTune = document.getElementById('luyendan-auto-tune')?.checked ?? true;
 
@@ -2588,6 +2598,7 @@
                     const selectedIds = Array.from(checkedCheckboxes).map(cb => cb.value).join(',');
 
                     localStorage.setItem('luyenDanMinStars', minStars);
+                    localStorage.setItem('luyenDanAutoStart', String(autoStart));
                     localStorage.setItem('luyenDanAutoUse', String(autoUse));
                     localStorage.setItem('luyenDanAutoDecompose', String(autoDecompose));
                     localStorage.setItem('luyenDanAutoTune', String(autoTune));
@@ -5362,6 +5373,11 @@
                     countdownTimer.remove('luyenDan');
                     this.updateProgress("Lò trống");
                     if (!autoLuyenDan) {
+                        return 15000;
+                    }
+                    const autoStart = localStorage.getItem('luyenDanAutoStart') !== 'false';
+                    if (!autoStart) {
+                        console.log(`${this.logPrefix} Tự động khai lò đã tắt, giữ lò trống.`);
                         return 15000;
                     }
                     const TiersOrder = ["cuc", "thuong", "trung", "ha"];
