@@ -1,11 +1,11 @@
 // ==UserScript==
-// @name          HH3D Auto - v2.6
+// @name          HH3D Auto - v2.7
 // @namespace     hh3d-tool
-// @version       v2.6
+// @version       v2.7
 // @updateURL     https://raw.githubusercontent.com/phamquyet47204/tool-automation/main/hh3d.user.js
 // @downloadURL   https://raw.githubusercontent.com/phamquyet47204/tool-automation/main/hh3d.user.js
 // @description   Auto  HH3D
-// @author        Cre: [Unknown] - v2.6
+// @author        Cre: [Unknown] - v2.7
 // @include       *://hoathinh3d.co*/*
 // @exclude       *://hoathinh3d.co/khoang-mach*
 // @require       https://cdn.jsdelivr.net/npm/sweetalert2@11.26.12/dist/sweetalert2.all.min.js
@@ -2175,6 +2175,7 @@
                     <div class="settings-option">
                         <label for="luyendan-min-stars">Sử dụng đan phẩm chất tối thiểu (Sao):</label>
                         <select id="luyendan-min-stars" class="settings-select" style="width: 100%; margin-top: 6px;">
+                            <option value="none" ${minStars === 'none' ? 'selected' : ''}>❌ Không tự động sử dụng</option>
                             <option value="1" ${minStars === '1' ? 'selected' : ''}>⭐ 1 Sao trở lên</option>
                             <option value="2" ${minStars === '2' ? 'selected' : ''}>⭐⭐ 2 Sao trở lên</option>
                             <option value="3" ${minStars === '3' ? 'selected' : ''}>⭐⭐⭐ 3 Sao trở lên</option>
@@ -4781,8 +4782,9 @@
 
                 // Tự động quét và phân giải đan dược phẩm chất kém trong túi
                 const autoDecompose = localStorage.getItem('luyenDanAutoDecompose') !== 'false';
-                const minStars = parseInt(localStorage.getItem('luyenDanMinStars') || '4', 10);
-                if (autoLuyenDan && autoDecompose) {
+                const minStarsVal = localStorage.getItem('luyenDanMinStars') || '4';
+                if (autoLuyenDan && autoDecompose && minStarsVal !== 'none') {
+                    const minStars = parseInt(minStarsVal, 10);
                     let stacks = [];
                     if (data.pill_stacks && data.pill_stacks.length > 0) {
                         stacks = data.pill_stacks.map(s => ({
@@ -4917,10 +4919,10 @@
                             const pillId = newPill ? String(newPill.id) : (collectRes.data?.last_collect?.pill_id || `${collectRes.data?.tier || data.tier || "ha"}:${stars}`);
 
                             if (pillId) {
-                                const minStars = parseInt(localStorage.getItem('luyenDanMinStars') || '4', 10);
+                                const minStarsVal = localStorage.getItem('luyenDanMinStars') || '4';
                                 const autoDecompose = localStorage.getItem('luyenDanAutoDecompose') !== 'false';
 
-                                if (stars >= minStars) {
+                                if (minStarsVal !== 'none' && stars >= parseInt(minStarsVal, 10)) {
                                     console.log(`${this.logPrefix} Đang tự động sử dụng đan phẩm chất cao (${stars}★)...`);
                                     this.updateProgress(`Sử dụng đan ${stars}★`);
                                     const useRes = await this.sendLdRequest("/use-pill", "POST", { pill_id: String(pillId) });
@@ -4929,8 +4931,8 @@
                                     } else {
                                         showNotification(`🧪 ⚠️ Lỗi sử dụng đan: ${useRes?.message || 'không thành công'}`, "warning");
                                     }
-                                } else if (autoDecompose) {
-                                    console.log(`${this.logPrefix} Đang tự động phân giải đan phẩm chất kém (${stars}★ < ${minStars}★)...`);
+                                } else if (minStarsVal !== 'none' && autoDecompose) {
+                                    console.log(`${this.logPrefix} Đang tự động phân giải đan phẩm chất kém (${stars}★ < ${minStarsVal}★)...`);
                                     this.updateProgress(`Phân giải đan ${stars}★`);
                                     const decompRes = await this.sendLdRequest("/decompose", "POST", { pill_id: String(pillId) });
                                     if (decompRes && (decompRes.success || decompRes.data)) {
@@ -4939,8 +4941,9 @@
                                         showNotification(`🧪 ⚠️ Lỗi phân giải đan: ${decompRes?.message || 'không thành công'}`, "warning");
                                     }
                                 } else {
-                                    console.log(`${this.logPrefix} Đan phẩm chất kém (${stars}★ < ${minStars}★) và tự động phân giải tắt. Giữ lại túi đồ.`);
-                                    showNotification(`🧪 📦 Đan phẩm chất kém (${stars}★). Giữ lại trong túi đồ.`, "info");
+                                    const reason = minStarsVal === 'none' ? "tự động sử dụng tắt" : `độ sao thấp < ${minStarsVal}★`;
+                                    console.log(`${this.logPrefix} Đan phẩm chất (${stars}★), lý do giữ: ${reason}. Giữ lại túi đồ.`);
+                                    showNotification(`🧪 📦 Nhận đan (${stars}★). Giữ lại trong túi đồ.`, "info");
                                     this.updateProgress(`Giữ đan ${stars}★`);
                                 }
                             }
