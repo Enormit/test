@@ -1,11 +1,11 @@
 // ==UserScript==
-// @name          HH3D Auto - v2.10
+// @name          HH3D Auto - v2.11
 // @namespace     hh3d-tool
-// @version       v2.10
+// @version       v2.11
 // @updateURL     https://raw.githubusercontent.com/phamquyet47204/tool-automation/main/hh3d.user.js
 // @downloadURL   https://raw.githubusercontent.com/phamquyet47204/tool-automation/main/hh3d.user.js
 // @description   Auto  HH3D
-// @author        Cre: [Unknown] - v2.10
+// @author        Cre: [Unknown] - v2.11
 // @include       *://hoathinh3d.co*/*
 // @exclude       *://hoathinh3d.co/khoang-mach*
 // @require       https://cdn.jsdelivr.net/npm/sweetalert2@11.26.12/dist/sweetalert2.all.min.js
@@ -4940,36 +4940,12 @@
 
         updateAlchemistUI(rankXp, danMaster) {
             try {
-                if (rankXp == null || !danMaster) return;
-                const r = this.computeDanRank(rankXp, danMaster);
                 const questItem = document.querySelector('.nv-quest-item[data-task-id="luyenDan"]');
-                if (!questItem) return;
-
-                let infoDiv = questItem.querySelector('.quest-alchemist-info');
-                if (!infoDiv) {
-                    infoDiv = document.createElement('div');
-                    infoDiv.className = 'quest-alchemist-info';
-                    infoDiv.style.cssText = 'font-size:10px; color:#10b981; margin-top:2px; margin-left:24px; font-weight:500; display:flex; flex-direction:column; gap:1px;';
-                    const nameEl = questItem.querySelector('.nv-quest-name');
-                    if (nameEl) {
-                        nameEl.parentNode.insertBefore(infoDiv, nameEl.nextSibling);
-                    } else {
-                        questItem.appendChild(infoDiv);
-                    }
+                if (questItem) {
+                    const infoDiv = questItem.querySelector('.quest-alchemist-info');
+                    if (infoDiv) infoDiv.remove();
                 }
-
-                infoDiv.innerHTML = `
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <span>🧪 Tiến độ Đan Sư:</span>
-                        <span>${r.xp_in_level}/${r.xp_per_level} XP (${r.pct.toFixed(0)}%)</span>
-                    </div>
-                    <div style="width:100%; background:rgba(255,255,255,0.08); height:3px; border-radius:2px; overflow:hidden; margin-top:2px;">
-                        <div style="width:${r.pct}%; background:#10b981; height:100%;"></div>
-                    </div>
-                `;
-            } catch (e) {
-                console.error(`${this.logPrefix} Lỗi khi cập nhật UI Đan Sư:`, e);
-            }
+            } catch (e) {}
         }
 
         async getNonce() {
@@ -5216,6 +5192,13 @@
                 const craft = data.craft || null;
                 const materials = data.materials || {};
                 const recipes = data.recipes || {};
+
+                if (data.dong_serving) {
+                    countdownTimer.remove('luyenDan');
+                    const tuneCount = craft ? (craft.tune_count | 0) : 0;
+                    this.updateProgress(`Đan đồng (${tuneCount}/3)`);
+                    return 15000;
+                }
 
                 console.log(`${this.logPrefix} Trạng thái Lò Đan: ${furnace.toUpperCase()}`);
 
