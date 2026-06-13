@@ -67,19 +67,20 @@
                         <input type="text" id="acc-name" placeholder="Ví dụ: Acc Chính, Clone 1..." autocomplete="off">
                     </div>
                     <div class="form-group">
-                        <label for="acc-username">Tên Đăng Nhập (Username hoặc Email)</label>
-                        <input type="text" id="acc-username" placeholder="Nhập tài khoản đăng nhập..." required autocomplete="off">
-                    </div>
-                    <div class="form-group">
-                        <label for="acc-password">Mật Khẩu (Password)</label>
-                        <input type="password" id="acc-password" placeholder="Nhập mật khẩu..." required autocomplete="off">
+                        <label for="acc-cookies">Chuỗi Cookies (Từ trình duyệt)</label>
+                        <textarea id="acc-cookies" placeholder="Nhập chuỗi cookies..." required autocomplete="off" rows="4"></textarea>
                     </div>
                     
-                    <div class="cookie-guide" style="background: rgba(245, 158, 11, 0.05); border-color: rgba(245, 158, 11, 0.2);">
-                        <h3>⚠️ Lưu ý về Tài Khoản & Mật Khẩu:</h3>
-                        <p style="font-size: 0.8rem; line-height: 1.5; color: var(--text-muted);">
-                            Hệ thống sẽ gửi yêu cầu đăng nhập trực tiếp tới trang WordPress để sinh Cookie tự động. Nếu hệ thống game kích hoạt chống bot hoặc Captcha nâng cao, tiến trình này có thể bị chặn.
-                        </p>
+                    <div class="cookie-guide">
+                        <h3>🔑 Hướng dẫn lấy Cookies:</h3>
+                        <ol>
+                            <li>Đăng nhập tài khoản trên website game <strong>hoathinh3d.co</strong></li>
+                            <li>Nhấn phím <strong>F12</strong> (hoặc Click chuột phải -> chọn Kiểm Tra) -> chuyển sang tab <strong>Console</strong>.</li>
+                            <li>Sao chép đoạn code dưới đây dán vào Console rồi bấm <strong>Enter</strong>:
+                                <code class="code-block" onclick="copyToClipboard(this)">copy(document.cookie)</code>
+                            </li>
+                            <li>Dán chuỗi cookies vừa copy được vào ô nhập liệu bên dưới.</li>
+                        </ol>
                     </div>
 
                     <div class="modal-footer">

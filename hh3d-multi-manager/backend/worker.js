@@ -12,8 +12,6 @@ class HH3DWorker {
     constructor(account) {
         this.id = account.id;
         this.name = account.name;
-        this.username = account.username;
-        this.password = account.password;
         this.cookies = account.cookies;
         this.config = account.config;
         
@@ -155,106 +153,22 @@ class HH3DWorker {
         this.nextRunTimes[`${taskName}_done_date`] = todayStr;
     }
 
-    // Auto-login using Username & Password
-    async login() {
-        if (!this.username || !this.password) {
-            this.log('🔑 ❌ Không có Username hoặc Password để thực hiện đăng nhập tự động!', 'error');
-            return false;
-        }
-
-        this.log(`🔑 Đang tiến hành đăng nhập tự động cho tài khoản: ${this.username}...`, 'info');
-        try {
-            const params = new URLSearchParams();
-            params.append('log', this.username);
-            params.append('pwd', this.password);
-            params.append('wp-submit', 'Đăng nhập');
-            params.append('rememberme', 'forever');
-
-            // Perform raw login call with disabled redirects to intercept cookies directly
-            const response = await this.enqueueRequest(async () => {
-                return axios.post(`${this.baseUrl}/wp-login.php`, params, {
-                    headers: {
-                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                        'Origin': this.baseUrl,
-                        'Referer': `${this.baseUrl}/wp-login.php`
-                    },
-                    maxRedirects: 0,
-                    validateStatus: (status) => status >= 200 && status < 400
-                });
-            });
-
-            // Extract set-cookie headers
-            const setCookie = response.headers['set-cookie'];
-            if (setCookie && setCookie.length > 0) {
-                const parsedCookies = setCookie.map(c => c.split(';')[0]).join('; ');
-                if (parsedCookies.includes('wordpress_logged_in')) {
-                    this.cookies = parsedCookies;
-                    
-                    // Re-initialize axios client defaults cookie header
-                    this.axios.defaults.headers['Cookie'] = this.cookies;
-                    
-                    // Save cookies to database state
-                    const db = require('./db');
-                    db.updateCookies(this.id, this.cookies);
-                    
-                    this.log('🔑 ✅ Đăng nhập thành công! Đã cập nhật Cookie mới.', 'success');
-                    return true;
-                }
-            }
-
-            this.log('🔑 ❌ Đăng nhập thất bại. Vui lòng kiểm tra lại tài khoản/mật khẩu hoặc website có Captcha.', 'error');
-            return false;
-        } catch (error) {
-            // Check redirect response headers (sometimes axios throws for 302 even if validateStatus is configured)
-            if (error.response && error.response.headers['set-cookie']) {
-                const setCookie = error.response.headers['set-cookie'];
-                const parsedCookies = setCookie.map(c => c.split(';')[0]).join('; ');
-                if (parsedCookies.includes('wordpress_logged_in')) {
-                    this.cookies = parsedCookies;
-                    this.axios.defaults.headers['Cookie'] = this.cookies;
-                    
-                    const db = require('./db');
-                    db.updateCookies(this.id, this.cookies);
-                    
-                    this.log('🔑 ✅ Đăng nhập thành công (302)! Đã cập nhật Cookie mới.', 'success');
-                    return true;
-                }
-            }
-            this.log(`🔑 ❌ Gặp lỗi khi đăng nhập: ${error.message}`, 'error');
-            return false;
-        }
-    }
-
     // Extract dynamic domain, tokens, nonces and decryptions from homepage HTML
     async ensureSession() {
         try {
             if (!this.cookies) {
-                const loggedIn = await this.login();
-                if (!loggedIn) return false;
+                this.log('❌ Chưa cấu hình Cookies cho tài khoản!', 'error');
+                return false;
             }
 
-            let homeHtml = await this.enqueueRequest(async () => {
+            const homeHtml = await this.enqueueRequest(async () => {
                 const res = await this.axios.get('/');
                 return res.data;
             });
 
-            // If not logged in, try to auto-login and fetch again
             if (!homeHtml || homeHtml.includes('wp-login.php') || homeHtml.includes('Đăng nhập') || !homeHtml.includes('userId')) {
-                this.log('⚠️ Session hết hạn hoặc chưa đăng nhập. Tiến hành tự động đăng nhập lại...', 'warning');
-                const loggedIn = await this.login();
-                if (!loggedIn) return false;
-                
-                // Refetch homepage html with new cookies
-                homeHtml = await this.enqueueRequest(async () => {
-                    const res = await this.axios.get('/');
-                    return res.data;
-                });
-                
-                if (!homeHtml || homeHtml.includes('wp-login.php') || homeHtml.includes('Đăng nhập')) {
-                    this.log('❌ Tự động đăng nhập thành công nhưng không thể tải trang chủ. Có lỗi xảy ra.', 'error');
-                    return false;
-                }
+                this.log('❌ Cookie đã hết hạn hoặc không hợp lệ. Vui lòng cập nhật Cookie mới từ trình duyệt.', 'error');
+                return false;
             }
 
             // Extract basic fields
@@ -313,7 +227,7 @@ class HH3DWorker {
             try {
                 const sessionOk = await this.ensureSession();
                 if (!sessionOk) {
-                    this.log('❌ Phiên hoạt động lỗi (Cần kiểm tra lại tài khoản/mật khẩu). Thử lại sau 2 phút...', 'error');
+                    this.log('❌ Phiên hoạt động lỗi (Cần cập nhật Cookie mới). Thử lại sau 2 phút...', 'error');
                     await this.sleep(120000);
                     continue;
                 }
@@ -743,7 +657,7 @@ class HH3DWorker {
                 if (submit?.success && submit.data?.is_correct === 1) {
                     this.log(`❓ ✅ Trả lời ĐÚNG: ${submit.data?.message || 'Chính xác!'}`, 'success');
                 } else {
-                    this.log(`❓ ❌ Trả lời SAI hoặc gặp lỗi: ${submit?.message || submit?.data?.message || 'Lỗi'}`, 'warning');
+                    this.log(`❓ ✗ Trả lời SAI hoặc gặp lỗi: ${submit?.message || submit?.data?.message || 'Lỗi'}`, 'warning');
                 }
                 await this.sleep(2000);
             }

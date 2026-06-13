@@ -52,7 +52,7 @@ function saveAccount(account) {
     if (!db.accounts) {
         db.accounts = [];
     }
-    const index = db.accounts.findIndex(acc => acc.id === account.id || (account.username && acc.username === account.username));
+    const index = db.accounts.findIndex(acc => acc.id === account.id);
     
     // Default task config if not specified
     const defaultTasks = {
@@ -85,11 +85,9 @@ function saveAccount(account) {
     };
 
     const newAccount = {
-        id: account.id || `acc_${Date.now()}`,
-        name: account.name || `Tài khoản ${account.username || account.id}`,
-        username: account.username || '',
-        password: account.password || '',
-        cookies: account.cookies || '',
+        id: account.id,
+        name: account.name || `Tài khoản ${account.id}`,
+        cookies: account.cookies,
         config: {
             tasks: { ...defaultTasks, ...(account.config?.tasks || {}) },
             mining: { ...defaultMining, ...(account.config?.mining || {}) },
@@ -109,9 +107,7 @@ function saveAccount(account) {
         db.accounts[index] = {
             ...db.accounts[index],
             name: account.name || db.accounts[index].name,
-            username: account.username !== undefined ? account.username : db.accounts[index].username,
-            password: account.password !== undefined ? account.password : db.accounts[index].password,
-            cookies: account.cookies !== undefined ? account.cookies : db.accounts[index].cookies,
+            cookies: account.cookies || db.accounts[index].cookies,
             config: {
                 tasks: { ...db.accounts[index].config.tasks, ...(account.config?.tasks || {}) },
                 mining: { ...db.accounts[index].config.mining, ...(account.config?.mining || {}) },

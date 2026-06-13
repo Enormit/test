@@ -62,7 +62,6 @@ app.get('/api/accounts', (req, res) => {
         return {
             id: acc.id,
             name: acc.name,
-            username: acc.username,
             config: acc.config,
             stats: acc.stats,
             isRunning: worker ? worker.isRunning : false,
@@ -72,32 +71,30 @@ app.get('/api/accounts', (req, res) => {
     res.json({ success: true, data: result });
 });
 
-// 2. Add/Verify account via Username & Password
+// 2. Add/Verify account via Cookies
 app.post('/api/accounts', async (req, res) => {
-    const { username, password, name } = req.body;
-    if (!username || !password) {
-        return res.status(400).json({ success: false, message: 'Vui lòng điền đầy đủ Tên đăng nhập và Mật khẩu!' });
+    const { cookies, name } = req.body;
+    if (!cookies) {
+        return res.status(400).json({ success: false, message: 'Vui lòng điền đầy đủ chuỗi Cookies!' });
     }
 
     try {
         // Create a temporary worker to verify and extract character information
-        const tempWorker = new HH3DWorker({ username, password });
+        const tempWorker = new HH3DWorker({ cookies });
         const verify = await tempWorker.ensureSession();
         
         if (!verify || !tempWorker.userid) {
             return res.status(400).json({ 
                 success: false, 
-                message: 'Không thể đăng nhập hoặc tải thông tin nhân vật. Vui lòng kiểm tra lại tài khoản/mật khẩu, hoặc website yêu cầu xác thực Captcha.' 
+                message: 'Không thể xác thực cookie hoặc tải thông tin nhân vật. Vui lòng kiểm tra lại chuỗi cookie hoặc đảm bảo cookie chưa hết hạn.' 
             });
         }
 
         const accountId = tempWorker.userid;
         const saved = db.saveAccount({
             id: accountId,
-            name: name || `Tài khoản ${username}`,
-            username: username,
-            password: password,
-            cookies: tempWorker.cookies
+            name: name || `Tài khoản ${accountId}`,
+            cookies: cookies
         });
 
         // Launch real worker
