@@ -52,7 +52,7 @@ function saveAccount(account) {
     if (!db.accounts) {
         db.accounts = [];
     }
-    const index = db.accounts.findIndex(acc => acc.id === account.id);
+    const index = db.accounts.findIndex(acc => acc.id === account.id || (account.username && acc.username === account.username));
     
     // Default task config if not specified
     const defaultTasks = {
@@ -64,11 +64,11 @@ function saveAccount(account) {
         mining: true,
         refine: true,
         gamble: false,
-        maze: false
+        spin: true
     };
 
     const defaultMining = {
-        mineType: 'silver', // 'silver', 'gold', 'spirit', etc.
+        mineType: 'silver',
         mineId: null
     };
 
@@ -80,24 +80,20 @@ function saveAccount(account) {
         waitInviteSeconds: 60
     };
 
-    const defaultMaze = {
-        minPlayers: 5,
-        role: 'member' // 'member' or 'leader'
-    };
-
     const defaultGamble = {
-        choice: 'tai' // 'tai' or 'xiu'
+        choice: 'tai'
     };
 
     const newAccount = {
-        id: account.id,
-        name: account.name || `Tài khoản ${account.id}`,
-        cookies: account.cookies,
+        id: account.id || `acc_${Date.now()}`,
+        name: account.name || `Tài khoản ${account.username || account.id}`,
+        username: account.username || '',
+        password: account.password || '',
+        cookies: account.cookies || '',
         config: {
             tasks: { ...defaultTasks, ...(account.config?.tasks || {}) },
             mining: { ...defaultMining, ...(account.config?.mining || {}) },
             refine: { ...defaultRefine, ...(account.config?.refine || {}) },
-            maze: { ...defaultMaze, ...(account.config?.maze || {}) },
             gamble: { ...defaultGamble, ...(account.config?.gamble || {}) }
         },
         stats: account.stats || {
@@ -113,12 +109,13 @@ function saveAccount(account) {
         db.accounts[index] = {
             ...db.accounts[index],
             name: account.name || db.accounts[index].name,
-            cookies: account.cookies || db.accounts[index].cookies,
+            username: account.username !== undefined ? account.username : db.accounts[index].username,
+            password: account.password !== undefined ? account.password : db.accounts[index].password,
+            cookies: account.cookies !== undefined ? account.cookies : db.accounts[index].cookies,
             config: {
                 tasks: { ...db.accounts[index].config.tasks, ...(account.config?.tasks || {}) },
                 mining: { ...db.accounts[index].config.mining, ...(account.config?.mining || {}) },
                 refine: { ...db.accounts[index].config.refine, ...(account.config?.refine || {}) },
-                maze: { ...db.accounts[index].config.maze, ...(account.config?.maze || {}) },
                 gamble: { ...db.accounts[index].config.gamble, ...(account.config?.gamble || {}) }
             },
             stats: { ...db.accounts[index].stats, ...(account.stats || {}) }
@@ -129,6 +126,18 @@ function saveAccount(account) {
 
     writeDb(db);
     return index !== -1 ? db.accounts[index] : newAccount;
+}
+
+// Update cookies for an account
+function updateCookies(id, cookies) {
+    const db = readDb();
+    const index = db.accounts.findIndex(acc => acc.id === id);
+    if (index !== -1) {
+        db.accounts[index].cookies = cookies;
+        writeDb(db);
+        return true;
+    }
+    return false;
 }
 
 // Delete an account
@@ -168,7 +177,6 @@ function updateConfig(id, config) {
             tasks: { ...db.accounts[index].config.tasks, ...(config.tasks || {}) },
             mining: { ...db.accounts[index].config.mining, ...(config.mining || {}) },
             refine: { ...db.accounts[index].config.refine, ...(config.refine || {}) },
-            maze: { ...db.accounts[index].config.maze, ...(config.maze || {}) },
             gamble: { ...db.accounts[index].config.gamble, ...(config.gamble || {}) }
         };
         writeDb(db);
@@ -180,6 +188,7 @@ function updateConfig(id, config) {
 module.exports = {
     getAccounts,
     saveAccount,
+    updateCookies,
     deleteAccount,
     updateStats,
     updateConfig

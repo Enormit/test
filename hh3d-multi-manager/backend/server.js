@@ -62,6 +62,7 @@ app.get('/api/accounts', (req, res) => {
         return {
             id: acc.id,
             name: acc.name,
+            username: acc.username,
             config: acc.config,
             stats: acc.stats,
             isRunning: worker ? worker.isRunning : false,
@@ -71,30 +72,32 @@ app.get('/api/accounts', (req, res) => {
     res.json({ success: true, data: result });
 });
 
-// 2. Add/Verify account via Cookies
+// 2. Add/Verify account via Username & Password
 app.post('/api/accounts', async (req, res) => {
-    const { cookies, name } = req.body;
-    if (!cookies) {
-        return res.status(400).json({ success: false, message: 'Vui lòng cung cấp Cookie đăng nhập!' });
+    const { username, password, name } = req.body;
+    if (!username || !password) {
+        return res.status(400).json({ success: false, message: 'Vui lòng điền đầy đủ Tên đăng nhập và Mật khẩu!' });
     }
 
     try {
         // Create a temporary worker to verify and extract character information
-        const tempWorker = new HH3DWorker({ id: 'temp', cookies });
+        const tempWorker = new HH3DWorker({ username, password });
         const verify = await tempWorker.ensureSession();
         
         if (!verify || !tempWorker.userid) {
             return res.status(400).json({ 
                 success: false, 
-                message: 'Cookie không hợp lệ, không có quyền truy cập hoặc phiên đã hết hạn. Vui lòng lấy cookie mới.' 
+                message: 'Không thể đăng nhập hoặc tải thông tin nhân vật. Vui lòng kiểm tra lại tài khoản/mật khẩu, hoặc website yêu cầu xác thực Captcha.' 
             });
         }
 
         const accountId = tempWorker.userid;
         const saved = db.saveAccount({
             id: accountId,
-            name: name || `Tài khoản ${accountId}`,
-            cookies: cookies
+            name: name || `Tài khoản ${username}`,
+            username: username,
+            password: password,
+            cookies: tempWorker.cookies
         });
 
         // Launch real worker
@@ -107,7 +110,7 @@ app.post('/api/accounts', async (req, res) => {
         });
     } catch (error) {
         console.error('Lỗi khi thêm tài khoản:', error);
-        res.status(500).json({ success: false, message: 'Lỗi máy chủ khi xác thực cookie: ' + error.message });
+        res.status(500).json({ success: false, message: 'Lỗi máy chủ khi xác thực tài khoản: ' + error.message });
     }
 });
 

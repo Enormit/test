@@ -53,11 +53,12 @@ async function handleAddAccount(e) {
     e.preventDefault();
     
     const nameInput = document.getElementById('acc-name').value.trim();
-    const cookiesInput = document.getElementById('acc-cookies').value.trim();
+    const usernameInput = document.getElementById('acc-username').value.trim();
+    const passwordInput = document.getElementById('acc-password').value.trim();
     const submitBtn = document.getElementById('btn-submit-add');
     
-    if (!cookiesInput) {
-        showToast('Vui lòng cung cấp chuỗi Cookie đăng nhập!', 'error');
+    if (!usernameInput || !passwordInput) {
+        showToast('Vui lòng cung cấp đầy đủ Tên đăng nhập và Mật khẩu!', 'error');
         return;
     }
 
@@ -68,7 +69,7 @@ async function handleAddAccount(e) {
         const res = await fetch(`${API_URL}/api/accounts`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ cookies: cookiesInput, name: nameInput })
+            body: JSON.stringify({ username: usernameInput, password: passwordInput, name: nameInput })
         });
         
         const result = await res.json();

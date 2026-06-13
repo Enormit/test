@@ -12,6 +12,8 @@ class HH3DWorker {
     constructor(account) {
         this.id = account.id;
         this.name = account.name;
+        this.username = account.username;
+        this.password = account.password;
         this.cookies = account.cookies;
         this.config = account.config;
         
@@ -42,7 +44,7 @@ class HH3DWorker {
             baseURL: this.baseUrl,
             headers: {
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                'Cookie': this.cookies,
+                'Cookie': this.cookies || '',
                 'Origin': this.baseUrl,
                 'Referer': this.baseUrl + '/',
                 'X-Requested-With': 'XMLHttpRequest'
@@ -153,18 +155,106 @@ class HH3DWorker {
         this.nextRunTimes[`${taskName}_done_date`] = todayStr;
     }
 
+    // Auto-login using Username & Password
+    async login() {
+        if (!this.username || !this.password) {
+            this.log('🔑 ❌ Không có Username hoặc Password để thực hiện đăng nhập tự động!', 'error');
+            return false;
+        }
+
+        this.log(`🔑 Đang tiến hành đăng nhập tự động cho tài khoản: ${this.username}...`, 'info');
+        try {
+            const params = new URLSearchParams();
+            params.append('log', this.username);
+            params.append('pwd', this.password);
+            params.append('wp-submit', 'Đăng nhập');
+            params.append('rememberme', 'forever');
+
+            // Perform raw login call with disabled redirects to intercept cookies directly
+            const response = await this.enqueueRequest(async () => {
+                return axios.post(`${this.baseUrl}/wp-login.php`, params, {
+                    headers: {
+                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'Origin': this.baseUrl,
+                        'Referer': `${this.baseUrl}/wp-login.php`
+                    },
+                    maxRedirects: 0,
+                    validateStatus: (status) => status >= 200 && status < 400
+                });
+            });
+
+            // Extract set-cookie headers
+            const setCookie = response.headers['set-cookie'];
+            if (setCookie && setCookie.length > 0) {
+                const parsedCookies = setCookie.map(c => c.split(';')[0]).join('; ');
+                if (parsedCookies.includes('wordpress_logged_in')) {
+                    this.cookies = parsedCookies;
+                    
+                    // Re-initialize axios client defaults cookie header
+                    this.axios.defaults.headers['Cookie'] = this.cookies;
+                    
+                    // Save cookies to database state
+                    const db = require('./db');
+                    db.updateCookies(this.id, this.cookies);
+                    
+                    this.log('🔑 ✅ Đăng nhập thành công! Đã cập nhật Cookie mới.', 'success');
+                    return true;
+                }
+            }
+
+            this.log('🔑 ❌ Đăng nhập thất bại. Vui lòng kiểm tra lại tài khoản/mật khẩu hoặc website có Captcha.', 'error');
+            return false;
+        } catch (error) {
+            // Check redirect response headers (sometimes axios throws for 302 even if validateStatus is configured)
+            if (error.response && error.response.headers['set-cookie']) {
+                const setCookie = error.response.headers['set-cookie'];
+                const parsedCookies = setCookie.map(c => c.split(';')[0]).join('; ');
+                if (parsedCookies.includes('wordpress_logged_in')) {
+                    this.cookies = parsedCookies;
+                    this.axios.defaults.headers['Cookie'] = this.cookies;
+                    
+                    const db = require('./db');
+                    db.updateCookies(this.id, this.cookies);
+                    
+                    this.log('🔑 ✅ Đăng nhập thành công (302)! Đã cập nhật Cookie mới.', 'success');
+                    return true;
+                }
+            }
+            this.log(`🔑 ❌ Gặp lỗi khi đăng nhập: ${error.message}`, 'error');
+            return false;
+        }
+    }
+
     // Extract dynamic domain, tokens, nonces and decryptions from homepage HTML
     async ensureSession() {
         try {
-            this.log('🔐 Đang kiểm tra phiên đăng nhập và tải Tokens...', 'info');
-            const homeHtml = await this.enqueueRequest(async () => {
+            if (!this.cookies) {
+                const loggedIn = await this.login();
+                if (!loggedIn) return false;
+            }
+
+            let homeHtml = await this.enqueueRequest(async () => {
                 const res = await this.axios.get('/');
                 return res.data;
             });
 
-            if (!homeHtml || homeHtml.includes('wp-login.php') || homeHtml.includes('Đăng nhập')) {
-                this.log('❌ Phiên đăng nhập hết hạn hoặc cookie không chính xác!', 'error');
-                return false;
+            // If not logged in, try to auto-login and fetch again
+            if (!homeHtml || homeHtml.includes('wp-login.php') || homeHtml.includes('Đăng nhập') || !homeHtml.includes('userId')) {
+                this.log('⚠️ Session hết hạn hoặc chưa đăng nhập. Tiến hành tự động đăng nhập lại...', 'warning');
+                const loggedIn = await this.login();
+                if (!loggedIn) return false;
+                
+                // Refetch homepage html with new cookies
+                homeHtml = await this.enqueueRequest(async () => {
+                    const res = await this.axios.get('/');
+                    return res.data;
+                });
+                
+                if (!homeHtml || homeHtml.includes('wp-login.php') || homeHtml.includes('Đăng nhập')) {
+                    this.log('❌ Tự động đăng nhập thành công nhưng không thể tải trang chủ. Có lỗi xảy ra.', 'error');
+                    return false;
+                }
             }
 
             // Extract basic fields
@@ -182,7 +272,6 @@ class HH3DWorker {
             const decrypted = decryptor.decryptHh3dActions(homeHtml);
             if (decrypted) {
                 this.act = decrypted;
-                // console.log(`Decrypted actions:`, Object.keys(this.act));
             } else {
                 this.log('⚠️ Không thể giải mã danh sách hành động (Action Mapping). Sử dụng mặc định.', 'warning');
             }
@@ -199,10 +288,10 @@ class HH3DWorker {
                 sect: sectMatch ? sectMatch[1].trim() : 'Không có'
             });
 
-            this.log(`✅ Kết nối thành công! Cấp: ${levelMatch ? levelMatch[1].trim() : 'Chưa rõ'} | Linh Thạch: ${ltMatch ? ltMatch[1] : '0'}`, 'success');
+            this.log(`✅ Đồng bộ thông tin nhân vật: Cấp: ${levelMatch ? levelMatch[1].trim() : 'Chưa rõ'} | Linh Thạch: ${ltMatch ? ltMatch[1] : '0'}`, 'success');
             return true;
         } catch (error) {
-            this.log(`❌ Lỗi khởi tạo Session: ${error.message}`, 'error');
+            this.log(`❌ Lỗi đồng bộ phiên: ${error.message}`, 'error');
             return false;
         }
     }
@@ -224,7 +313,7 @@ class HH3DWorker {
             try {
                 const sessionOk = await this.ensureSession();
                 if (!sessionOk) {
-                    this.log('❌ Session không thể hoạt động. Thử lại sau 2 phút...', 'error');
+                    this.log('❌ Phiên hoạt động lỗi (Cần kiểm tra lại tài khoản/mật khẩu). Thử lại sau 2 phút...', 'error');
                     await this.sleep(120000);
                     continue;
                 }
@@ -243,7 +332,6 @@ class HH3DWorker {
 
                     const nextRun = this.nextRunTimes[taskName] || 0;
                     if (now >= nextRun) {
-                        // Temp lock to prevent duplicate schedules
                         this.nextRunTimes[taskName] = now + 180000; // 3 mins lock
                         
                         try {
@@ -287,7 +375,7 @@ class HH3DWorker {
                 return await this.taskSpin();
             default:
                 this.log(`⚠️ Nhiệm vụ "${taskName}" chưa hỗ trợ hoặc bị bỏ qua.`, 'warning');
-                return 3600000; // 1 hour delay
+                return 3600000;
         }
     }
 
@@ -357,7 +445,6 @@ class HH3DWorker {
                 return 24 * 60 * 60 * 1000;
             }
 
-            // Parse time format "mm:ss"
             const parseTimeStr = (str) => {
                 if (!str || str === '00:00') return 0;
                 const parts = str.split(':').map(Number);
@@ -380,10 +467,10 @@ class HH3DWorker {
                 } else {
                     this.log(`🎁 ❌ Mở rương thất bại: ${openResp?.message || 'Lỗi không rõ'}`, 'error');
                 }
-                return 10000; // Check again shortly
+                return 10000;
             } else {
                 this.log(`🎁 Rương tiếp theo [${chestNames[nextChestId] || nextChestId}] cần đợi ${time || '0s'}`, 'info');
-                return waitMs + 5000; // Wait and add 5s buffer
+                return waitMs + 5000;
             }
         } catch (e) {
             this.log(`🎁 ❌ Lỗi Phúc Lợi Đường: ${e.message}`, 'error');
@@ -464,7 +551,7 @@ class HH3DWorker {
                     this.bossAttackToken = result.data.attack_token;
                 }
                 this.log(`🛡️ ✅ Tấn công thành công! Sát thương gây ra: ${result.data?.damage || 'OK'}`, 'success');
-                return 8000; // Attack again after 8s
+                return 8000;
             } else {
                 const msg = result?.message || result?.data?.error || result?.data?.message || '';
                 if (msg.includes('hết lượt') || msg.includes('hết lượt tấn công')) {
@@ -477,7 +564,7 @@ class HH3DWorker {
                     this.log(`🛡️ Kết quả nhận quà Boss: ${claim?.message || JSON.stringify(claim)}`, 'success');
                     return 5000;
                 } else if (msg.includes('token')) {
-                    this.bossAttackToken = null; // Reset to refetch
+                    this.bossAttackToken = null;
                     this.log('🛡️ Token hết hạn, đang nạp lại...', 'warning');
                     return 5000;
                 }
@@ -617,7 +704,7 @@ class HH3DWorker {
                 answersDb = JSON.parse(fs.readFileSync(extAnswersPath, 'utf8'));
             } else {
                 this.log('❓ ❌ Không tìm thấy answers.json ở thư mục extension!', 'error');
-                return 3600000; // Delay check again
+                return 3600000;
             }
 
             const quiz = await this.postForm(this.ajaxUrl, {
@@ -658,7 +745,7 @@ class HH3DWorker {
                 } else {
                     this.log(`❓ ❌ Trả lời SAI hoặc gặp lỗi: ${submit?.message || submit?.data?.message || 'Lỗi'}`, 'warning');
                 }
-                await this.sleep(2000); // 2s spacing
+                await this.sleep(2000);
             }
 
             this.log('❓ ✅ Trả lời xong các câu hỏi Vấn Đáp.', 'success');
@@ -666,7 +753,7 @@ class HH3DWorker {
             return 24 * 60 * 60 * 1000;
         } catch (e) {
             this.log(`❓ ❌ Lỗi Vấn Đáp: ${e.message}`, 'error');
-            return 300000;
+            return 30000;
         }
     }
 
@@ -793,11 +880,11 @@ class HH3DWorker {
 
                 if (claim?.success) {
                     this.log(`⛏️ ✅ Nhận thưởng mỏ thành công: ${claim.data?.message || 'OK'}`, 'success');
-                    return 30 * 60 * 1000; // Check again in 30 mins
+                    return 30 * 60 * 1000;
                 } else {
                     const claimMsg = claim?.message || claim?.data?.message || '';
                     if (claimMsg.includes('đủ thưởng') || claimMsg.includes('không thể vào')) {
-                        this.log('⛏️ ✅ Đã đạt giới hạn Linh Thạch đào mỏ hôm nay. Chờ đến ngày mai.', 'success');
+                        this.log('⛏️ ✅ Đã đạt giới hạn Linh Thạch đào mỏ hôm nay. Chờ ngày mai.', 'success');
                         this.markTaskDoneToday('mining');
                         return 24 * 60 * 60 * 1000;
                     }
@@ -824,7 +911,6 @@ class HH3DWorker {
                         return 24 * 60 * 60 * 1000;
                     }
                     this.log(`⛏️ ❌ Vào mỏ thất bại: ${enterMsg}`, 'error');
-                    // Reset custom mine ID to lookup dynamically next time
                     return 60000;
                 }
             }
@@ -927,7 +1013,6 @@ class HH3DWorker {
                         const pillName = collect.data?.pill_name || 'Đan';
                         this.log(`🧪 ✅ Thu đan thành công: ${pillName} ★${collect.data?.stars || 1}`, 'success');
                         
-                        // Auto use pill
                         if (collect.data?.pill_id) {
                             await this.callLdApi('/use-pill', 'POST', { pill_id: String(collect.data.pill_id) });
                             this.log(`🧪 ✅ Đã sử dụng đan tăng Tu Vi.`, 'success');
@@ -960,7 +1045,7 @@ class HH3DWorker {
                             return cooldown * 1000 + 500;
                         }
                     }
-                    return 5000; // Check stability again in 5s
+                    return 5000;
                 } else {
                     this.log(`🧪 Lò đan đã an toàn tuyệt đối. Sẽ tự động thu đan sau ${leftSec}s.`, 'success');
                     return leftSec * 1000 + 3000;
@@ -968,7 +1053,6 @@ class HH3DWorker {
             }
 
             if (furnace === 'idle') {
-                // Determine highest unlocked recipe we can craft
                 const tiers = ['cuc', 'thuong', 'trung', 'ha'];
                 let chosenTier = null;
 
@@ -998,7 +1082,6 @@ class HH3DWorker {
                     }
                     return 10000;
                 } else {
-                    // Try to open a materials packet
                     const bundles = data.mat_bundles || [];
                     if (bundles.length > 0) {
                         const key = bundles[0].bundle_key;
@@ -1007,7 +1090,7 @@ class HH3DWorker {
                         return 5000;
                     } else {
                         this.log('🧪 ❌ Hết nguyên liệu ngũ hành và túi quà linh dược. Tạm ngưng Luyện Đan.', 'error');
-                        this.markTaskDoneToday('refine'); // lock until tomorrow
+                        this.markTaskDoneToday('refine');
                         return 24 * 60 * 60 * 1000;
                     }
                 }
@@ -1024,12 +1107,11 @@ class HH3DWorker {
     // ==========================================
     async taskGamble() {
         const hour = parseInt(new Date().toLocaleString('en-US', { timeZone: 'Asia/Ho_Chi_Minh', hour: 'numeric', hour12: false }));
-        // Allowed schedules: Morning (06:00 - 13:00) and Afternoon (16:00 - 21:00)
         const isBettingTime = (hour >= 6 && hour < 13) || (hour >= 16 && hour < 21);
 
         if (!isBettingTime) {
             this.log('🪙 [Đổ Thạch] Ngoài khung giờ cá cược (06h-13h, 16h-21h). Chờ ca tiếp theo.', 'info');
-            return 30 * 60 * 1000; // Check every 30m
+            return 30 * 60 * 1000;
         }
 
         this.log('🪙 [Đổ Thạch] Đang kiểm tra phiên đổ thạch...', 'info');
@@ -1051,7 +1133,6 @@ class HH3DWorker {
             const data = sessionData.data;
             const userBetStones = data.stones.filter(s => s.bet_placed);
 
-            // A. Claim previous winning reward if any
             if (data.winning_stone_id) {
                 const claimable = userBetStones.find(s => s.stone_id === data.winning_stone_id && !s.reward_claimed);
                 if (claimable) {
@@ -1062,14 +1143,13 @@ class HH3DWorker {
                     });
                     this.log(`🪙 Kết quả nhận thưởng: ${claim?.data?.message || 'Thành công'}`, 'success');
                 }
-                return 180000; // Wait for next round starting
+                return 180000;
             }
 
-            // B. Place Bet
             const userBetCount = userBetStones.length;
             if (userBetCount >= 2) {
                 this.log('🪙 ✅ Đã đặt đủ 2 cược cho phiên hiện tại. Đợi kết quả.', 'success');
-                return 300000; // Wait 5m
+                return 300000;
             }
 
             const sorted = [...data.stones].sort((a, b) => b.reward_multiplier - a.reward_multiplier);
@@ -1136,7 +1216,7 @@ class HH3DWorker {
 
             if (spin?.success) {
                 this.log(`🎡 ✅ Quay thành công: ${spin.message || 'Nhận quà'}`, 'success');
-                return 10000; // Check again for milestones
+                return 10000;
             } else {
                 const msg = spin?.message || spin?.data?.message || '';
                 if (msg.includes('hết lượt') || msg.includes('đã hết lượt')) {
@@ -1182,7 +1262,7 @@ class HH3DWorker {
                 return 24 * 60 * 60 * 1000;
             }
 
-            return 3600000; // Retry checking milestones in 1 hour
+            return 3600000;
         } catch (e) {
             this.log(`🎡 ❌ Lỗi Vòng Quay: ${e.message}`, 'error');
             return 300000;
