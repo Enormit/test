@@ -1220,6 +1220,10 @@
                 <button id="settings-btn" class="settings-btn" title="Cài đặt chung">⚙️</button>
                 <button id="guide-btn" class="settings-btn" title="Hướng dẫn sử dụng">❓</button>
             </div>
+            <div id="manager-sync-form" class="promo-form" style="margin-top: 5px; border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 5px; display: flex; gap: 5px;">
+                <button id="manager-sync-btn" style="flex: 1; background: #6366f1; color: #fff; border: none; border-radius: 4px; padding: 5px 8px; font-size: 11px; cursor: pointer; font-weight: bold; height: 26px;">🔄 Đồng bộ Manager</button>
+                <button id="manager-logout-btn" style="background: #ef4444; color: #fff; border: none; border-radius: 4px; padding: 5px 8px; font-size: 11px; cursor: pointer; font-weight: bold; height: 26px;">🚪 Chuyển Acc</button>
+            </div>
         `;
             const refreshBtn = document.getElementById('profile-refresh-btn');
             if (refreshBtn) {
@@ -1261,6 +1265,83 @@
             setTimeout(() => {
                 const promoSubmit = document.getElementById('promo-code-submit');
                 const promoInput = document.getElementById('promo-code-input');
+
+                // Đồng bộ Manager
+                const syncBtn = document.getElementById('manager-sync-btn');
+                if (syncBtn) {
+                    syncBtn.addEventListener('click', async () => {
+                        const originalText = syncBtn.textContent;
+                        syncBtn.disabled = true;
+                        syncBtn.textContent = '⏳ Đang đồng bộ...';
+                        try {
+                            const accId = await getAccountId();
+                            const res = await fetch('http://localhost:3000/api/accounts', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    cookies: document.cookie,
+                                    name: `Tài khoản ${accId || 'Auto'}`
+                                })
+                            });
+                            const data = await res.json();
+                            if (data.success) {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Đồng bộ thành công!',
+                                    text: `Tài khoản ${data.data.name} đã được thêm/cập nhật vào Manager.`,
+                                    timer: 2000,
+                                    showConfirmButton: false
+                                });
+                            } else {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Thất bại',
+                                    text: data.message || 'Lỗi không xác định.'
+                                });
+                            }
+                        } catch (err) {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Không thể kết nối',
+                                text: 'Hãy đảm bảo HH3D Multi-Account Manager đang chạy tại http://localhost:3000'
+                            });
+                        } finally {
+                            syncBtn.textContent = originalText;
+                            syncBtn.disabled = false;
+                        }
+                    });
+                }
+
+                // Đăng xuất an toàn (Chuyển Acc)
+                const logoutBtn = document.getElementById('manager-logout-btn');
+                if (logoutBtn) {
+                    logoutBtn.addEventListener('click', () => {
+                        Swal.fire({
+                            title: 'Chuyển tài khoản?',
+                            text: 'Hệ thống sẽ xoá cookies cục bộ trên trình duyệt để bạn đăng nhập tài khoản khác. Phiên làm việc trên Manager vẫn sẽ tiếp tục chạy ngầm!',
+                            icon: 'warning',
+                            showCancelButton: true,
+                            confirmButtonColor: '#3085d6',
+                            cancelButtonColor: '#d33',
+                            confirmButtonText: 'Đồng ý',
+                            cancelButtonText: 'Hủy'
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                const cookies = document.cookie.split(";");
+                                for (let i = 0; i < cookies.length; i++) {
+                                    const cookie = cookies[i];
+                                    const eqPos = cookie.indexOf("=");
+                                    const name = eqPos > -1 ? cookie.substr(0, eqPos).trim() : cookie.trim();
+                                    if (name.includes("wordpress") || name.includes("wp-settings")) {
+                                        document.cookie = name + "=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+                                        document.cookie = name + "=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=." + window.location.hostname.replace("www.", "") + ";";
+                                    }
+                                }
+                                window.location.href = '/wp-login.php';
+                            }
+                        });
+                    });
+                }
 
                 // Submit code
                 if (promoSubmit && promoInput) {
