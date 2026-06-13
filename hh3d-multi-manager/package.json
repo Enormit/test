@@ -1,0 +1,16 @@
+{
+  "name": "hh3d-multi-manager",
+  "version": "1.0.0",
+  "description": "Multi-Account Manager and Automation for HH3D",
+  "main": "backend/server.js",
+  "scripts": {
+    "start": "node backend/server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "axios": "^1.7.2",
+    "cors": "^2.8.5"
+  },
+  "author": "",
+  "license": "ISC"
+}

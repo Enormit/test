@@ -1,0 +1,5 @@
+auto-hh3d/
+node_modules/
+hh3d-multi-manager/node_modules/
+hh3d-multi-manager/backend/db.json
+*.log
