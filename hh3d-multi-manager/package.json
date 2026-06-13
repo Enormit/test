@@ -2,15 +2,19 @@
   "name": "hh3d-multi-manager",
   "version": "1.0.0",
   "description": "Multi-Account Manager and Automation for HH3D",
-  "main": "backend/server.js",
+  "main": "main.js",
   "scripts": {
-    "start": "node backend/server.js"
+    "start": "node backend/server.js",
+    "app": "electron ."
   },
   "dependencies": {
-    "express": "^4.19.2",
     "axios": "^1.7.2",
-    "cors": "^2.8.5"
+    "cors": "^2.8.5",
+    "express": "^4.19.2"
   },
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "devDependencies": {
+    "electron": "^42.4.0"
+  }
 }
