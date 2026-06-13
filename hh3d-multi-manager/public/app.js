@@ -117,6 +117,14 @@ async function handleSaveConfig(e) {
         },
         gamble: {
             choice: document.getElementById('gamble-choice').value
+        },
+        proxy: {
+            enabled: document.getElementById('proxy-enabled').checked,
+            type: document.getElementById('proxy-type').value,
+            host: document.getElementById('proxy-host').value.trim(),
+            port: document.getElementById('proxy-port').value ? parseInt(document.getElementById('proxy-port').value) : null,
+            username: document.getElementById('proxy-user').value.trim(),
+            password: document.getElementById('proxy-pass').value.trim()
         }
     };
 
@@ -401,6 +409,15 @@ function openConfigModal(id) {
     document.getElementById('refine-auto-leave').checked = acc.config.refine.autoLeave;
 
     document.getElementById('gamble-choice').value = acc.config.gamble.choice || 'tai';
+
+    // Proxy settings setup values
+    const proxy = acc.config.proxy || { enabled: false, type: 'http', host: '', port: '', username: '', password: '' };
+    document.getElementById('proxy-enabled').checked = !!proxy.enabled;
+    document.getElementById('proxy-type').value = proxy.type || 'http';
+    document.getElementById('proxy-host').value = proxy.host || '';
+    document.getElementById('proxy-port').value = proxy.port || '';
+    document.getElementById('proxy-user').value = proxy.username || '';
+    document.getElementById('proxy-pass').value = proxy.password || '';
 
     openModal('config-modal');
 }

@@ -84,6 +84,15 @@ function saveAccount(account) {
         choice: 'tai'
     };
 
+    const defaultProxy = {
+        enabled: false,
+        type: 'http',
+        host: '',
+        port: null,
+        username: '',
+        password: ''
+    };
+
     const newAccount = {
         id: account.id,
         name: account.name || `Tài khoản ${account.id}`,
@@ -92,7 +101,8 @@ function saveAccount(account) {
             tasks: { ...defaultTasks, ...(account.config?.tasks || {}) },
             mining: { ...defaultMining, ...(account.config?.mining || {}) },
             refine: { ...defaultRefine, ...(account.config?.refine || {}) },
-            gamble: { ...defaultGamble, ...(account.config?.gamble || {}) }
+            gamble: { ...defaultGamble, ...(account.config?.gamble || {}) },
+            proxy: { ...defaultProxy, ...(account.config?.proxy || {}) }
         },
         stats: account.stats || {
             level: 'Chưa cập nhật',
@@ -112,7 +122,8 @@ function saveAccount(account) {
                 tasks: { ...db.accounts[index].config.tasks, ...(account.config?.tasks || {}) },
                 mining: { ...db.accounts[index].config.mining, ...(account.config?.mining || {}) },
                 refine: { ...db.accounts[index].config.refine, ...(account.config?.refine || {}) },
-                gamble: { ...db.accounts[index].config.gamble, ...(account.config?.gamble || {}) }
+                gamble: { ...db.accounts[index].config.gamble, ...(account.config?.gamble || {}) },
+                proxy: { ...db.accounts[index].config.proxy, ...(account.config?.proxy || {}) }
             },
             stats: { ...db.accounts[index].stats, ...(account.stats || {}) }
         };
@@ -173,7 +184,8 @@ function updateConfig(id, config) {
             tasks: { ...db.accounts[index].config.tasks, ...(config.tasks || {}) },
             mining: { ...db.accounts[index].config.mining, ...(config.mining || {}) },
             refine: { ...db.accounts[index].config.refine, ...(config.refine || {}) },
-            gamble: { ...db.accounts[index].config.gamble, ...(config.gamble || {}) }
+            gamble: { ...db.accounts[index].config.gamble, ...(config.gamble || {}) },
+            proxy: { ...db.accounts[index].config.proxy, ...(config.proxy || {}) }
         };
         writeDb(db);
         return db.accounts[index];

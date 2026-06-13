@@ -3,6 +3,11 @@ const fs = require('fs');
 const path = require('path');
 const EventEmitter = require('events');
 const decryptor = require('./decryptor');
+const puppeteer = require('puppeteer-extra');
+const StealthPlugin = require('puppeteer-extra-plugin-stealth');
+
+// Use Puppeteer Stealth
+puppeteer.use(StealthPlugin());
 
 // Setup standard event emitter for streaming logs
 class LogBroadcaster extends EventEmitter {}
@@ -37,7 +42,11 @@ class HH3DWorker {
         this.luyenDanTokenExpires = 0;
         this.claimedDailyStages = new Set();
         
-        // Create Axios Client
+        // Puppeteer instances
+        this.browser = null;
+        this.page = null;
+        
+        // Create Axios Client (Keep for internal compatibility/offline tasks if any)
         this.axios = axios.create({
             baseURL: this.baseUrl,
             headers: {
@@ -48,7 +57,7 @@ class HH3DWorker {
                 'X-Requested-With': 'XMLHttpRequest'
             },
             timeout: 15000,
-            validateStatus: () => true // Allow handling non-200 responses inside logic
+            validateStatus: () => true
         });
     }
 
@@ -92,23 +101,152 @@ class HH3DWorker {
         });
     }
 
+    async initBrowser() {
+        try {
+            if (this.browser) {
+                await this.closeBrowser();
+            }
+
+            const args = [
+                '--no-sandbox',
+                '--disable-setuid-sandbox',
+                '--disable-infobars',
+                '--window-position=0,0',
+                '--ignore-certificate-errors',
+                '--ignore-certificate-errors-spki-list'
+            ];
+
+            // If proxy is enabled, add it to Chrome launch args
+            if (this.config.proxy && this.config.proxy.enabled && this.config.proxy.host && this.config.proxy.port) {
+                const { type, host, port } = this.config.proxy;
+                const proxyType = type === 'socks5' ? 'socks5' : 'http';
+                args.push(`--proxy-server=${proxyType}://${host}:${port}`);
+                this.log(`🌐 Sử dụng Proxy: ${proxyType}://${host}:${port}`, 'info');
+            }
+
+            this.browser = await puppeteer.launch({
+                headless: true,
+                args: args
+            });
+
+            this.page = await this.browser.newPage();
+            await this.page.setViewport({ width: 1280, height: 800 });
+
+            // Authenticate proxy if credentials are provided
+            if (this.config.proxy && this.config.proxy.enabled && this.config.proxy.username && this.config.proxy.password) {
+                await this.page.authenticate({
+                    username: this.config.proxy.username,
+                    password: this.config.proxy.password
+                });
+            }
+
+            // Set cookies for the page
+            if (this.cookies) {
+                const parsedCookies = this.cookies.split(';').map(c => {
+                    const parts = c.split('=');
+                    const name = parts[0].trim();
+                    const value = parts.slice(1).join('=').trim();
+                    return {
+                        name: name,
+                        value: value,
+                        domain: 'hoathinh3d.co',
+                        path: '/'
+                    };
+                });
+                await this.page.setCookie(...parsedCookies);
+            }
+
+            // Open the homepage to establish the session
+            await this.page.goto(this.baseUrl, { waitUntil: 'domcontentloaded', timeout: 30000 });
+        } catch (error) {
+            this.log(`❌ Lỗi khởi động trình duyệt ngầm: ${error.message}`, 'error');
+            throw error;
+        }
+    }
+
+    async closeBrowser() {
+        try {
+            if (this.page) {
+                await this.page.close();
+                this.page = null;
+            }
+            if (this.browser) {
+                await this.browser.close();
+                this.browser = null;
+            }
+        } catch (error) {
+            // Ignore error during close
+        }
+    }
+
     async request(url, options = {}) {
         return this.enqueueRequest(async () => {
             try {
-                const response = await this.axios({
-                    url,
-                    ...options
-                });
-                
-                if (response.status === 429 || response.status === 503) {
-                    this.log(`⚠️ Bị giới hạn request (HTTP ${response.status}). Sẽ tự động thử lại sau 15s...`, 'warning');
+                if (!this.page) {
+                    throw new Error('Trình duyệt ngầm chưa được khởi tạo.');
+                }
+
+                // Format url to absolute path if relative
+                const absoluteUrl = url.startsWith('http') ? url : (this.baseUrl.replace(/\/+$/, '') + '/' + url.replace(/^\/+/, ''));
+
+                const fetchOptions = {
+                    method: options.method || 'GET',
+                    headers: options.headers || {}
+                };
+
+                if (options.data !== undefined) {
+                    if (typeof options.data === 'string') {
+                        fetchOptions.body = options.data;
+                    } else if (options.headers && options.headers['Content-Type'] && options.headers['Content-Type'].includes('json')) {
+                        fetchOptions.body = JSON.stringify(options.data);
+                    } else {
+                        fetchOptions.body = String(options.data);
+                    }
+                }
+
+                // Execute request inside the browser console via fetch
+                const result = await this.page.evaluate(async (fetchUrl, fetchOpts) => {
+                    const headers = fetchOpts.headers || {};
+                    headers['X-Requested-With'] = 'XMLHttpRequest';
+                    
+                    try {
+                        const response = await fetch(fetchUrl, {
+                            ...fetchOpts,
+                            headers: headers
+                        });
+
+                        const status = response.status;
+                        if (status === 429 || status === 503) {
+                            return { __status: status };
+                        }
+
+                        const contentType = response.headers.get('content-type');
+                        if (contentType && contentType.includes('application/json')) {
+                            const data = await response.json();
+                            return { __success: true, data };
+                        } else {
+                            const text = await response.text();
+                            return { __success: true, text };
+                        }
+                    } catch (err) {
+                        return { __success: false, error: err.message };
+                    }
+                }, absoluteUrl, fetchOptions);
+
+                // Handle status code from response
+                if (result.__status === 429 || result.__status === 503) {
+                    this.log(`⚠️ Bị giới hạn request (HTTP ${result.__status}). Sẽ tự động thử lại sau 15s...`, 'warning');
                     await this.sleep(15000);
                     return this.request(url, options);
                 }
 
-                return response.data;
+                if (result.__success) {
+                    return result.data !== undefined ? result.data : result.text;
+                }
+
+                throw new Error(result.error || 'Lỗi request không xác định.');
             } catch (error) {
-                this.log(`❌ Lỗi mạng: ${error.message}`, 'error');
+                this.log(`❌ Lỗi kết nối trình duyệt: ${error.message}`, 'error');
                 throw error;
             }
         });
@@ -161,10 +299,11 @@ class HH3DWorker {
                 return false;
             }
 
-            const homeHtml = await this.enqueueRequest(async () => {
-                const res = await this.axios.get('/');
-                return res.data;
-            });
+            if (!this.page) {
+                throw new Error('Trình duyệt ngầm chưa được khởi tạo.');
+            }
+
+            const homeHtml = await this.page.content();
 
             if (!homeHtml || homeHtml.includes('wp-login.php') || homeHtml.includes('Đăng nhập') || !homeHtml.includes('userId')) {
                 this.log('❌ Cookie đã hết hạn hoặc không hợp lệ. Vui lòng cập nhật Cookie mới từ trình duyệt.', 'error');
@@ -179,8 +318,8 @@ class HH3DWorker {
                              decryptor.extractFromHtml(homeHtml, /hh3dData\.restNonce\s*=\s*["']([^"']+)["']/i);
             
             this.userid = decryptor.extractFromHtml(homeHtml, /"userId"\s*:\s*"(\d+)"/) ||
-                          decryptor.extractFromHtml(homeHtml, /"userId"\s*:\s*(\d+)/) ||
-                          decryptor.extractFromHtml(homeHtml, /hh3dData\.userId\s*=\s*["']?(\d+)["']?/i);
+                           decryptor.extractFromHtml(homeHtml, /"userId"\s*:\s*(\d+)/) ||
+                           decryptor.extractFromHtml(homeHtml, /hh3dData\.userId\s*=\s*["']?(\d+)["']?/i);
 
             // Decrypt actions map
             const decrypted = decryptor.decryptHh3dActions(homeHtml);
@@ -219,46 +358,65 @@ class HH3DWorker {
 
     async stop() {
         this.isRunning = false;
+        await this.closeBrowser();
         this.log('🛑 Worker đã dừng.', 'warning');
     }
 
     async runScheduler() {
         while (this.isRunning) {
             try {
-                const sessionOk = await this.ensureSession();
-                if (!sessionOk) {
-                    this.log('❌ Phiên hoạt động lỗi (Cần cập nhật Cookie mới). Thử lại sau 2 phút...', 'error');
-                    await this.sleep(120000);
-                    continue;
-                }
-
                 const now = Date.now();
                 const taskKeys = Object.keys(this.config.tasks);
+                let hasTaskToRun = false;
 
                 for (const taskName of taskKeys) {
-                    if (!this.isRunning) break;
-                    if (!this.config.tasks[taskName]) continue;
-
-                    // Skip tasks that are already done for today
-                    if (this.isTaskDoneToday(taskName)) {
-                        continue;
-                    }
-
-                    const nextRun = this.nextRunTimes[taskName] || 0;
-                    if (now >= nextRun) {
-                        this.nextRunTimes[taskName] = now + 180000; // 3 mins lock
-                        
-                        try {
-                            const delayMs = await this.executeTask(taskName);
-                            this.nextRunTimes[taskName] = Date.now() + (delayMs || 30000);
-                        } catch (err) {
-                            this.log(`💥 Nhiệm vụ "${taskName}" bị lỗi: ${err.message}`, 'error');
-                            this.nextRunTimes[taskName] = Date.now() + 60000; // retry in 1 minute
+                    if (this.config.tasks[taskName] && !this.isTaskDoneToday(taskName)) {
+                        const nextRun = this.nextRunTimes[taskName] || 0;
+                        if (now >= nextRun) {
+                            hasTaskToRun = true;
+                            break;
                         }
                     }
                 }
+
+                if (hasTaskToRun) {
+                    this.log('🌐 Khởi động trình duyệt ngầm chống phát hiện...', 'info');
+                    await this.initBrowser();
+
+                    const sessionOk = await this.ensureSession();
+                    if (sessionOk) {
+                        for (const taskName of taskKeys) {
+                            if (!this.isRunning) break;
+                            if (!this.config.tasks[taskName]) continue;
+                            if (this.isTaskDoneToday(taskName)) continue;
+
+                            const nextRun = this.nextRunTimes[taskName] || 0;
+                            if (Date.now() >= nextRun) {
+                                this.nextRunTimes[taskName] = Date.now() + 180000; // 3 mins lock
+                                
+                                try {
+                                    const delayMs = await this.executeTask(taskName);
+                                    this.nextRunTimes[taskName] = Date.now() + (delayMs || 30000);
+                                } catch (err) {
+                                    this.log(`💥 Nhiệm vụ "${taskName}" bị lỗi: ${err.message}`, 'error');
+                                    this.nextRunTimes[taskName] = Date.now() + 60000; // retry in 1 minute
+                                }
+                            }
+                        }
+                    } else {
+                        this.log('❌ Phiên hoạt động lỗi hoặc không hợp lệ. Đợi 2 phút...', 'error');
+                        // Lock tasks to avoid immediate retry loop
+                        taskKeys.forEach(taskName => {
+                            this.nextRunTimes[taskName] = Date.now() + 120000;
+                        });
+                    }
+
+                    this.log('💤 Đóng trình duyệt ngầm để giải phóng tài nguyên...', 'info');
+                    await this.closeBrowser();
+                }
             } catch (err) {
                 this.log(`💥 Lỗi bộ lập lịch (Scheduler): ${err.message}`, 'error');
+                await this.closeBrowser();
             }
             // Sleep 15 seconds before scanning again
             await this.sleep(15000);

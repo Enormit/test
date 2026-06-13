@@ -186,6 +186,43 @@
                         </select>
                     </div>
 
+                    <hr class="modal-divider">
+
+                    <h3>🌐 Cấu Hình Proxy (HTTP / SOCKS5)</h3>
+                    <div class="form-group">
+                        <label class="toggle-control">
+                            <input type="checkbox" id="proxy-enabled">
+                            <span class="toggle-label">Bật sử dụng Proxy cho tài khoản này</span>
+                        </label>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group half">
+                            <label for="proxy-type">Loại Proxy:</label>
+                            <select id="proxy-type">
+                                <option value="http">HTTP Proxy</option>
+                                <option value="socks5">SOCKS5 Proxy</option>
+                            </select>
+                        </div>
+                        <div class="form-group half">
+                            <label for="proxy-host">Địa chỉ IP / Host:</label>
+                            <input type="text" id="proxy-host" placeholder="Ví dụ: 45.122.23.45">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group half">
+                            <label for="proxy-port">Cổng (Port):</label>
+                            <input type="number" id="proxy-port" placeholder="Ví dụ: 8080">
+                        </div>
+                        <div class="form-group half">
+                            <label for="proxy-user">Username (Tùy chọn):</label>
+                            <input type="text" id="proxy-user" placeholder="Nhập username...">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="proxy-pass">Mật khẩu (Tùy chọn):</label>
+                        <input type="password" id="proxy-pass" placeholder="Nhập mật khẩu...">
+                    </div>
+
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" onclick="closeModal('config-modal')">Hủy bỏ</button>
                         <button type="submit" class="btn btn-primary">Lưu cấu hình</button>

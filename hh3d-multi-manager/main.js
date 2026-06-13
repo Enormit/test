@@ -1,6 +1,9 @@
 const { app, BrowserWindow } = require('electron');
 const path = require('path');
 
+// Disable GPU Acceleration to prevent crash on some Windows machines
+app.disableHardwareAcceleration();
+
 // Start the backend Express server
 require('./backend/server.js');
 
