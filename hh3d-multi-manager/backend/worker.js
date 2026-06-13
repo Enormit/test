@@ -18,7 +18,7 @@ class HH3DWorker {
         this.id = account.id;
         this.name = account.name;
         this.cookies = account.cookies;
-        this.config = account.config;
+        this.config = account.config || { tasks: {}, mining: {}, refine: {}, gamble: {}, proxy: {} };
         
         this.isRunning = false;
         this.logs = [];
