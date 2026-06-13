@@ -78,12 +78,15 @@ app.post('/api/accounts', async (req, res) => {
         return res.status(400).json({ success: false, message: 'Vui lòng điền đầy đủ chuỗi Cookies!' });
     }
 
+    let tempWorker = null;
     try {
         // Create a temporary worker to verify and extract character information
-        const tempWorker = new HH3DWorker({ cookies });
+        tempWorker = new HH3DWorker({ cookies });
+        await tempWorker.initBrowser();
         const verify = await tempWorker.ensureSession();
         
         if (!verify || !tempWorker.userid) {
+            await tempWorker.closeBrowser();
             return res.status(400).json({ 
                 success: false, 
                 message: 'Không thể xác thực cookie hoặc tải thông tin nhân vật. Vui lòng kiểm tra lại chuỗi cookie hoặc đảm bảo cookie chưa hết hạn.' 
@@ -91,6 +94,8 @@ app.post('/api/accounts', async (req, res) => {
         }
 
         const accountId = tempWorker.userid;
+        await tempWorker.closeBrowser();
+
         const saved = db.saveAccount({
             id: accountId,
             name: name || `Tài khoản ${accountId}`,
@@ -106,6 +111,9 @@ app.post('/api/accounts', async (req, res) => {
             data: saved 
         });
     } catch (error) {
+        if (tempWorker) {
+            await tempWorker.closeBrowser().catch(() => {});
+        }
         console.error('Lỗi khi thêm tài khoản:', error);
         res.status(500).json({ success: false, message: 'Lỗi máy chủ khi xác thực tài khoản: ' + error.message });
     }
