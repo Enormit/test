@@ -1480,6 +1480,7 @@ function App() {
                             onChange={e => setLogFilter(e.target.value)}
                           >
                             <option value="all">Tất cả ({ (logs[selectedId] || []).length })</option>
+                            <option value="notification">📢 Thông báo game</option>
                             <option value="info">Thông tin (Info)</option>
                             <option value="success">Thành công (Success)</option>
                             <option value="warning">Cảnh báo (Warning)</option>

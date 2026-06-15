@@ -44,11 +44,12 @@
                 lower.includes('thành công') ||
                 lower.includes('hoàn tất') ||
                 lower.includes('bắt đầu') ||
-                lower.includes('lỗi')
+                lower.includes('lỗi') ||
+                lower.includes('thông báo game')
             ) {
                 return true;
             }
-            const emojis = ['✅', '⚠️', '❌', '⚡', '▶️', '🎯', '🔓', '🛑', '🔑', '🔍', '📋', '🤖', '👑', '💰'];
+            const emojis = ['✅', '⚠️', '❌', '⚡', '▶️', '🎯', '🔓', '🛑', '🔑', '🔍', '📋', '🤖', '👑', '💰', '📢'];
             if (emojis.some(emoji => text.includes(emoji))) {
                 return true;
             }
@@ -64,10 +65,14 @@
         };
 
         const sendLogToServer = (text, level) => {
+            let finalLevel = level;
+            if (text.includes('[Thông báo game]') || text.includes('📢')) {
+                finalLevel = 'notification';
+            }
             fetch('http://localhost:3000/api/logs', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ profileId, level, text })
+                body: JSON.stringify({ profileId, level: finalLevel, text })
             }).catch(() => {});
         };
 
@@ -2488,6 +2493,7 @@
                         <div style="display:flex;gap:6px">
                             <select id="hh3d-log-filter" style="font-size:11px;padding:2px 6px;border-radius:4px;border:1px solid rgba(255,255,255,0.2);background:rgba(255,255,255,0.07);color:#d0d8f0">
                                 <option value="all">Tất cả</option>
+                                <option value="notification">📢 Thông báo game</option>
                                 <option value="success">✅ Success</option>
                                 <option value="warn">⚠️ Warn</option>
                                 <option value="error">❌ Error</option>
@@ -8031,18 +8037,33 @@
 
     function hh3dPushLog(message, type = 'info') {
         const plain = String(message).replace(/<[^>]*>/g, '');
-        window.hh3dLogBuffer.push({ time: Date.now(), message: plain, type });
+        let finalType = type;
+        if (plain.includes('[Thông báo game]') || plain.includes('📢') || plain.includes('[HH3D Notification]')) {
+            finalType = 'notification';
+        }
+        window.hh3dLogBuffer.push({ time: Date.now(), message: plain, type: finalType });
         if (window.hh3dLogBuffer.length > HH3D_LOG_BUFFER_MAX) window.hh3dLogBuffer.shift();
         // Nếu tab Log đang mở thì cập nhật live
         const logList = document.getElementById('hh3d-log-list');
         if (logList) {
-            _hh3dRenderLogLine(logList, window.hh3dLogBuffer[window.hh3dLogBuffer.length - 1], false);
-            logList.scrollTop = logList.scrollHeight;
+            const filterEl = document.getElementById('hh3d-log-filter');
+            const currentFilter = filterEl ? filterEl.value : 'all';
+            if (currentFilter === 'all' || finalType === currentFilter) {
+                _hh3dRenderLogLine(logList, window.hh3dLogBuffer[window.hh3dLogBuffer.length - 1], false);
+                logList.scrollTop = logList.scrollHeight;
+            }
         }
     }
 
     function _hh3dRenderLogLine(container, entry, prepend = false) {
-        const colors = { success: '#4caf50', warn: '#ff9800', error: '#f44336', info: '#63b3ed', debug: '#9ca3af' };
+        const colors = { 
+            success: '#4caf50', 
+            warn: '#ff9800', 
+            error: '#f44336', 
+            info: '#63b3ed', 
+            debug: '#9ca3af',
+            notification: '#ec4899'
+        };
         const timeStr = new Date(entry.time).toLocaleTimeString('vi-VN');
         const div = document.createElement('div');
         div.style.cssText = `padding:3px 6px;border-bottom:1px solid rgba(255,255,255,0.05);font-size:11px;font-family:monospace;color:${colors[entry.type] || '#ccc'};word-break:break-all`;
@@ -11587,7 +11608,7 @@
                     const friendsRes = await tanghoa.getFriends();
                     friends = Array.isArray(friendsRes?.data) ? friendsRes.data : (Array.isArray(friendsRes) ? friendsRes : []);
                 } catch (e) {
-                    console.warn('[MetadataSync] Failed to load friends:', e);
+                    console.warn('[HH3D Auto] ❌ [MetadataSync] Failed to load friends:', e);
                 }
 
                 let mines = [];
@@ -11595,7 +11616,7 @@
                     const minesRes = await khoangmach.getAllMines(false);
                     mines = minesRes?.minesData || [];
                 } catch (e) {
-                    console.warn('[MetadataSync] Failed to load mines:', e);
+                    console.warn('[HH3D Auto] ❌ [MetadataSync] Failed to load mines:', e);
                 }
 
                 if (friends.length > 0 || mines.length > 0) {
@@ -11605,6 +11626,8 @@
                         body: JSON.stringify({ friends, mines })
                     });
                     console.log('[MetadataSync] ✅ Đồng bộ danh sách bạn bè và mỏ thành công.');
+                } else {
+                    console.log('[HH3D Auto] ⚠️ [MetadataSync] Không tìm thấy bạn bè hoặc mỏ nào để đồng bộ.');
                 }
             } catch (err) {
                 console.warn('[MetadataSync] ⚠️ Lỗi gửi metadata:', err.message);

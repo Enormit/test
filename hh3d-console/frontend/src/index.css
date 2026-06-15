@@ -595,6 +595,12 @@ input:checked + .slider:before {
   border: 1px solid rgba(255, 51, 102, 0.2);
 }
 
+.log-badge.notification {
+  background: rgba(236, 72, 153, 0.1);
+  color: #ec4899;
+  border: 1px solid rgba(236, 72, 153, 0.2);
+}
+
 .log-text {
   color: #e2e8f0;
   white-space: pre-wrap;
@@ -605,6 +611,7 @@ input:checked + .slider:before {
 .log-text.success { color: #a7f3d0; }
 .log-text.warning { color: #fde68a; }
 .log-text.error { color: #fecdd3; }
+.log-text.notification { color: #fbcfe8; }
 
 /* Empty state */
 .empty-state {
