@@ -31,6 +31,38 @@
         const _warn = console.warn;
         const _error = console.error;
 
+        const isImportantLog = (text) => {
+            const lower = text.toLowerCase();
+            if (
+                lower.includes('[hh3d') ||
+                lower.includes('[anti-bot]') ||
+                lower.includes('[tts]') ||
+                lower.includes('[voice]') ||
+                lower.includes('[task') ||
+                lower.includes('[quest') ||
+                lower.includes('[nhiệm vụ') ||
+                lower.includes('thành công') ||
+                lower.includes('hoàn tất') ||
+                lower.includes('bắt đầu') ||
+                lower.includes('lỗi')
+            ) {
+                return true;
+            }
+            const emojis = ['✅', '⚠️', '❌', '⚡', '▶️', '🎯', '🔓', '🛑', '🔑', '🔍', '📋', '🤖', '👑', '💰'];
+            if (emojis.some(emoji => text.includes(emoji))) {
+                return true;
+            }
+            return false;
+        };
+
+        const cleanStyledText = (args) => {
+            if (typeof args[0] === 'string' && args[0].includes('%c')) {
+                // Return text with %c removed, ignore other style parameters
+                return args[0].replace(/%c/g, '');
+            }
+            return args.map(arg => typeof arg === 'object' ? JSON.stringify(arg) : String(arg)).join(' ');
+        };
+
         const sendLogToServer = (text, level) => {
             fetch('http://localhost:3000/api/logs', {
                 method: 'POST',
@@ -41,20 +73,26 @@
 
         console.log = function(...args) {
             _log.apply(console, args);
-            const text = args.map(arg => typeof arg === 'object' ? JSON.stringify(arg) : String(arg)).join(' ');
-            sendLogToServer(text, 'info');
+            const text = cleanStyledText(args);
+            if (isImportantLog(text)) {
+                sendLogToServer(text, 'info');
+            }
         };
 
         console.warn = function(...args) {
             _warn.apply(console, args);
-            const text = args.map(arg => typeof arg === 'object' ? JSON.stringify(arg) : String(arg)).join(' ');
-            sendLogToServer(text, 'warning');
+            const text = cleanStyledText(args);
+            if (isImportantLog(text)) {
+                sendLogToServer(text, 'warning');
+            }
         };
 
         console.error = function(...args) {
             _error.apply(console, args);
-            const text = args.map(arg => typeof arg === 'object' ? JSON.stringify(arg) : String(arg)).join(' ');
-            sendLogToServer(text, 'error');
+            const text = cleanStyledText(args);
+            if (isImportantLog(text)) {
+                sendLogToServer(text, 'error');
+            }
         };
     }
 
