@@ -126,7 +126,15 @@
                 .then(settings => {
                     if (settings) {
                         for (const key in settings) {
-                            localStorage.setItem(key, String(settings[key]));
+                            let val = settings[key];
+                            if (typeof val === 'boolean') {
+                                if (key.startsWith('auto')) {
+                                    val = val ? '1' : '0';
+                                } else {
+                                    val = val ? 'true' : 'false';
+                                }
+                            }
+                            localStorage.setItem(key, String(val));
                         }
                         console.log('[SettingsSync] ✅ Đồng bộ cấu hình từ Dashboard thành công.');
                     }
