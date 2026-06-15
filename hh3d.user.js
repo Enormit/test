@@ -94,6 +94,32 @@
                 sendLogToServer(text, 'error');
             }
         };
+
+        // Watch in-game notifications
+        const observeNotifications = () => {
+            const container = document.getElementById('hh3d-notification-container');
+            if (!container) {
+                setTimeout(observeNotifications, 2000);
+                return;
+            }
+            console.log('[Notification] Đã kích hoạt bộ theo dõi thông báo game.');
+            const observer = new MutationObserver((mutations) => {
+                for (const mutation of mutations) {
+                    if (mutation.type === 'childList') {
+                        for (const node of mutation.addedNodes) {
+                            if (node.nodeType === Node.ELEMENT_NODE) {
+                                const text = node.textContent || node.innerText;
+                                if (text && text.trim()) {
+                                    console.log(`📢 [Thông báo game] ${text.trim()}`);
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            observer.observe(container, { childList: true, subtree: true });
+        };
+        observeNotifications();
     }
 
     // ===============================================
@@ -911,10 +937,64 @@
         return now.getTime() + millisecondsToAdd;
     }
 
+    async function claimDailyTurns() {
+        const logPrefix = "[HH3D Khắc Trận Văn Daily]";
+        const accountId = localStorage.getItem('hh3d_account_id') || '';
+        if (localStorage.getItem('generalVipMode') !== 'true') {
+            return;
+        }
+        const today = new Date().toISOString().slice(0, 10);
+        const lastRunKey = `claimDailyTurnsLastDate_${accountId}`;
+        if (localStorage.getItem(lastRunKey) === today) {
+            return;
+        }
+        console.log(`${logPrefix} 🔮 Bắt đầu tự động nhận lượt Khắc Trận Văn daily...`);
+        const nonce = await getNonce();
+        if (!nonce) {
+            console.error(`${logPrefix} ❌ Không lấy được WP Rest Nonce.`);
+            return;
+        }
+        try {
+            const url = weburl + "wp-json/phap-tuong/v1/claim-daily-turns";
+            const response = await fetch(url, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-WP-Nonce": nonce
+                },
+                credentials: "include"
+            });
+            const data = await response.json();
+            if (data && data.success) {
+                console.log(`${logPrefix} ✅ ${data.message || 'Nhận thành công lượt Khắc Trận Văn!'}`);
+                localStorage.setItem(lastRunKey, today);
+            } else {
+                console.warn(`${logPrefix} ⚠️ Kết quả: ${data.message || JSON.stringify(data)}`);
+                if (data.message && (data.message.includes('đã nhận') || data.message.includes('limit') || data.message.includes('hôm nay'))) {
+                    localStorage.setItem(lastRunKey, today);
+                }
+            }
+        } catch (e) {
+            console.error(`${logPrefix} ❌ Lỗi kết nối API:`, e);
+        }
+    }
+
     // ===============================================
     // ĐỊNH NGHĨA CÁC NHIỆM VỤ / QUEST CONFIGURATION
     // ===============================================
     const QUEST_CONFIG = [
+        {
+            taskId: 'claimDailyTurns',
+            taskName: 'Nhận Lượt Khắc Trận Văn (VIP)',
+            taskIcon: '<i class="fas fa-magic"></i>',
+            autorunEnabled: true,
+            autorunKey: 'autoClaimDailyTurns',
+            hasButton: true,
+            buttonText: 'Nhận',
+            async action() {
+                await claimDailyTurns();
+            }
+        },
         {
             taskId: 'diemdanh',
             taskName: 'Điểm Danh, Tế Lễ, Vấn Đáp',
