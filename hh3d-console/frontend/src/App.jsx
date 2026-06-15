@@ -827,7 +827,6 @@ function App() {
                               type="checkbox" 
                               checked={generalVipMode} 
                               onChange={e => setGeneralVipMode(e.target.checked)} 
-                              disabled={selectedProfile.status === 'Running'}
                             />
                             <span className="slider"></span>
                           </label>
@@ -841,7 +840,7 @@ function App() {
                               <span className="hh3d-option-desc">Điểm danh ngày nhận quà</span>
                             </div>
                             <label className="switch">
-                              <input type="checkbox" checked={autoDiemDanh} onChange={e => setAutoDiemDanh(e.target.checked)} disabled={selectedProfile.status === 'Running'} />
+                              <input type="checkbox" checked={autoDiemDanh} onChange={e => setAutoDiemDanh(e.target.checked)} />
                               <span className="slider"></span>
                             </label>
                           </div>
@@ -851,7 +850,7 @@ function App() {
                               <span className="hh3d-option-desc">Khiêu chiến thí luyện tối đa</span>
                             </div>
                             <label className="switch">
-                              <input type="checkbox" checked={autoThiLuyen} onChange={e => setAutoThiLuyen(e.target.checked)} disabled={selectedProfile.status === 'Running'} />
+                              <input type="checkbox" checked={autoThiLuyen} onChange={e => setAutoThiLuyen(e.target.checked)} />
                               <span className="slider"></span>
                             </label>
                           </div>
@@ -861,7 +860,7 @@ function App() {
                               <span className="hh3d-option-desc">Nhận quà phúc lợi & điểm năng động</span>
                             </div>
                             <label className="switch">
-                              <input type="checkbox" checked={autoPhucLoi} onChange={e => setAutoPhucLoi(e.target.checked)} disabled={selectedProfile.status === 'Running'} />
+                              <input type="checkbox" checked={autoPhucLoi} onChange={e => setAutoPhucLoi(e.target.checked)} />
                               <span className="slider"></span>
                             </label>
                           </div>
@@ -871,7 +870,7 @@ function App() {
                               <span className="hh3d-option-desc">Nhận trận văn khắc trận hàng ngày</span>
                             </div>
                             <label className="switch">
-                              <input type="checkbox" checked={autoClaimDailyTurns} onChange={e => setAutoClaimDailyTurns(e.target.checked)} disabled={selectedProfile.status === 'Running'} />
+                              <input type="checkbox" checked={autoClaimDailyTurns} onChange={e => setAutoClaimDailyTurns(e.target.checked)} />
                               <span className="slider"></span>
                             </label>
                           </div>
@@ -881,7 +880,7 @@ function App() {
                               <span className="hh3d-option-desc">Tự động khiêu chiến hoàng vực</span>
                             </div>
                             <label className="switch">
-                              <input type="checkbox" checked={autoHoangVuc} onChange={e => setAutoHoangVuc(e.target.checked)} disabled={selectedProfile.status === 'Running'} />
+                              <input type="checkbox" checked={autoHoangVuc} onChange={e => setAutoHoangVuc(e.target.checked)} />
                               <span className="slider"></span>
                             </label>
                           </div>
@@ -891,7 +890,7 @@ function App() {
                               <span className="hh3d-option-desc">Tự tìm đường & nhận quà mê cung</span>
                             </div>
                             <label className="switch">
-                              <input type="checkbox" checked={autoMeCung} onChange={e => setAutoMeCung(e.target.checked)} disabled={selectedProfile.status === 'Running'} />
+                              <input type="checkbox" checked={autoMeCung} onChange={e => setAutoMeCung(e.target.checked)} />
                               <span className="slider"></span>
                             </label>
                           </div>
@@ -901,7 +900,7 @@ function App() {
                               <span className="hh3d-option-desc">Tham gia lắc xúc xắc đổ thạch</span>
                             </div>
                             <label className="switch">
-                              <input type="checkbox" checked={autoDoThach} onChange={e => setAutoDoThach(e.target.checked)} disabled={selectedProfile.status === 'Running'} />
+                              <input type="checkbox" checked={autoDoThach} onChange={e => setAutoDoThach(e.target.checked)} />
                               <span className="slider"></span>
                             </label>
                           </div>
@@ -911,7 +910,7 @@ function App() {
                               <span className="hh3d-option-desc">Tự tham gia bí cảnh tông môn</span>
                             </div>
                             <label className="switch">
-                              <input type="checkbox" checked={autoBiCanh} onChange={e => setAutoBiCanh(e.target.checked)} disabled={selectedProfile.status === 'Running'} />
+                              <input type="checkbox" checked={autoBiCanh} onChange={e => setAutoBiCanh(e.target.checked)} />
                               <span className="slider"></span>
                             </label>
                           </div>
@@ -921,7 +920,7 @@ function App() {
                               <span className="hh3d-option-desc">Nhận tiên duyên & tặng hoa bạn bè</span>
                             </div>
                             <label className="switch">
-                              <input type="checkbox" checked={autoTienDuyen} onChange={e => setAutoTienDuyen(e.target.checked)} disabled={selectedProfile.status === 'Running'} />
+                              <input type="checkbox" checked={autoTienDuyen} onChange={e => setAutoTienDuyen(e.target.checked)} />
                               <span className="slider"></span>
                             </label>
                           </div>
@@ -931,7 +930,7 @@ function App() {
                               <span className="hh3d-option-desc">Tự động hoàn thành năng động ngày</span>
                             </div>
                             <label className="switch">
-                              <input type="checkbox" checked={autoHoatDongNgay} onChange={e => setAutoHoatDongNgay(e.target.checked)} disabled={selectedProfile.status === 'Running'} />
+                              <input type="checkbox" checked={autoHoatDongNgay} onChange={e => setAutoHoatDongNgay(e.target.checked)} />
                               <span className="slider"></span>
                             </label>
                           </div>
@@ -945,7 +944,6 @@ function App() {
                               className="select-field" 
                               value={diceRollChoice} 
                               onChange={e => setDiceRollChoice(e.target.value)}
-                              disabled={selectedProfile.status === 'Running'}
                             >
                               <option value="tai">Tài</option>
                               <option value="xiu">Xỉu</option>
@@ -958,7 +956,6 @@ function App() {
                               className="select-field" 
                               value={tienduyenChoice} 
                               onChange={e => setTienduyenChoice(e.target.value)}
-                              disabled={selectedProfile.status === 'Running'}
                             >
                               <option value="1">Lựa chọn 1</option>
                               <option value="2">Lựa chọn 2</option>
@@ -979,7 +976,6 @@ function App() {
                               type="checkbox" 
                               checked={hoangvucMaximizeDamage} 
                               onChange={e => setHoangvucMaximizeDamage(e.target.checked)} 
-                              disabled={selectedProfile.status === 'Running'}
                             />
                             <span className="slider"></span>
                           </label>
@@ -996,7 +992,6 @@ function App() {
                               onChange={e => setSelfScheduleH(e.target.value)}
                               placeholder="Hour (0-23)"
                               min="0" max="23"
-                              disabled={selectedProfile.status === 'Running'}
                             />
                             <span style={{ fontSize: '18px', fontWeight: 'bold' }}>:</span>
                             <input 
@@ -1007,7 +1002,6 @@ function App() {
                               onChange={e => setSelfScheduleM(e.target.value)}
                               placeholder="Minute (0-59)"
                               min="0" max="59"
-                              disabled={selectedProfile.status === 'Running'}
                             />
                           </div>
                         </div>
@@ -1025,7 +1019,6 @@ function App() {
                             className="input-field" 
                             value={formName} 
                             onChange={e => setFormName(e.target.value)} 
-                            disabled={selectedProfile.status === 'Running'}
                           />
                         </div>
 
@@ -1035,7 +1028,6 @@ function App() {
                             className="select-field" 
                             value={proxyType} 
                             onChange={e => setProxyType(e.target.value)}
-                            disabled={selectedProfile.status === 'Running'}
                           >
                             <option value="None">Không Proxy (Mạng nhà)</option>
                             <option value="HTTP">HTTP Proxy</option>
@@ -1053,7 +1045,6 @@ function App() {
                                   className="input-field" 
                                   value={proxyHost} 
                                   onChange={e => setProxyHost(e.target.value)}
-                                  disabled={selectedProfile.status === 'Running'}
                                 />
                               </div>
                               <div className="form-group" style={{ flex: 1 }}>
@@ -1063,7 +1054,6 @@ function App() {
                                   className="input-field" 
                                   value={proxyPort} 
                                   onChange={e => setProxyPort(e.target.value)}
-                                  disabled={selectedProfile.status === 'Running'}
                                 />
                               </div>
                             </div>
@@ -1076,7 +1066,6 @@ function App() {
                                   className="input-field" 
                                   value={proxyUsername} 
                                   onChange={e => setProxyUsername(e.target.value)}
-                                  disabled={selectedProfile.status === 'Running'}
                                 />
                               </div>
                               <div className="form-group">
@@ -1086,7 +1075,6 @@ function App() {
                                   className="input-field" 
                                   value={proxyPassword} 
                                   onChange={e => setProxyPassword(e.target.value)}
-                                  disabled={selectedProfile.status === 'Running'}
                                 />
                               </div>
                             </div>
@@ -1103,7 +1091,6 @@ function App() {
                               type="checkbox" 
                               checked={headless} 
                               onChange={e => setHeadless(e.target.checked)} 
-                              disabled={selectedProfile.status === 'Running'}
                             />
                             <span className="slider"></span>
                           </label>
@@ -1125,7 +1112,6 @@ function App() {
                               type="checkbox" 
                               checked={autoKhoangMach} 
                               onChange={e => setAutoKhoangMach(e.target.checked)} 
-                              disabled={selectedProfile.status === 'Running'} 
                             />
                             <span className="slider"></span>
                           </label>
@@ -1140,7 +1126,7 @@ function App() {
                                   <span className="hh3d-option-desc">Tấn công chiếm lại mỏ khi bị chiếm</span>
                                 </div>
                                 <label className="switch">
-                                  <input type="checkbox" checked={khoangmach_auto_takeover} onChange={e => setKhoangmachAutoTakeover(e.target.checked)} disabled={selectedProfile.status === 'Running'} />
+                                  <input type="checkbox" checked={khoangmach_auto_takeover} onChange={e => setKhoangmachAutoTakeover(e.target.checked)} />
                                   <span className="slider"></span>
                                 </label>
                               </div>
@@ -1151,7 +1137,7 @@ function App() {
                                   <span className="hh3d-option-desc">Tự luân chuyển các mỏ đã lưu</span>
                                 </div>
                                 <label className="switch">
-                                  <input type="checkbox" checked={khoangmach_auto_takeover_rotation} onChange={e => setKhoangmachAutoTakeoverRotation(e.target.checked)} disabled={selectedProfile.status === 'Running'} />
+                                  <input type="checkbox" checked={khoangmach_auto_takeover_rotation} onChange={e => setKhoangmachAutoTakeoverRotation(e.target.checked)} />
                                   <span className="slider"></span>
                                 </label>
                               </div>
@@ -1162,7 +1148,7 @@ function App() {
                                   <span className="hh3d-option-desc">Bơm tài nguyên tăng tốc mỏ</span>
                                 </div>
                                 <label className="switch">
-                                  <input type="checkbox" checked={khoangmach_use_buff} onChange={e => setKhoangmachUseBuff(e.target.checked)} disabled={selectedProfile.status === 'Running'} />
+                                  <input type="checkbox" checked={khoangmach_use_buff} onChange={e => setKhoangmachUseBuff(e.target.checked)} />
                                   <span className="slider"></span>
                                 </label>
                               </div>
@@ -1173,7 +1159,7 @@ function App() {
                                   <span className="hh3d-option-desc">Bỏ qua một số bước chờ hoạt ảnh</span>
                                 </div>
                                 <label className="switch">
-                                  <input type="checkbox" checked={khoangmach_fast_attack} onChange={e => setKhoangmachFastAttack(e.target.checked)} disabled={selectedProfile.status === 'Running'} />
+                                  <input type="checkbox" checked={khoangmach_fast_attack} onChange={e => setKhoangmachFastAttack(e.target.checked)} />
                                   <span className="slider"></span>
                                 </label>
                               </div>
@@ -1184,7 +1170,7 @@ function App() {
                                   <span className="hh3d-option-desc">Rời mỏ khi đủ điều kiện buff/thời gian</span>
                                 </div>
                                 <label className="switch">
-                                  <input type="checkbox" checked={khoangmach_leave_mine} onChange={e => setKhoangmachLeaveMine(e.target.checked)} disabled={selectedProfile.status === 'Running'} />
+                                  <input type="checkbox" checked={khoangmach_leave_mine} onChange={e => setKhoangmachLeaveMine(e.target.checked)} />
                                   <span className="slider"></span>
                                 </label>
                               </div>
@@ -1195,7 +1181,7 @@ function App() {
                                   <span className="hh3d-option-desc">Gửi thông báo khi có ngoại tông xâm nhập</span>
                                 </div>
                                 <label className="switch">
-                                  <input type="checkbox" checked={khoangmach_outer_notification} onChange={e => setKhoangmachOuterNotification(e.target.checked)} disabled={selectedProfile.status === 'Running'} />
+                                  <input type="checkbox" checked={khoangmach_outer_notification} onChange={e => setKhoangmachOuterNotification(e.target.checked)} />
                                   <span className="slider"></span>
                                 </label>
                               </div>
@@ -1208,7 +1194,6 @@ function App() {
                                   className="select-field" 
                                   value={khoangmach_reward_mode} 
                                   onChange={e => setKhoangmachRewardMode(e.target.value)}
-                                  disabled={selectedProfile.status === 'Running'}
                                 >
                                   <option value="any">Bất kỳ</option>
                                   <option value="110">110%</option>
@@ -1223,7 +1208,6 @@ function App() {
                                   className="select-field" 
                                   value={khoangmach_reward_time} 
                                   onChange={e => setKhoangmachRewardTime(e.target.value)}
-                                  disabled={selectedProfile.status === 'Running'}
                                 >
                                   <option value="max">Đạt tối đa</option>
                                   <option value="20">20 phút</option>
@@ -1241,7 +1225,6 @@ function App() {
                                 className="input-field" 
                                 value={khoangmach_check_interval} 
                                 onChange={e => setKhoangmachCheckInterval(e.target.value)}
-                                disabled={selectedProfile.status === 'Running'}
                               />
                             </div>
 
@@ -1252,7 +1235,6 @@ function App() {
                                   className="select-field" 
                                   value={khoangmach_selected_mine} 
                                   onChange={e => setKhoangmachSelectedMine(e.target.value)}
-                                  disabled={selectedProfile.status === 'Running'}
                                 >
                                   <option value="">-- Chọn mỏ --</option>
                                   {selectedProfile.metadata.mines.map(m => {
@@ -1275,7 +1257,6 @@ function App() {
                                     placeholder='Ví dụ: {"id":12,"type":"gold"}' 
                                     value={khoangmach_selected_mine} 
                                     onChange={e => setKhoangmachSelectedMine(e.target.value)}
-                                    disabled={selectedProfile.status === 'Running'}
                                   />
                                 </div>
                               )}
@@ -1299,7 +1280,6 @@ function App() {
                               type="checkbox" 
                               checked={autoLuyenDan} 
                               onChange={e => setAutoLuyenDan(e.target.checked)} 
-                              disabled={selectedProfile.status === 'Running'} 
                             />
                             <span className="slider"></span>
                           </label>
@@ -1314,7 +1294,7 @@ function App() {
                                   <span className="hh3d-option-desc">Tự click bắt đầu khi sẵn sàng</span>
                                 </div>
                                 <label className="switch">
-                                  <input type="checkbox" checked={luyenDanAutoStart} onChange={e => setLuyenDanAutoStart(e.target.checked)} disabled={selectedProfile.status === 'Running'} />
+                                  <input type="checkbox" checked={luyenDanAutoStart} onChange={e => setLuyenDanAutoStart(e.target.checked)} />
                                   <span className="slider"></span>
                                 </label>
                               </div>
@@ -1325,7 +1305,7 @@ function App() {
                                   <span className="hh3d-option-desc">Tự động phân giải đan phẩm thấp</span>
                                 </div>
                                 <label className="switch">
-                                  <input type="checkbox" checked={luyenDanAutoDecompose} onChange={e => setLuyenDanAutoDecompose(e.target.checked)} disabled={selectedProfile.status === 'Running'} />
+                                  <input type="checkbox" checked={luyenDanAutoDecompose} onChange={e => setLuyenDanAutoDecompose(e.target.checked)} />
                                   <span className="slider"></span>
                                 </label>
                               </div>
@@ -1336,7 +1316,7 @@ function App() {
                                   <span className="hh3d-option-desc">Tự động thay đổi thuộc tính đan</span>
                                 </div>
                                 <label className="switch">
-                                  <input type="checkbox" checked={luyenDanAutoTune} onChange={e => setLuyenDanAutoTune(e.target.checked)} disabled={selectedProfile.status === 'Running'} />
+                                  <input type="checkbox" checked={luyenDanAutoTune} onChange={e => setLuyenDanAutoTune(e.target.checked)} />
                                   <span className="slider"></span>
                                 </label>
                               </div>
@@ -1347,7 +1327,7 @@ function App() {
                                   <span className="hh3d-option-desc">Tự động cắn đan dược thu hoạch</span>
                                 </div>
                                 <label className="switch">
-                                  <input type="checkbox" checked={luyenDanAutoUse} onChange={e => setLuyenDanAutoUse(e.target.checked)} disabled={selectedProfile.status === 'Running'} />
+                                  <input type="checkbox" checked={luyenDanAutoUse} onChange={e => setLuyenDanAutoUse(e.target.checked)} />
                                   <span className="slider"></span>
                                 </label>
                               </div>
@@ -1358,7 +1338,7 @@ function App() {
                                   <span className="hh3d-option-desc">Gửi lời mời bạn bè vào phòng</span>
                                 </div>
                                 <label className="switch">
-                                  <input type="checkbox" checked={luyenDanAutoInvite} onChange={e => setLuyenDanAutoInvite(e.target.checked)} disabled={selectedProfile.status === 'Running'} />
+                                  <input type="checkbox" checked={luyenDanAutoInvite} onChange={e => setLuyenDanAutoInvite(e.target.checked)} />
                                   <span className="slider"></span>
                                 </label>
                               </div>
@@ -1369,7 +1349,7 @@ function App() {
                                   <span className="hh3d-option-desc">Đồng ý lời mời vào phòng của bạn bè</span>
                                 </div>
                                 <label className="switch">
-                                  <input type="checkbox" checked={luyenDanAutoAcceptInvite} onChange={e => setLuyenDanAutoAcceptInvite(e.target.checked)} disabled={selectedProfile.status === 'Running'} />
+                                  <input type="checkbox" checked={luyenDanAutoAcceptInvite} onChange={e => setLuyenDanAutoAcceptInvite(e.target.checked)} />
                                   <span className="slider"></span>
                                 </label>
                               </div>
@@ -1380,7 +1360,7 @@ function App() {
                                   <span className="hh3d-option-desc">Chấp nhận lời mời từ bất kỳ ai</span>
                                 </div>
                                 <label className="switch">
-                                  <input type="checkbox" checked={luyenDanAcceptAllInvites} onChange={e => setLuyenDanAcceptAllInvites(e.target.checked)} disabled={selectedProfile.status === 'Running'} />
+                                  <input type="checkbox" checked={luyenDanAcceptAllInvites} onChange={e => setLuyenDanAcceptAllInvites(e.target.checked)} />
                                   <span className="slider"></span>
                                 </label>
                               </div>
@@ -1391,7 +1371,7 @@ function App() {
                                   <span className="hh3d-option-desc">Rời phòng sau khi mẻ đan kết thúc</span>
                                 </div>
                                 <label className="switch">
-                                  <input type="checkbox" checked={luyenDanAutoLeave} onChange={e => setLuyenDanAutoLeave(e.target.checked)} disabled={selectedProfile.status === 'Running'} />
+                                  <input type="checkbox" checked={luyenDanAutoLeave} onChange={e => setLuyenDanAutoLeave(e.target.checked)} />
                                   <span className="slider"></span>
                                 </label>
                               </div>
@@ -1404,7 +1384,6 @@ function App() {
                                   className="select-field" 
                                   value={luyenDanMinStars} 
                                   onChange={e => setLuyenDanMinStars(e.target.value)}
-                                  disabled={selectedProfile.status === 'Running'}
                                 >
                                   <option value="1">1 Sao</option>
                                   <option value="2">2 Sao</option>
@@ -1421,7 +1400,6 @@ function App() {
                                   className="input-field" 
                                   value={luyenDanWaitInviteSeconds} 
                                   onChange={e => setLuyenDanWaitInviteSeconds(e.target.value)}
-                                  disabled={selectedProfile.status === 'Running'}
                                 />
                               </div>
                             </div>
@@ -1455,7 +1433,6 @@ function App() {
                                             <input 
                                               type="checkbox" 
                                               checked={isChecked} 
-                                              disabled={selectedProfile.status === 'Running'}
                                               onChange={e => {
                                                 let newIds = [...uids];
                                                 if (e.target.checked) {
@@ -1483,7 +1460,6 @@ function App() {
                                     placeholder="Ví dụ: 12345,67890" 
                                     value={luyenDanSelectedFriendIds} 
                                     onChange={e => setLuyenDanSelectedFriendIds(e.target.value)}
-                                    disabled={selectedProfile.status === 'Running'}
                                   />
                                 </div>
                               )}
@@ -1542,7 +1518,7 @@ function App() {
                         className="btn btn-primary" 
                         style={{ width: 'auto' }} 
                         onClick={handleUpdateProfile} 
-                        disabled={loading || selectedProfile.status === 'Running'}
+                        disabled={loading}
                       >
                         💾 Lưu Toàn Bộ Cấu Hình
                       </button>
