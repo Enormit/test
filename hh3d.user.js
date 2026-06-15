@@ -1,22 +1,62 @@
 // ==UserScript==
-// @name          HH3D Auto - v2.14
+// @name          HH3D Auto - v2.15
 // @namespace     hh3d-tool
-// @version       v2.14
+// @version       v2.15
 // @updateURL     https://raw.githubusercontent.com/Enormit/tool-automation/main/hh3d.user.js
 // @downloadURL   https://raw.githubusercontent.com/Enormit/tool-automation/main/hh3d.user.js
 // @description   Auto  HH3D
-// @author        Cre: [Unknown] - v2.14
+// @author        Cre: [Unknown] - v2.15
 // @include       *://hoathinh3d.co*/*
 // @exclude       *://hoathinh3d.co/khoang-mach*
 // @require       https://cdn.jsdelivr.net/npm/sweetalert2@11.26.12/dist/sweetalert2.all.min.js
-// @run-at        document-start
+// @run-at        document-end
 // @grant         unsafeWindow
 // @connect       raw.githubusercontent.com
 // @icon          😂
 
 // ==/UserScript==
 (async function () {
-    'use strict';
+    // Read profileId from URL query parameters or localStorage
+    const urlParams = new URLSearchParams(window.location.search);
+    let profileId = urlParams.get('profileId');
+    if (profileId) {
+        localStorage.setItem('hh3d_profile_id', profileId);
+    } else {
+        profileId = localStorage.getItem('hh3d_profile_id');
+    }
+
+    // Wrap console functions to send logs to local NodeJS server
+    if (profileId) {
+        const _log = console.log;
+        const _warn = console.warn;
+        const _error = console.error;
+
+        const sendLogToServer = (text, level) => {
+            fetch('http://localhost:3000/api/logs', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ profileId, level, text })
+            }).catch(() => {});
+        };
+
+        console.log = function(...args) {
+            _log.apply(console, args);
+            const text = args.map(arg => typeof arg === 'object' ? JSON.stringify(arg) : String(arg)).join(' ');
+            sendLogToServer(text, 'info');
+        };
+
+        console.warn = function(...args) {
+            _warn.apply(console, args);
+            const text = args.map(arg => typeof arg === 'object' ? JSON.stringify(arg) : String(arg)).join(' ');
+            sendLogToServer(text, 'warning');
+        };
+
+        console.error = function(...args) {
+            _error.apply(console, args);
+            const text = args.map(arg => typeof arg === 'object' ? JSON.stringify(arg) : String(arg)).join(' ');
+            sendLogToServer(text, 'error');
+        };
+    }
 
     // ===============================================
     // ANTI-BOT FETCH WRAPPER
@@ -2189,6 +2229,7 @@
                             <option value="2" ${minStars === '2' ? 'selected' : ''}>⭐⭐ 2 Sao trở lên</option>
                             <option value="3" ${minStars === '3' ? 'selected' : ''}>⭐⭐⭐ 3 Sao trở lên</option>
                             <option value="4" ${minStars === '4' ? 'selected' : ''}>⭐⭐⭐⭐ 4 Sao trở lên (Mặc định)</option>
+                            <option value="5" ${minStars === '5' ? 'selected' : ''}>⭐⭐⭐⭐⭐ 5 Sao trở lên (Phân giải cả 4★)</option>
                         </select>
                         <p class="settings-description">Mức sao làm mốc để phân biệt đan dược phẩm chất tốt hay kém.</p>
                     </div>
@@ -3409,6 +3450,21 @@
             });
         }
 
+        // 💕 Chúc phúc Hồng Nhan (endpoint riêng)
+        async addHongNhanBlessing(weddingRoomId, message = "🌠 Một đoạn hồng duyên, vạn phần cơ ngộ! Chúc mừng cơ duyên đẹp giữa chốn hồng trần. ✨") {
+            const res = await fetch(weburl + "wp-json/hh3d/v1/hong-nhan/bless", {
+                credentials: "include",
+                method: "POST",
+                headers: {
+                    "Accept": "*/*",
+                    "Content-Type": "application/json",
+                    "X-WP-Nonce": this.nonce
+                },
+                body: JSON.stringify({ wedding_room_id: weddingRoomId, message })
+            });
+            return res.json();
+        }
+
         // 🧧 Nhận lì xì
         async receiveLiXi(weddingRoomId) {
             return await this.#post("hh3d_receive_li_xi", {
@@ -3436,19 +3492,27 @@
             let processedCount = 0;
             for (const room of list.data) {
                 taskTracker.setLastCheckTienDuyen(accountId, now);
-                // Tối ưu: Nếu đã chúc phúc và không có lì xì để nhận -> Bỏ qua phòng này
-                if (room.has_blessed === true && !room.has_li_xi) {
+                const isHongNhan = room.room_type === 'hong_nhan';
+
+                // Server trả has_blessed sai cho phòng Hồng Nhan → chỉ skip nếu là Đạo Lữ đã chúc & không có lì xì
+                if (!isHongNhan && room.has_blessed === true && room.has_li_xi === false) {
                     continue;
                 }
-                
-                processedCount++;
-                console.log(`👉 Kiểm tra phòng ${room.wedding_room_id}`);
 
-                if (room.has_blessed === false) {
-                    const bless = await this.addBlessing(room.wedding_room_id);
+                processedCount++;
+                console.log(`👉 Kiểm tra phòng ${room.wedding_room_id} [${room.room_type}]`);
+
+                // Đạo Lữ: chỉ chúc khi chưa chúc; Hồng Nhan: luôn thử (server tự báo lỗi nếu đã chúc)
+                if (isHongNhan || room.has_blessed === false) {
+                    const name1 = isHongNhan ? (room.nguyen_chu_name || room.user1_name) : room.user1_name;
+                    const name2 = isHongNhan ? (room.hong_nhan_name || room.user2_name) : room.user2_name;
+                    const bless = isHongNhan
+                        ? await this.addHongNhanBlessing(room.wedding_room_id)
+                        : await this.addBlessing(room.wedding_room_id);
                     if (bless && bless.success === true) {
+                        const label = isHongNhan ? '💕 Hồng Nhan' : '💞 Đạo Lữ';
                         showNotification(
-                            `Bạn đã gửi lời chúc phúc cho cặp đôi <br><b>${room.user1_name} 💞 ${room.user2_name}</b>`,
+                            `Bạn đã gửi lời chúc phúc [${label}] cho cặp đôi <br><b>${name1} 💞 ${name2}</b>`,
                             "success"
                         );
                     }
