@@ -141,6 +141,12 @@
                                     localStorage.setItem(`khoangmach_selected_mine_${accId}`, String(val));
                                 }
                             }
+                            if (key === 'khoangmach_leave_mine') {
+                                const accId = localStorage.getItem('hh3d_account_id') || '';
+                                if (accId) {
+                                    localStorage.setItem(`khoangmach_leave_mine_to_claim_reward_${accId}`, String(val));
+                                }
+                            }
                         }
                         console.log('[SettingsSync] ✅ Đồng bộ cấu hình từ Dashboard thành công.');
                     }

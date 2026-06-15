@@ -53,9 +53,12 @@ function App() {
   const [khoangmach_auto_takeover, setKhoangmachAutoTakeover] = useState(false);
   const [khoangmach_auto_takeover_rotation, setKhoangmachAutoTakeoverRotation] = useState(false);
   const [khoangmach_reward_mode, setKhoangmachRewardMode] = useState('any');
+  const [khoangmach_reward_time, setKhoangmachRewardTime] = useState('max');
   const [khoangmach_use_buff, setKhoangmachUseBuff] = useState(false);
   const [khoangmach_fast_attack, setKhoangmachFastAttack] = useState(false);
   const [khoangmach_check_interval, setKhoangmachCheckInterval] = useState('5');
+  const [khoangmach_leave_mine, setKhoangmachLeaveMine] = useState(false);
+  const [khoangmach_outer_notification, setKhoangmachOuterNotification] = useState(false);
   const [diceRollChoice, setDiceRollChoice] = useState('tai');
   const [tienduyenChoice, setTienduyenChoice] = useState('5');
   const [hoangvucMaximizeDamage, setHoangvucMaximizeDamage] = useState(false);
@@ -97,9 +100,12 @@ function App() {
         setKhoangmachAutoTakeover(data.khoangmach_auto_takeover === 'true' || data.khoangmach_auto_takeover === true);
         setKhoangmachAutoTakeoverRotation(data.khoangmach_auto_takeover_rotation === 'true' || data.khoangmach_auto_takeover_rotation === true);
         setKhoangmachRewardMode(data.khoangmach_reward_mode || 'any');
+        setKhoangmachRewardTime(data.khoangmach_reward_time || 'max');
         setKhoangmachUseBuff(data.khoangmach_use_buff === 'true' || data.khoangmach_use_buff === true);
         setKhoangmachFastAttack(data.khoangmach_fast_attack === 'true' || data.khoangmach_fast_attack === true);
         setKhoangmachCheckInterval(data.khoangmach_check_interval || '5');
+        setKhoangmachLeaveMine(data.khoangmach_leave_mine === 'true' || data.khoangmach_leave_mine === true);
+        setKhoangmachOuterNotification(data.khoangmach_outer_notification === 'true' || data.khoangmach_outer_notification === true);
         
         setDiceRollChoice(data['dice-roll-choice'] || 'tai');
         setTienduyenChoice(data['tienduyen-choice'] || '5');
@@ -286,9 +292,12 @@ function App() {
           khoangmach_auto_takeover,
           khoangmach_auto_takeover_rotation,
           khoangmach_reward_mode,
+          khoangmach_reward_time,
           khoangmach_use_buff,
           khoangmach_fast_attack,
           khoangmach_check_interval,
+          khoangmach_leave_mine,
+          khoangmach_outer_notification,
           'dice-roll-choice': diceRollChoice,
           'tienduyen-choice': tienduyenChoice,
           hoangvucMaximizeDamage,
@@ -1177,21 +1186,72 @@ function App() {
                       </div>
                     </div>
 
-                    <div className="inline-form-row" style={{ display: 'flex', gap: '15px' }}>
+                    <div className="inline-form-row" style={{ display: 'flex', gap: '15px', marginBottom: '12px' }}>
                       <div className="form-group" style={{ flex: 1 }}>
-                        <label>Chế độ nhận thưởng</label>
+                        <label>Chế độ nhận thưởng (% Buff)</label>
                         <select 
                           className="select-field" 
                           value={khoangmach_reward_mode} 
                           onChange={e => setKhoangmachRewardMode(e.target.value)}
                           disabled={selectedProfile.status === 'Running'}
                         >
-                          <option value="any">Bất kỳ quặng nào</option>
-                          <option value="high">Ưu tiên quặng cao</option>
-                          <option value="buff">Chỉ quặng có buff</option>
+                          <option value="any">Bất kỳ</option>
+                          <option value="110">110%</option>
+                          <option value="100">100%</option>
+                          <option value="20">20%</option>
                         </select>
                       </div>
 
+                      <div className="form-group" style={{ flex: 1 }}>
+                        <label>Thời gian đạt tối thiểu</label>
+                        <select 
+                          className="select-field" 
+                          value={khoangmach_reward_time} 
+                          onChange={e => setKhoangmachRewardTime(e.target.value)}
+                          disabled={selectedProfile.status === 'Running'}
+                        >
+                          <option value="max">Đạt tối đa</option>
+                          <option value="20">20 phút</option>
+                          <option value="10">10 phút</option>
+                          <option value="4">4 phút</option>
+                          <option value="2">2 phút</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
+                      <div className="toggle-container">
+                        <div className="toggle-label">
+                          <span className="toggle-title">Rời mỏ nhận thưởng</span>
+                        </div>
+                        <label className="switch">
+                          <input 
+                            type="checkbox" 
+                            checked={khoangmach_leave_mine} 
+                            onChange={e => setKhoangmachLeaveMine(e.target.checked)} 
+                            disabled={selectedProfile.status === 'Running'}
+                          />
+                          <span className="slider"></span>
+                        </label>
+                      </div>
+
+                      <div className="toggle-container">
+                        <div className="toggle-label">
+                          <span className="toggle-title">Báo ngoại tông vào mỏ</span>
+                        </div>
+                        <label className="switch">
+                          <input 
+                            type="checkbox" 
+                            checked={khoangmach_outer_notification} 
+                            onChange={e => setKhoangmachOuterNotification(e.target.checked)} 
+                            disabled={selectedProfile.status === 'Running'}
+                          />
+                          <span className="slider"></span>
+                        </label>
+                      </div>
+                    </div>
+
+                    <div className="inline-form-row" style={{ display: 'flex', gap: '15px' }}>
                       <div className="form-group" style={{ flex: 1 }}>
                         <label>Chu kỳ quét mỏ (phút)</label>
                         <input 
