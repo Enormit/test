@@ -88,7 +88,8 @@ app.get('/api/profiles', (req, res) => {
     // Update running status based on active processes
     const updated = profiles.map(p => ({
         ...p,
-        status: activeBrowsers[p.id] ? 'Running' : 'Stopped'
+        status: activeBrowsers[p.id] ? 'Running' : 'Stopped',
+        isRunningHeadless: activeBrowsers[p.id] ? activeBrowsers[p.id].isHeadless : false
     }));
     res.json(updated);
 });
@@ -251,22 +252,18 @@ app.post('/api/profiles/:id/metadata', (req, res) => {
     res.json({ success: true });
 });
 
-// Start a profile
-app.post('/api/profiles/:id/start', async (req, res) => {
-    const { id } = req.params;
-    const { headless } = req.body; // allow overriding headless mode
-
+async function startProfileBrowser(id, overrideHeadless) {
     if (activeBrowsers[id]) {
-        return res.status(400).json({ error: 'Profile is already running' });
+        throw new Error('Profile is already running');
     }
 
     const profiles = readProfiles();
     const profile = profiles.find(p => p.id === id);
-    if (!profile) return res.status(404).json({ error: 'Profile not found' });
+    if (!profile) throw new Error('Profile not found');
 
     const firefoxPath = getFirefoxPath();
     if (!firefoxPath) {
-        return res.status(500).json({ error: 'Mozilla Firefox installation not found on this system.' });
+        throw new Error('Mozilla Firefox installation not found on this system.');
     }
 
     const profileDataDir = path.join(PROFILES_DIR, id);
@@ -290,7 +287,7 @@ app.post('/api/profiles/:id/start', async (req, res) => {
         }
     }
 
-    const isHeadless = headless !== undefined ? headless : profile.headless;
+    const isHeadless = overrideHeadless !== undefined ? overrideHeadless : profile.headless;
 
     // Build extra preferences for Firefox
     const extraPrefsFirefox = {
@@ -322,70 +319,73 @@ app.post('/api/profiles/:id/start', async (req, res) => {
 
     sendLog(id, 'info', `Khởi chạy trình duyệt Firefox... (Chế độ: ${isHeadless ? 'Ẩn' : 'Hiện'})`);
 
-    try {
-        const browser = await puppeteer.launch({
-            product: 'firefox',
-            protocol: 'webDriverBiDi',
-            executablePath: firefoxPath,
-            headless: isHeadless,
-            userDataDir: profileDataDir,
-            defaultViewport: null,
-            extraPrefsFirefox
-        });
+    const browser = await puppeteer.launch({
+        product: 'firefox',
+        protocol: 'webDriverBiDi',
+        executablePath: firefoxPath,
+        headless: isHeadless,
+        userDataDir: profileDataDir,
+        defaultViewport: null,
+        extraPrefsFirefox
+    });
 
-        activeBrowsers[id] = browser;
-        sendLog(id, 'info', 'Đã nạp thành công Violentmonkey vào Firefox.');
+    activeBrowsers[id] = browser;
+    browser.isHeadless = isHeadless;
+    sendLog(id, 'info', 'Đã nạp thành công Violentmonkey vào Firefox.');
 
-        // Apply proxy authentication if needed
-        if (profile.proxyUsername && profile.proxyPassword) {
-            sendLog(id, 'info', 'Ủy thác tài khoản proxy. Đang cấu hình xác thực...');
-            const pages = await browser.pages();
-            for (let page of pages) {
-                try {
+    // Apply proxy authentication if needed
+    if (profile.proxyUsername && profile.proxyPassword) {
+        sendLog(id, 'info', 'Ủy thác tài khoản proxy. Đang cấu hình xác thực...');
+        const pages = await browser.pages();
+        for (let page of pages) {
+            try {
+                await page.authenticate({
+                    username: profile.proxyUsername,
+                    password: profile.proxyPassword
+                });
+            } catch (e) {
+                sendLog(id, 'warning', `Yêu cầu xác thực Proxy thủ công: Vui lòng nhập và lưu tài khoản/mật khẩu proxy ở chế độ Hiện (Headful).`);
+            }
+        }
+        // Authenticate on any new target/page
+        browser.on('targetcreated', async (target) => {
+            if (target.type() === 'page') {
+                const page = await target.page();
+                if (page) {
                     await page.authenticate({
                         username: profile.proxyUsername,
                         password: profile.proxyPassword
-                    });
-                } catch (e) {
-                    sendLog(id, 'warning', `Yêu cầu xác thực Proxy thủ công: Vui lòng nhập và lưu tài khoản/mật khẩu proxy ở chế độ Hiện (Headful).`);
+                    }).catch(() => {});
                 }
             }
-            // Authenticate on any new target/page
-            browser.on('targetcreated', async (target) => {
-                if (target.type() === 'page') {
-                    const page = await target.page();
-                    if (page) {
-                        await page.authenticate({
-                            username: profile.proxyUsername,
-                            password: profile.proxyPassword
-                        }).catch(() => {});
-                    }
-                }
-            });
-        }
-
-        // Open game URL automatically
-        const pages = await browser.pages();
-        const mainPage = pages.length > 0 ? pages[0] : await browser.newPage();
-        await mainPage.goto(`https://hoathinh3d.co/?profileId=${id}`, { waitUntil: 'domcontentloaded' }).catch(() => {});
-
-        // Open install page in new tab if headful mode (for Violentmonkey userscript install)
-
-
-
-
-        // Listen for browser close/crash
-        browser.on('disconnected', () => {
-            delete activeBrowsers[id];
-            sendLog(id, 'info', 'Trình duyệt đã đóng.');
-            broadcast({ type: 'STATUS', data: { id, status: 'Stopped' } });
         });
+    }
 
-        broadcast({ type: 'STATUS', data: { id, status: 'Running' } });
+    // Open game URL automatically
+    const pages = await browser.pages();
+    const mainPage = pages.length > 0 ? pages[0] : await browser.newPage();
+    await mainPage.goto(`https://hoathinh3d.co/?profileId=${id}`, { waitUntil: 'domcontentloaded' }).catch(() => {});
+
+    // Listen for browser close/crash
+    browser.on('disconnected', () => {
+        delete activeBrowsers[id];
+        sendLog(id, 'info', 'Trình duyệt đã đóng.');
+        broadcast({ type: 'STATUS', data: { id, status: 'Stopped' } });
+    });
+
+    broadcast({ type: 'STATUS', data: { id, status: 'Running', isRunningHeadless: isHeadless } });
+    return browser;
+}
+
+// Start a profile
+app.post('/api/profiles/:id/start', async (req, res) => {
+    const { id } = req.params;
+    const { headless } = req.body;
+
+    try {
+        await startProfileBrowser(id, headless);
         res.json({ success: true });
     } catch (err) {
-        delete activeBrowsers[id];
-        sendLog(id, 'error', `Khởi chạy thất bại: ${err.message}`);
         res.status(500).json({ error: err.message });
     }
 });
@@ -444,6 +444,7 @@ app.post('/api/profiles/:id/start-clean', async (req, res) => {
     child.unref();
 
     activeBrowsers[id] = {
+        isHeadless: false,
         close: async () => {
             try {
                 child.kill();
@@ -477,6 +478,68 @@ app.post('/api/profiles/:id/stop', async (req, res) => {
         delete activeBrowsers[id];
         res.json({ success: true });
     } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// Toggle headless mode for a running browser
+app.post('/api/profiles/:id/toggle-headless', async (req, res) => {
+    const { id } = req.params;
+    const browser = activeBrowsers[id];
+    if (!browser) {
+        return res.status(400).json({ error: 'Profile is not running' });
+    }
+
+    if (!browser.pages) {
+        return res.status(400).json({ error: 'Không thể chuyển đổi chế độ cho trình duyệt Đăng Nhập Sạch' });
+    }
+
+    const prevHeadless = browser.isHeadless || false;
+    const nextHeadless = !prevHeadless;
+
+    sendLog(id, 'info', `Đang chuyển đổi trình duyệt sang chế độ ${nextHeadless ? 'Ẩn (Chạy ngầm)' : 'Hiện (Trực quan)'}...`);
+
+    try {
+        await browser.close();
+        delete activeBrowsers[id];
+        
+        // Wait 1.5 seconds for release
+        await new Promise(resolve => setTimeout(resolve, 1500));
+
+        await startProfileBrowser(id, nextHeadless);
+        res.json({ success: true });
+    } catch (err) {
+        sendLog(id, 'error', `Chuyển đổi chế độ thất bại: ${err.message}`);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Refresh page for a running browser
+app.post('/api/profiles/:id/refresh', async (req, res) => {
+    const { id } = req.params;
+    const browser = activeBrowsers[id];
+    if (!browser) {
+        return res.status(400).json({ error: 'Profile is not running' });
+    }
+
+    if (!browser.pages) {
+        return res.status(400).json({ error: 'Trình duyệt ở chế độ Đăng Nhập Sạch không hỗ trợ tự động điều khiển' });
+    }
+
+    try {
+        sendLog(id, 'info', 'Đang thực hiện tải lại trang game...');
+        const pages = await browser.pages();
+        if (pages.length > 0) {
+            await pages[0].reload({ waitUntil: 'domcontentloaded' });
+            sendLog(id, 'success', 'Đã tải lại trang game thành công.');
+        } else {
+            const page = await browser.newPage();
+            await page.goto(`https://hoathinh3d.co/?profileId=${id}`, { waitUntil: 'domcontentloaded' });
+            sendLog(id, 'success', 'Đã mở tab game mới và tải trang.');
+        }
+        res.json({ success: true });
+    } catch (e) {
+        sendLog(id, 'error', `Tải lại trang thất bại: ${e.message}`);
         res.status(500).json({ error: e.message });
     }
 });

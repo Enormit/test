@@ -160,8 +160,8 @@ function App() {
           };
         });
       } else if (msg.type === 'STATUS') {
-        const { id, status } = msg.data;
-        setProfiles(prev => prev.map(p => p.id === id ? { ...p, status } : p));
+        const { id } = msg.data;
+        setProfiles(prev => prev.map(p => p.id === id ? { ...p, ...msg.data } : p));
       }
     };
 
@@ -427,6 +427,41 @@ function App() {
     }
   };
 
+  // Toggle headless mode (show/hide browser)
+  const handleToggleHeadless = async () => {
+    if (!selectedId) return;
+    setLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}/profiles/${selectedId}/toggle-headless`, { method: 'POST' });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error);
+      }
+      fetchProfiles();
+    } catch (err) {
+      alert('Chuyển đổi chế độ ẩn/hiện thất bại: ' + err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Refresh current game page
+  const handleRefreshPage = async () => {
+    if (!selectedId) return;
+    setLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}/profiles/${selectedId}/refresh`, { method: 'POST' });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error);
+      }
+    } catch (err) {
+      alert('Tải lại trang thất bại: ' + err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const resetForm = () => {
     setFormName('');
     setProxyType('None');
@@ -686,10 +721,27 @@ function App() {
                 <div className="glass-panel" style={{ padding: '16px 20px', display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
                   <span style={{ fontWeight: '700', fontSize: '15px', marginRight: '12px' }}>Điều khiển {selectedProfile.name}:</span>
                   {selectedProfile.status === 'Running' ? (
-                    <button className="btn btn-danger" style={{ width: 'auto', padding: '10px 20px' }} onClick={handleStop} disabled={loading}>
-                      <Square size={16} />
-                      Dừng Trình Duyệt (Stop)
-                    </button>
+                    <>
+                      <button className="btn btn-danger" style={{ width: 'auto', padding: '10px 20px' }} onClick={handleStop} disabled={loading}>
+                        <Square size={16} />
+                        Dừng Trình Duyệt (Stop)
+                      </button>
+                      {selectedProfile.isRunningHeadless ? (
+                        <button className="btn btn-secondary" style={{ width: 'auto', borderColor: '#00f0ff', color: '#00f0ff', padding: '10px 20px' }} onClick={handleToggleHeadless} disabled={loading}>
+                          <Eye size={16} />
+                          Hiện Trình Duyệt (Show)
+                        </button>
+                      ) : (
+                        <button className="btn btn-secondary" style={{ width: 'auto', padding: '10px 20px' }} onClick={handleToggleHeadless} disabled={loading}>
+                          <EyeOff size={16} />
+                          Ẩn Trình Duyệt (Hide)
+                        </button>
+                      )}
+                      <button className="btn btn-secondary" style={{ width: 'auto', padding: '10px 20px' }} onClick={handleRefreshPage} disabled={loading}>
+                        <RefreshCw size={16} />
+                        Tải Lại Trang (Refresh)
+                      </button>
+                    </>
                   ) : (
                     <>
                       <button className="btn btn-primary" style={{ width: 'auto', padding: '10px 20px' }} onClick={() => handleStart(false)} disabled={loading}>
