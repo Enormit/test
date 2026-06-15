@@ -143,7 +143,9 @@ app.post('/api/profiles', (req, res) => {
             'tienduyen-choice': '5',
             hoangvucMaximizeDamage: false,
             selfSchedule_h: '0',
-            selfSchedule_m: '30'
+            selfSchedule_m: '30',
+            luyenDanSelectedFriendIds: '',
+            khoangmach_selected_mine: ''
         }
     };
 
@@ -227,6 +229,23 @@ app.put('/api/profiles/:id/settings', (req, res) => {
     };
     writeProfiles(profiles);
     res.json(profiles[index].settings);
+});
+
+// Update profile metadata (friends and mines)
+app.post('/api/profiles/:id/metadata', (req, res) => {
+    const { id } = req.params;
+    const { friends, mines } = req.body;
+    const profiles = readProfiles();
+    const index = profiles.findIndex(p => p.id === id);
+    if (index === -1) return res.status(404).json({ error: 'Profile not found' });
+
+    profiles[index].metadata = {
+        friends: friends || [],
+        mines: mines || []
+    };
+    writeProfiles(profiles);
+    broadcast({ type: 'STATUS', data: { id, status: profiles[index].status } });
+    res.json({ success: true });
 });
 
 // Start a profile

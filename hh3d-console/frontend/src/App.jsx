@@ -24,6 +24,7 @@ function App() {
   const [proxyPassword, setProxyPassword] = useState('');
   const [headless, setHeadless] = useState(false);
   const [activeTab, setActiveTab] = useState('logs');
+  const [friendSearch, setFriendSearch] = useState('');
 
   // Tool settings state
   const [generalVipMode, setGeneralVipMode] = useState(false);
@@ -60,6 +61,8 @@ function App() {
   const [hoangvucMaximizeDamage, setHoangvucMaximizeDamage] = useState(false);
   const [selfSchedule_h, setSelfScheduleH] = useState('0');
   const [selfSchedule_m, setSelfScheduleM] = useState('30');
+  const [luyenDanSelectedFriendIds, setLuyenDanSelectedFriendIds] = useState('');
+  const [khoangmach_selected_mine, setKhoangmachSelectedMine] = useState('');
 
   const fetchSettings = async (id) => {
     try {
@@ -103,6 +106,8 @@ function App() {
         setHoangvucMaximizeDamage(data.hoangvucMaximizeDamage === 'true' || data.hoangvucMaximizeDamage === true);
         setSelfScheduleH(data.selfSchedule_h || '0');
         setSelfScheduleM(data.selfSchedule_m || '30');
+        setLuyenDanSelectedFriendIds(data.luyenDanSelectedFriendIds || '');
+        setKhoangmachSelectedMine(data.khoangmach_selected_mine || '');
       }
     } catch (e) {
       console.error('Error fetching settings:', e);
@@ -288,7 +293,9 @@ function App() {
           'tienduyen-choice': tienduyenChoice,
           hoangvucMaximizeDamage,
           selfSchedule_h,
-          selfSchedule_m
+          selfSchedule_m,
+          luyenDanSelectedFriendIds,
+          khoangmach_selected_mine
         })
       });
 
@@ -1055,6 +1062,70 @@ function App() {
                         />
                       </div>
                     </div>
+
+                    {/* Friend selection list */}
+                    <div className="form-group" style={{ marginTop: '10px' }}>
+                      <label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span>Chọn bạn bè hỗ trợ (Mời / Nhận lời mời)</span>
+                        <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>
+                          Đã chọn: {luyenDanSelectedFriendIds ? luyenDanSelectedFriendIds.split(',').filter(Boolean).length : 0} người
+                        </span>
+                      </label>
+                      
+                      {selectedProfile.metadata?.friends && selectedProfile.metadata.friends.length > 0 ? (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '6px' }}>
+                          <input 
+                            type="text" 
+                            className="input-field" 
+                            placeholder="Tìm kiếm bạn bè..." 
+                            value={friendSearch} 
+                            onChange={e => setFriendSearch(e.target.value)}
+                            style={{ padding: '6px 10px', fontSize: '13px' }}
+                          />
+                          <div style={{ maxHeight: '150px', overflowY: 'auto', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--border-glass)', borderRadius: '6px', padding: '8px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                            {selectedProfile.metadata.friends
+                              .filter(f => !friendSearch || (f.display_name || '').toLowerCase().includes(friendSearch.toLowerCase()) || String(f.user_id).includes(friendSearch))
+                              .map(f => {
+                                const uids = luyenDanSelectedFriendIds ? luyenDanSelectedFriendIds.split(',').filter(Boolean) : [];
+                                const isChecked = uids.includes(String(f.user_id));
+                                return (
+                                  <label key={f.user_id} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '13px', userSelect: 'none' }}>
+                                    <input 
+                                      type="checkbox" 
+                                      checked={isChecked} 
+                                      disabled={selectedProfile.status === 'Running'}
+                                      onChange={e => {
+                                        let newIds = [...uids];
+                                        if (e.target.checked) {
+                                          newIds.push(String(f.user_id));
+                                        } else {
+                                          newIds = newIds.filter(id => id !== String(f.user_id));
+                                        }
+                                        setLuyenDanSelectedFriendIds(newIds.join(','));
+                                      }}
+                                    />
+                                    <span>{f.display_name} (ID: {f.user_id})</span>
+                                  </label>
+                                );
+                              })}
+                          </div>
+                        </div>
+                      ) : (
+                        <div style={{ padding: '12px', background: 'rgba(255,255,255,0.02)', border: '1px dashed var(--border-glass)', borderRadius: '6px', marginTop: '6px' }}>
+                          <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '8px' }}>
+                            ⚠️ Chưa có dữ liệu bạn bè được đồng bộ. Hãy khởi chạy profile này ở chế độ Hiện (Headful) ít nhất 1 lần để tải danh sách bạn bè từ game, hoặc nhập thủ công các ID (cách nhau bằng dấu phẩy):
+                          </p>
+                          <input 
+                            type="text" 
+                            className="input-field" 
+                            placeholder="Ví dụ: 12345,67890" 
+                            value={luyenDanSelectedFriendIds} 
+                            onChange={e => setLuyenDanSelectedFriendIds(e.target.value)}
+                            disabled={selectedProfile.status === 'Running'}
+                          />
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   {/* Category 3: Mining Config */}
@@ -1132,6 +1203,43 @@ function App() {
                         />
                       </div>
                     </div>
+
+                    {/* Mine Selection list */}
+                    <div className="form-group" style={{ marginTop: '10px' }}>
+                      <label>Mỏ khoáng sản muốn cướp / giữ</label>
+                      {selectedProfile.metadata?.mines && selectedProfile.metadata.mines.length > 0 ? (
+                        <select 
+                          className="select-field" 
+                          value={khoangmach_selected_mine} 
+                          onChange={e => setKhoangmachSelectedMine(e.target.value)}
+                          disabled={selectedProfile.status === 'Running'}
+                        >
+                          <option value="">-- Chọn mỏ --</option>
+                          {selectedProfile.metadata.mines.map(m => {
+                            const valStr = JSON.stringify({ id: m.id, type: m.type });
+                            return (
+                              <option key={m.id} value={valStr}>
+                                [{m.type === 'gold' ? 'VÀNG' : m.type === 'silver' ? 'BẠC' : 'ĐỒNG'}] {m.name || `Mỏ ID ${m.id}`}
+                              </option>
+                            );
+                          })}
+                        </select>
+                      ) : (
+                        <div style={{ padding: '12px', background: 'rgba(255,255,255,0.02)', border: '1px dashed var(--border-glass)', borderRadius: '6px', marginTop: '6px' }}>
+                          <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '8px' }}>
+                            ⚠️ Chưa có dữ liệu danh sách mỏ. Hãy chạy profile này ở chế độ Hiện (Headful) ít nhất 1 lần để quét và đồng bộ danh sách mỏ từ game, hoặc nhập thủ công JSON cấu hình mỏ:
+                          </p>
+                          <input 
+                            type="text" 
+                            className="input-field" 
+                            placeholder='Ví dụ: {"id":12,"type":"gold"}' 
+                            value={khoangmach_selected_mine} 
+                            onChange={e => setKhoangmachSelectedMine(e.target.value)}
+                            disabled={selectedProfile.status === 'Running'}
+                          />
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   {/* Category 4: Other Settings & Timer */}
@@ -1156,7 +1264,7 @@ function App() {
                       </div>
 
                       <div className="form-group">
-                        <label>Lựa chọn Tiên Duyên</label>
+                        <label>Lựa chọn Tiên Duyên & Số người Tặng Hoa</label>
                         <select 
                           className="select-field" 
                           value={tienduyenChoice} 

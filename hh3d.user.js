@@ -135,6 +135,12 @@
                                 }
                             }
                             localStorage.setItem(key, String(val));
+                            if (key === 'khoangmach_selected_mine') {
+                                const accId = localStorage.getItem('hh3d_account_id') || '';
+                                if (accId) {
+                                    localStorage.setItem(`khoangmach_selected_mine_${accId}`, String(val));
+                                }
+                            }
                         }
                         console.log('[SettingsSync] ✅ Đồng bộ cấu hình từ Dashboard thành công.');
                     }
@@ -11562,5 +11568,41 @@
     automatic.checkAndStart();
     if (location.pathname.includes("khoang-mach") || location.href.includes("khoang-mach")) {
         hienTuviKM.startUp();
+    }
+
+    // Send friends and mines list to server (Metadata Sync)
+    if (profileId) {
+        (async () => {
+            try {
+                await new Promise(resolve => setTimeout(resolve, 8000));
+                let friends = [];
+                try {
+                    if (!tanghoa.initialized) await tanghoa.init();
+                    const friendsRes = await tanghoa.getFriends();
+                    friends = Array.isArray(friendsRes?.data) ? friendsRes.data : (Array.isArray(friendsRes) ? friendsRes : []);
+                } catch (e) {
+                    console.warn('[MetadataSync] Failed to load friends:', e);
+                }
+
+                let mines = [];
+                try {
+                    const minesRes = await khoangmach.getAllMines(false);
+                    mines = minesRes?.minesData || [];
+                } catch (e) {
+                    console.warn('[MetadataSync] Failed to load mines:', e);
+                }
+
+                if (friends.length > 0 || mines.length > 0) {
+                    await fetch('http://localhost:3000/api/profiles/' + profileId + '/metadata', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ friends, mines })
+                    });
+                    console.log('[MetadataSync] ✅ Đồng bộ danh sách bạn bè và mỏ thành công.');
+                }
+            } catch (err) {
+                console.warn('[MetadataSync] ⚠️ Lỗi gửi metadata:', err.message);
+            }
+        })();
     }
 })();
