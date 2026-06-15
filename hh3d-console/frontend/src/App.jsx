@@ -25,6 +25,8 @@ function App() {
   const [headless, setHeadless] = useState(false);
   const [activeTab, setActiveTab] = useState('logs');
   const [friendSearch, setFriendSearch] = useState('');
+  const [settingsTab, setSettingsTab] = useState('general');
+  const [logFilter, setLogFilter] = useState('all');
 
   // Tool settings state
   const [generalVipMode, setGeneralVipMode] = useState(false);
@@ -207,6 +209,8 @@ function App() {
 
   useEffect(() => {
     setActiveTab('logs');
+    setSettingsTab('general');
+    setLogFilter('all');
   }, [selectedId]);
 
   // Handle profile creation
@@ -734,656 +738,772 @@ function App() {
                 </div>
               </div>
             ) : (
-              <div className="tab-content-settings" style={{ display: 'grid', gridTemplateColumns: '1.2fr 2fr', gap: '20px', height: 'calc(100vh - 180px)', overflow: 'hidden' }}>
-                
-                {/* Left Column: Profile & Proxy Config */}
-                <div className="glass-panel" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px', overflowY: 'auto' }}>
-                  <h3 className="panel-title" style={{ fontSize: '16px', borderBottom: '1px solid var(--border-glass)', paddingBottom: '10px' }}>Kết Nối & Profile</h3>
-                  
-                  <div className="form-group">
-                    <label>Tên Profile</label>
-                    <input 
-                      type="text" 
-                      className="input-field" 
-                      value={formName} 
-                      onChange={e => setFormName(e.target.value)} 
-                      disabled={selectedProfile.status === 'Running'}
-                    />
-                  </div>
-
-                  <div className="form-group">
-                    <label>Loại Proxy</label>
-                    <select 
-                      className="select-field" 
-                      value={proxyType} 
-                      onChange={e => setProxyType(e.target.value)}
-                      disabled={selectedProfile.status === 'Running'}
+              <div className="hh3d-settings-layout" style={{ height: 'calc(100vh - 180px)' }}>
+                {/* LEFT: Vertical Tab Sidebar */}
+                <div className="hh3d-settings-tabs">
+                  {[
+                    { id: 'general', icon: '⚙️', label: 'Chung & Nhiệm Vụ' },
+                    { id: 'profile', icon: '🔌', label: 'Kết Nối & Profile' },
+                    { id: 'khoangmach', icon: '⛏️', label: 'Khoáng Mạch' },
+                    { id: 'luyendan', icon: '🧪', label: 'Luyện Đan' },
+                    { id: 'log', icon: '📋', label: 'Lịch Sử Log' },
+                  ].map(tab => (
+                    <button
+                      key={tab.id}
+                      className={`hh3d-settings-tab ${settingsTab === tab.id ? 'active' : ''}`}
+                      onClick={() => setSettingsTab(tab.id)}
                     >
-                      <option value="None">Không Proxy (Mạng nhà)</option>
-                      <option value="HTTP">HTTP Proxy</option>
-                      <option value="SOCKS5">SOCKS5 Proxy</option>
-                    </select>
-                  </div>
-
-                  {proxyType !== 'None' && (
-                    <>
-                      <div className="inline-form-row" style={{ display: 'flex', gap: '10px' }}>
-                        <div className="form-group" style={{ flex: 2 }}>
-                          <label>IP / Host</label>
-                          <input 
-                            type="text" 
-                            className="input-field" 
-                            value={proxyHost} 
-                            onChange={e => setProxyHost(e.target.value)}
-                            disabled={selectedProfile.status === 'Running'}
-                          />
-                        </div>
-                        <div className="form-group" style={{ flex: 1 }}>
-                          <label>Cổng Port</label>
-                          <input 
-                            type="number" 
-                            className="input-field" 
-                            value={proxyPort} 
-                            onChange={e => setProxyPort(e.target.value)}
-                            disabled={selectedProfile.status === 'Running'}
-                          />
-                        </div>
-                      </div>
-
-                      <div className="inline-form-row" style={{ display: 'flex', gap: '10px' }}>
-                        <div className="form-group">
-                          <label>Proxy User</label>
-                          <input 
-                            type="text" 
-                            className="input-field" 
-                            value={proxyUsername} 
-                            onChange={e => setProxyUsername(e.target.value)}
-                            disabled={selectedProfile.status === 'Running'}
-                          />
-                        </div>
-                        <div className="form-group">
-                          <label>Proxy Pass</label>
-                          <input 
-                            type="password" 
-                            className="input-field" 
-                            value={proxyPassword} 
-                            onChange={e => setProxyPassword(e.target.value)}
-                            disabled={selectedProfile.status === 'Running'}
-                          />
-                        </div>
-                      </div>
-                    </>
-                  )}
-
-                  <div className="toggle-container">
-                    <div className="toggle-label">
-                      <span className="toggle-title">Mặc định chạy ngầm</span>
-                      <span className="toggle-subtitle">Tự ẩn Firefox khi bấm Start</span>
-                    </div>
-                    <label className="switch">
-                      <input 
-                        type="checkbox" 
-                        checked={headless} 
-                        onChange={e => setHeadless(e.target.checked)} 
-                        disabled={selectedProfile.status === 'Running'}
-                      />
-                      <span className="slider"></span>
-                    </label>
-                  </div>
-
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: 'auto', paddingTop: '20px', borderTop: '1px solid var(--border-glass)' }}>
-                    <button 
-                      className="btn btn-primary" 
-                      onClick={handleUpdateProfile} 
-                      disabled={loading || selectedProfile.status === 'Running'}
-                      style={{ width: '100%', justifyContent: 'center' }}
-                    >
-                      <Settings size={16} />
-                      Lưu Toàn Bộ Cấu Hình
+                      <span className="tab-icon">{tab.icon}</span>
+                      {tab.label}
                     </button>
-                    <button 
-                      className="btn btn-danger" 
-                      onClick={handleDeleteProfile} 
-                      disabled={loading || selectedProfile.status === 'Running'}
-                      style={{ width: '100%', justifyContent: 'center', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)', color: '#ef4444' }}
-                    >
-                      <Trash2 size={16} />
-                      Xóa Profile Này
-                    </button>
-                  </div>
+                  ))}
                 </div>
 
-                {/* Right Column: Detailed Userscript Settings */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', overflowY: 'auto', paddingRight: '4px' }}>
-                  
-                  {/* Category 1: Daily Tasks */}
-                  <div className="glass-panel" style={{ padding: '20px' }}>
-                    <h4 className="panel-title" style={{ fontSize: '15px', color: 'var(--accent-cyan)', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <CheckCircle size={16} />
-                      Nhiệm Vụ Hàng Ngày (Daily Quests)
-                    </h4>
-                    
-                    <div className="toggle-container" style={{ marginBottom: '12px', background: 'rgba(0, 240, 255, 0.03)', border: '1px dashed rgba(0, 240, 255, 0.2)' }}>
-                      <div className="toggle-label">
-                        <span className="toggle-title" style={{ color: 'var(--accent-cyan)' }}>Kích hoạt Chế độ VIP (generalVipMode)</span>
-                        <span className="toggle-subtitle">Mở các chức năng nhận lượt, claim thưởng dành riêng cho VIP</span>
-                      </div>
-                      <label className="switch">
-                        <input 
-                          type="checkbox" 
-                          checked={generalVipMode} 
-                          onChange={e => setGeneralVipMode(e.target.checked)} 
-                          disabled={selectedProfile.status === 'Running'}
-                        />
-                        <span className="slider"></span>
-                      </label>
-                    </div>
+                {/* RIGHT: Content per tab */}
+                <div style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0, overflow: 'hidden', flex: 1 }}>
+                  <div className="hh3d-settings-content" style={{ flex: 1, minHeight: 0 }}>
+                    {settingsTab === 'general' && (
+                      <div className="hh3d-section">
+                        <div className="hh3d-section-title">⚙️ Cấu hình chung</div>
+                        <div className="hh3d-option" style={{ background: 'rgba(0, 240, 255, 0.03)', borderColor: 'rgba(0, 240, 255, 0.2)' }}>
+                          <div className="hh3d-option-label">
+                            <span className="hh3d-option-title" style={{ color: 'var(--accent-cyan)' }}>Kích hoạt Chế độ VIP (generalVipMode)</span>
+                            <span className="hh3d-option-desc">Mở các chức năng nhận lượt, claim thưởng dành riêng cho VIP</span>
+                          </div>
+                          <label className="switch">
+                            <input 
+                              type="checkbox" 
+                              checked={generalVipMode} 
+                              onChange={e => setGeneralVipMode(e.target.checked)} 
+                              disabled={selectedProfile.status === 'Running'}
+                            />
+                            <span className="slider"></span>
+                          </label>
+                        </div>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                      <div className="toggle-container">
-                        <div className="toggle-label"><span className="toggle-title">Tự Điểm Danh</span></div>
-                        <label className="switch">
-                          <input type="checkbox" checked={autoDiemDanh} onChange={e => setAutoDiemDanh(e.target.checked)} disabled={selectedProfile.status === 'Running'} />
-                          <span className="slider"></span>
-                        </label>
-                      </div>
-
-                      <div className="toggle-container">
-                        <div className="toggle-label"><span className="toggle-title">Tự Thí Luyện</span></div>
-                        <label className="switch">
-                          <input type="checkbox" checked={autoThiLuyen} onChange={e => setAutoThiLuyen(e.target.checked)} disabled={selectedProfile.status === 'Running'} />
-                          <span className="slider"></span>
-                        </label>
-                      </div>
-
-                      <div className="toggle-container">
-                        <div className="toggle-label"><span className="toggle-title">Tự Phúc Lợi</span></div>
-                        <label className="switch">
-                          <input type="checkbox" checked={autoPhucLoi} onChange={e => setAutoPhucLoi(e.target.checked)} disabled={selectedProfile.status === 'Running'} />
-                          <span className="slider"></span>
-                        </label>
-                      </div>
-
-                      <div className="toggle-container">
-                        <div className="toggle-label"><span className="toggle-title">Tự Nhận Trận Văn (VIP)</span></div>
-                        <label className="switch">
-                          <input type="checkbox" checked={autoClaimDailyTurns} onChange={e => setAutoClaimDailyTurns(e.target.checked)} disabled={selectedProfile.status === 'Running'} />
-                          <span className="slider"></span>
-                        </label>
-                      </div>
-
-                      <div className="toggle-container">
-                        <div className="toggle-label"><span className="toggle-title">Tự Hoang Vực</span></div>
-                        <label className="switch">
-                          <input type="checkbox" checked={autoHoangVuc} onChange={e => setAutoHoangVuc(e.target.checked)} disabled={selectedProfile.status === 'Running'} />
-                          <span className="slider"></span>
-                        </label>
-                      </div>
-
-                      <div className="toggle-container">
-                        <div className="toggle-label"><span className="toggle-title">Tự Mê Cung</span></div>
-                        <label className="switch">
-                          <input type="checkbox" checked={autoMeCung} onChange={e => setAutoMeCung(e.target.checked)} disabled={selectedProfile.status === 'Running'} />
-                          <span className="slider"></span>
-                        </label>
-                      </div>
-
-                      <div className="toggle-container">
-                        <div className="toggle-label"><span className="toggle-title">Tự Đổ Thạch</span></div>
-                        <label className="switch">
-                          <input type="checkbox" checked={autoDoThach} onChange={e => setAutoDoThach(e.target.checked)} disabled={selectedProfile.status === 'Running'} />
-                          <span className="slider"></span>
-                        </label>
-                      </div>
-
-                      <div className="toggle-container">
-                        <div className="toggle-label"><span className="toggle-title">Tự Bí Cảnh</span></div>
-                        <label className="switch">
-                          <input type="checkbox" checked={autoBiCanh} onChange={e => setAutoBiCanh(e.target.checked)} disabled={selectedProfile.status === 'Running'} />
-                          <span className="slider"></span>
-                        </label>
-                      </div>
-
-                      <div className="toggle-container">
-                        <div className="toggle-label"><span className="toggle-title">Tự Tiên Duyên</span></div>
-                        <label className="switch">
-                          <input type="checkbox" checked={autoTienDuyen} onChange={e => setAutoTienDuyen(e.target.checked)} disabled={selectedProfile.status === 'Running'} />
-                          <span className="slider"></span>
-                        </label>
-                      </div>
-
-                      <div className="toggle-container">
-                        <div className="toggle-label"><span className="toggle-title">Tự H.Động Ngày</span></div>
-                        <label className="switch">
-                          <input type="checkbox" checked={autoHoatDongNgay} onChange={e => setAutoHoatDongNgay(e.target.checked)} disabled={selectedProfile.status === 'Running'} />
-                          <span className="slider"></span>
-                        </label>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Category 2: Alchemy Config */}
-                  <div className="glass-panel" style={{ padding: '20px' }}>
-                    <h4 className="panel-title" style={{ fontSize: '15px', color: 'var(--accent-green)', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <RefreshCw size={16} />
-                      Tự Động Luyện Đan (Alchemy Settings)
-                    </h4>
-
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
-                      <div className="toggle-container">
-                        <div className="toggle-label"><span className="toggle-title">Kích hoạt Luyện Đan</span></div>
-                        <label className="switch">
-                          <input type="checkbox" checked={autoLuyenDan} onChange={e => setAutoLuyenDan(e.target.checked)} disabled={selectedProfile.status === 'Running'} />
-                          <span className="slider"></span>
-                        </label>
-                      </div>
-
-                      <div className="toggle-container">
-                        <div className="toggle-label"><span className="toggle-title">Tự Bắt Đầu Mẻ Mới</span></div>
-                        <label className="switch">
-                          <input type="checkbox" checked={luyenDanAutoStart} onChange={e => setLuyenDanAutoStart(e.target.checked)} disabled={selectedProfile.status === 'Running'} />
-                          <span className="slider"></span>
-                        </label>
-                      </div>
-
-                      <div className="toggle-container">
-                        <div className="toggle-label"><span className="toggle-title">Tự Phân Giải Đan Thừa</span></div>
-                        <label className="switch">
-                          <input type="checkbox" checked={luyenDanAutoDecompose} onChange={e => setLuyenDanAutoDecompose(e.target.checked)} disabled={selectedProfile.status === 'Running'} />
-                          <span className="slider"></span>
-                        </label>
-                      </div>
-
-                      <div className="toggle-container">
-                        <div className="toggle-label"><span className="toggle-title">Tự Lọc Thuộc Tính (Tune)</span></div>
-                        <label className="switch">
-                          <input type="checkbox" checked={luyenDanAutoTune} onChange={e => setLuyenDanAutoTune(e.target.checked)} disabled={selectedProfile.status === 'Running'} />
-                          <span className="slider"></span>
-                        </label>
-                      </div>
-
-                      <div className="toggle-container">
-                        <div className="toggle-label"><span className="toggle-title">Tự Sử Dụng Đan Dược</span></div>
-                        <label className="switch">
-                          <input type="checkbox" checked={luyenDanAutoUse} onChange={e => setLuyenDanAutoUse(e.target.checked)} disabled={selectedProfile.status === 'Running'} />
-                          <span className="slider"></span>
-                        </label>
-                      </div>
-
-                      <div className="toggle-container">
-                        <div className="toggle-label"><span className="toggle-title">Tự Mời Bạn Bè</span></div>
-                        <label className="switch">
-                          <input type="checkbox" checked={luyenDanAutoInvite} onChange={e => setLuyenDanAutoInvite(e.target.checked)} disabled={selectedProfile.status === 'Running'} />
-                          <span className="slider"></span>
-                        </label>
-                      </div>
-
-                      <div className="toggle-container">
-                        <div className="toggle-label"><span className="toggle-title">Tự Nhận Lời Mời</span></div>
-                        <label className="switch">
-                          <input type="checkbox" checked={luyenDanAutoAcceptInvite} onChange={e => setLuyenDanAutoAcceptInvite(e.target.checked)} disabled={selectedProfile.status === 'Running'} />
-                          <span className="slider"></span>
-                        </label>
-                      </div>
-
-                      <div className="toggle-container">
-                        <div className="toggle-label"><span className="toggle-title">Nhận Mọi Lời Mời</span></div>
-                        <label className="switch">
-                          <input type="checkbox" checked={luyenDanAcceptAllInvites} onChange={e => setLuyenDanAcceptAllInvites(e.target.checked)} disabled={selectedProfile.status === 'Running'} />
-                          <span className="slider"></span>
-                        </label>
-                      </div>
-
-                      <div className="toggle-container">
-                        <div className="toggle-label"><span className="toggle-title">Tự Rời Phòng Khi Xong</span></div>
-                        <label className="switch">
-                          <input type="checkbox" checked={luyenDanAutoLeave} onChange={e => setLuyenDanAutoLeave(e.target.checked)} disabled={selectedProfile.status === 'Running'} />
-                          <span className="slider"></span>
-                        </label>
-                      </div>
-                    </div>
-
-                    <div className="inline-form-row" style={{ display: 'flex', gap: '15px' }}>
-                      <div className="form-group" style={{ flex: 1 }}>
-                        <label>Số sao tối thiểu (luyenDanMinStars)</label>
-                        <select 
-                          className="select-field" 
-                          value={luyenDanMinStars} 
-                          onChange={e => setLuyenDanMinStars(e.target.value)}
-                          disabled={selectedProfile.status === 'Running'}
-                        >
-                          <option value="1">1 Sao</option>
-                          <option value="2">2 Sao</option>
-                          <option value="3">3 Sao</option>
-                          <option value="4">4 Sao</option>
-                          <option value="5">5 Sao</option>
-                        </select>
-                      </div>
-
-                      <div className="form-group" style={{ flex: 1 }}>
-                        <label>Thời gian chờ mời (giây)</label>
-                        <input 
-                          type="number" 
-                          className="input-field" 
-                          value={luyenDanWaitInviteSeconds} 
-                          onChange={e => setLuyenDanWaitInviteSeconds(e.target.value)}
-                          disabled={selectedProfile.status === 'Running'}
-                        />
-                      </div>
-                    </div>
-
-                    {/* Friend selection list */}
-                    <div className="form-group" style={{ marginTop: '10px' }}>
-                      <label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span>Chọn bạn bè hỗ trợ (Mời / Nhận lời mời)</span>
-                        <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>
-                          Đã chọn: {luyenDanSelectedFriendIds ? luyenDanSelectedFriendIds.split(',').filter(Boolean).length : 0} người
-                        </span>
-                      </label>
-                      
-                      {selectedProfile.metadata?.friends && selectedProfile.metadata.friends.length > 0 ? (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '6px' }}>
-                          <input 
-                            type="text" 
-                            className="input-field" 
-                            placeholder="Tìm kiếm bạn bè..." 
-                            value={friendSearch} 
-                            onChange={e => setFriendSearch(e.target.value)}
-                            style={{ padding: '6px 10px', fontSize: '13px' }}
-                          />
-                          <div style={{ maxHeight: '150px', overflowY: 'auto', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--border-glass)', borderRadius: '6px', padding: '8px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                            {selectedProfile.metadata.friends
-                              .filter(f => !friendSearch || (f.display_name || '').toLowerCase().includes(friendSearch.toLowerCase()) || String(f.user_id).includes(friendSearch))
-                              .map(f => {
-                                const uids = luyenDanSelectedFriendIds ? luyenDanSelectedFriendIds.split(',').filter(Boolean) : [];
-                                const isChecked = uids.includes(String(f.user_id));
-                                return (
-                                  <label key={f.user_id} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '13px', userSelect: 'none' }}>
-                                    <input 
-                                      type="checkbox" 
-                                      checked={isChecked} 
-                                      disabled={selectedProfile.status === 'Running'}
-                                      onChange={e => {
-                                        let newIds = [...uids];
-                                        if (e.target.checked) {
-                                          newIds.push(String(f.user_id));
-                                        } else {
-                                          newIds = newIds.filter(id => id !== String(f.user_id));
-                                        }
-                                        setLuyenDanSelectedFriendIds(newIds.join(','));
-                                      }}
-                                    />
-                                    <span>{f.display_name} (ID: {f.user_id})</span>
-                                  </label>
-                                );
-                              })}
+                        <div className="hh3d-section-title" style={{ marginTop: '10px' }}>✅ Nhiệm vụ hàng ngày</div>
+                        <div className="hh3d-toggles-grid">
+                          <div className="hh3d-option">
+                            <div className="hh3d-option-label">
+                              <span className="hh3d-option-title">Tự Điểm Danh</span>
+                              <span className="hh3d-option-desc">Điểm danh ngày nhận quà</span>
+                            </div>
+                            <label className="switch">
+                              <input type="checkbox" checked={autoDiemDanh} onChange={e => setAutoDiemDanh(e.target.checked)} disabled={selectedProfile.status === 'Running'} />
+                              <span className="slider"></span>
+                            </label>
+                          </div>
+                          <div className="hh3d-option">
+                            <div className="hh3d-option-label">
+                              <span className="hh3d-option-title">Tự Thí Luyen</span>
+                              <span className="hh3d-option-desc">Khiêu chiến thí luyện tối đa</span>
+                            </div>
+                            <label className="switch">
+                              <input type="checkbox" checked={autoThiLuyen} onChange={e => setAutoThiLuyen(e.target.checked)} disabled={selectedProfile.status === 'Running'} />
+                              <span className="slider"></span>
+                            </label>
+                          </div>
+                          <div className="hh3d-option">
+                            <div className="hh3d-option-label">
+                              <span className="hh3d-option-title">Tự Phúc Lợi</span>
+                              <span className="hh3d-option-desc">Nhận quà phúc lợi & điểm năng động</span>
+                            </div>
+                            <label className="switch">
+                              <input type="checkbox" checked={autoPhucLoi} onChange={e => setAutoPhucLoi(e.target.checked)} disabled={selectedProfile.status === 'Running'} />
+                              <span className="slider"></span>
+                            </label>
+                          </div>
+                          <div className="hh3d-option">
+                            <div className="hh3d-option-label">
+                              <span className="hh3d-option-title">Tự Nhận Trận Văn (VIP)</span>
+                              <span className="hh3d-option-desc">Nhận trận văn khắc trận hàng ngày</span>
+                            </div>
+                            <label className="switch">
+                              <input type="checkbox" checked={autoClaimDailyTurns} onChange={e => setAutoClaimDailyTurns(e.target.checked)} disabled={selectedProfile.status === 'Running'} />
+                              <span className="slider"></span>
+                            </label>
+                          </div>
+                          <div className="hh3d-option">
+                            <div className="hh3d-option-label">
+                              <span className="hh3d-option-title">Tự Hoang Vực</span>
+                              <span className="hh3d-option-desc">Tự động khiêu chiến hoàng vực</span>
+                            </div>
+                            <label className="switch">
+                              <input type="checkbox" checked={autoHoangVuc} onChange={e => setAutoHoangVuc(e.target.checked)} disabled={selectedProfile.status === 'Running'} />
+                              <span className="slider"></span>
+                            </label>
+                          </div>
+                          <div className="hh3d-option">
+                            <div className="hh3d-option-label">
+                              <span className="hh3d-option-title">Tự Mê Cung</span>
+                              <span className="hh3d-option-desc">Tự tìm đường & nhận quà mê cung</span>
+                            </div>
+                            <label className="switch">
+                              <input type="checkbox" checked={autoMeCung} onChange={e => setAutoMeCung(e.target.checked)} disabled={selectedProfile.status === 'Running'} />
+                              <span className="slider"></span>
+                            </label>
+                          </div>
+                          <div className="hh3d-option">
+                            <div className="hh3d-option-label">
+                              <span className="hh3d-option-title">Tự Đổ Thạch</span>
+                              <span className="hh3d-option-desc">Tham gia lắc xúc xắc đổ thạch</span>
+                            </div>
+                            <label className="switch">
+                              <input type="checkbox" checked={autoDoThach} onChange={e => setAutoDoThach(e.target.checked)} disabled={selectedProfile.status === 'Running'} />
+                              <span className="slider"></span>
+                            </label>
+                          </div>
+                          <div className="hh3d-option">
+                            <div className="hh3d-option-label">
+                              <span className="hh3d-option-title">Tự Bí Cảnh</span>
+                              <span className="hh3d-option-desc">Tự tham gia bí cảnh tông môn</span>
+                            </div>
+                            <label className="switch">
+                              <input type="checkbox" checked={autoBiCanh} onChange={e => setAutoBiCanh(e.target.checked)} disabled={selectedProfile.status === 'Running'} />
+                              <span className="slider"></span>
+                            </label>
+                          </div>
+                          <div className="hh3d-option">
+                            <div className="hh3d-option-label">
+                              <span className="hh3d-option-title">Tự Tiên Duyên</span>
+                              <span className="hh3d-option-desc">Nhận tiên duyên & tặng hoa bạn bè</span>
+                            </div>
+                            <label className="switch">
+                              <input type="checkbox" checked={autoTienDuyen} onChange={e => setAutoTienDuyen(e.target.checked)} disabled={selectedProfile.status === 'Running'} />
+                              <span className="slider"></span>
+                            </label>
+                          </div>
+                          <div className="hh3d-option">
+                            <div className="hh3d-option-label">
+                              <span className="hh3d-option-title">Tự H.Động Ngày</span>
+                              <span className="hh3d-option-desc">Tự động hoàn thành năng động ngày</span>
+                            </div>
+                            <label className="switch">
+                              <input type="checkbox" checked={autoHoatDongNgay} onChange={e => setAutoHoatDongNgay(e.target.checked)} disabled={selectedProfile.status === 'Running'} />
+                              <span className="slider"></span>
+                            </label>
                           </div>
                         </div>
-                      ) : (
-                        <div style={{ padding: '12px', background: 'rgba(255,255,255,0.02)', border: '1px dashed var(--border-glass)', borderRadius: '6px', marginTop: '6px' }}>
-                          <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '8px' }}>
-                            ⚠️ Chưa có dữ liệu bạn bè được đồng bộ. Hãy khởi chạy profile này ở chế độ Hiện (Headful) ít nhất 1 lần để tải danh sách bạn bè từ game, hoặc nhập thủ công các ID (cách nhau bằng dấu phẩy):
-                          </p>
+
+                        <div className="hh3d-section-title" style={{ marginTop: '10px' }}>📅 Hẹn giờ & Cấu hình phụ</div>
+                        <div className="hh3d-inline-row">
+                          <div className="form-group" style={{ flex: 1 }}>
+                            <label>Lựa chọn Đổ Thạch</label>
+                            <select 
+                              className="select-field" 
+                              value={diceRollChoice} 
+                              onChange={e => setDiceRollChoice(e.target.value)}
+                              disabled={selectedProfile.status === 'Running'}
+                            >
+                              <option value="tai">Tài</option>
+                              <option value="xiu">Xỉu</option>
+                            </select>
+                          </div>
+
+                          <div className="form-group" style={{ flex: 1 }}>
+                            <label>Lựa chọn Tiên Duyên & Số người Tặng Hoa</label>
+                            <select 
+                              className="select-field" 
+                              value={tienduyenChoice} 
+                              onChange={e => setTienduyenChoice(e.target.value)}
+                              disabled={selectedProfile.status === 'Running'}
+                            >
+                              <option value="1">Lựa chọn 1</option>
+                              <option value="2">Lựa chọn 2</option>
+                              <option value="3">Lựa chọn 3</option>
+                              <option value="4">Lựa chọn 4</option>
+                              <option value="5">Lựa chọn 5</option>
+                            </select>
+                          </div>
+                        </div>
+
+                        <div className="hh3d-option">
+                          <div className="hh3d-option-label">
+                            <span className="hh3d-option-title">Tối ưu Sát thương Hoang Vực</span>
+                            <span className="hh3d-option-desc">Tự động chọn skill để đạt sát thương cao nhất</span>
+                          </div>
+                          <label className="switch">
+                            <input 
+                              type="checkbox" 
+                              checked={hoangvucMaximizeDamage} 
+                              onChange={e => setHoangvucMaximizeDamage(e.target.checked)} 
+                              disabled={selectedProfile.status === 'Running'}
+                            />
+                            <span className="slider"></span>
+                          </label>
+                        </div>
+
+                        <div className="form-group">
+                          <label>Hẹn giờ chạy (Bắt đầu sau hh:mm)</label>
+                          <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                            <input 
+                              type="number" 
+                              className="input-field" 
+                              style={{ textAlign: 'center' }} 
+                              value={selfSchedule_h} 
+                              onChange={e => setSelfScheduleH(e.target.value)}
+                              placeholder="Hour (0-23)"
+                              min="0" max="23"
+                              disabled={selectedProfile.status === 'Running'}
+                            />
+                            <span style={{ fontSize: '18px', fontWeight: 'bold' }}>:</span>
+                            <input 
+                              type="number" 
+                              className="input-field" 
+                              style={{ textAlign: 'center' }} 
+                              value={selfSchedule_m} 
+                              onChange={e => setSelfScheduleM(e.target.value)}
+                              placeholder="Minute (0-59)"
+                              min="0" max="59"
+                              disabled={selectedProfile.status === 'Running'}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {settingsTab === 'profile' && (
+                      <div className="hh3d-section">
+                        <div className="hh3d-section-title">🔌 Kết nối & Cấu hình Profile</div>
+                        
+                        <div className="form-group">
+                          <label>Tên Profile</label>
                           <input 
                             type="text" 
                             className="input-field" 
-                            placeholder="Ví dụ: 12345,67890" 
-                            value={luyenDanSelectedFriendIds} 
-                            onChange={e => setLuyenDanSelectedFriendIds(e.target.value)}
+                            value={formName} 
+                            onChange={e => setFormName(e.target.value)} 
                             disabled={selectedProfile.status === 'Running'}
                           />
                         </div>
-                      )}
-                    </div>
+
+                        <div className="form-group">
+                          <label>Loại Proxy</label>
+                          <select 
+                            className="select-field" 
+                            value={proxyType} 
+                            onChange={e => setProxyType(e.target.value)}
+                            disabled={selectedProfile.status === 'Running'}
+                          >
+                            <option value="None">Không Proxy (Mạng nhà)</option>
+                            <option value="HTTP">HTTP Proxy</option>
+                            <option value="SOCKS5">SOCKS5 Proxy</option>
+                          </select>
+                        </div>
+
+                        {proxyType !== 'None' && (
+                          <>
+                            <div className="hh3d-inline-row">
+                              <div className="form-group" style={{ flex: 2 }}>
+                                <label>IP / Host</label>
+                                <input 
+                                  type="text" 
+                                  className="input-field" 
+                                  value={proxyHost} 
+                                  onChange={e => setProxyHost(e.target.value)}
+                                  disabled={selectedProfile.status === 'Running'}
+                                />
+                              </div>
+                              <div className="form-group" style={{ flex: 1 }}>
+                                <label>Cổng Port</label>
+                                <input 
+                                  type="number" 
+                                  className="input-field" 
+                                  value={proxyPort} 
+                                  onChange={e => setProxyPort(e.target.value)}
+                                  disabled={selectedProfile.status === 'Running'}
+                                />
+                              </div>
+                            </div>
+
+                            <div className="hh3d-inline-row">
+                              <div className="form-group">
+                                <label>Proxy User</label>
+                                <input 
+                                  type="text" 
+                                  className="input-field" 
+                                  value={proxyUsername} 
+                                  onChange={e => setProxyUsername(e.target.value)}
+                                  disabled={selectedProfile.status === 'Running'}
+                                />
+                              </div>
+                              <div className="form-group">
+                                <label>Proxy Pass</label>
+                                <input 
+                                  type="password" 
+                                  className="input-field" 
+                                  value={proxyPassword} 
+                                  onChange={e => setProxyPassword(e.target.value)}
+                                  disabled={selectedProfile.status === 'Running'}
+                                />
+                              </div>
+                            </div>
+                          </>
+                        )}
+
+                        <div className="hh3d-option">
+                          <div className="hh3d-option-label">
+                            <span className="hh3d-option-title">Mặc định chạy ngầm</span>
+                            <span className="hh3d-option-desc">Tự động ẩn Firefox khi bấm Start</span>
+                          </div>
+                          <label className="switch">
+                            <input 
+                              type="checkbox" 
+                              checked={headless} 
+                              onChange={e => setHeadless(e.target.checked)} 
+                              disabled={selectedProfile.status === 'Running'}
+                            />
+                            <span className="slider"></span>
+                          </label>
+                        </div>
+                      </div>
+                    )}
+
+                    {settingsTab === 'khoangmach' && (
+                      <div className="hh3d-section">
+                        <div className="hh3d-section-title">⛏️ Cấu hình Khoáng Mạch</div>
+                        
+                        <div className="hh3d-option" style={{ background: 'rgba(249, 115, 22, 0.03)', borderColor: 'rgba(249, 115, 22, 0.2)' }}>
+                          <div className="hh3d-option-label">
+                            <span className="hh3d-option-title" style={{ color: 'var(--accent-orange)' }}>Kích hoạt Khoáng Mạch</span>
+                            <span className="hh3d-option-desc">Cho phép tự động quản lý cướp/giữ/nhận quà mỏ khoáng</span>
+                          </div>
+                          <label className="switch">
+                            <input 
+                              type="checkbox" 
+                              checked={autoKhoangMach} 
+                              onChange={e => setAutoKhoangMach(e.target.checked)} 
+                              disabled={selectedProfile.status === 'Running'} 
+                            />
+                            <span className="slider"></span>
+                          </label>
+                        </div>
+
+                        {autoKhoangMach && (
+                          <>
+                            <div className="hh3d-toggles-grid">
+                              <div className="hh3d-option">
+                                <div className="hh3d-option-label">
+                                  <span className="hh3d-option-title">Tự Động Cướp Mỏ</span>
+                                  <span className="hh3d-option-desc">Tấn công chiếm lại mỏ khi bị chiếm</span>
+                                </div>
+                                <label className="switch">
+                                  <input type="checkbox" checked={khoangmach_auto_takeover} onChange={e => setKhoangmachAutoTakeover(e.target.checked)} disabled={selectedProfile.status === 'Running'} />
+                                  <span className="slider"></span>
+                                </label>
+                              </div>
+
+                              <div className="hh3d-option">
+                                <div className="hh3d-option-label">
+                                  <span className="hh3d-option-title">Tự Xoay Vòng Mỏ</span>
+                                  <span className="hh3d-option-desc">Tự luân chuyển các mỏ đã lưu</span>
+                                </div>
+                                <label className="switch">
+                                  <input type="checkbox" checked={khoangmach_auto_takeover_rotation} onChange={e => setKhoangmachAutoTakeoverRotation(e.target.checked)} disabled={selectedProfile.status === 'Running'} />
+                                  <span className="slider"></span>
+                                </label>
+                              </div>
+
+                              <div className="hh3d-option">
+                                <div className="hh3d-option-label">
+                                  <span className="hh3d-option-title">Tự Động Bơm Buff</span>
+                                  <span className="hh3d-option-desc">Bơm tài nguyên tăng tốc mỏ</span>
+                                </div>
+                                <label className="switch">
+                                  <input type="checkbox" checked={khoangmach_use_buff} onChange={e => setKhoangmachUseBuff(e.target.checked)} disabled={selectedProfile.status === 'Running'} />
+                                  <span className="slider"></span>
+                                </label>
+                              </div>
+
+                              <div className="hh3d-option">
+                                <div className="hh3d-option-label">
+                                  <span className="hh3d-option-title">Chế Độ Tấn Công Nhanh</span>
+                                  <span className="hh3d-option-desc">Bỏ qua một số bước chờ hoạt ảnh</span>
+                                </div>
+                                <label className="switch">
+                                  <input type="checkbox" checked={khoangmach_fast_attack} onChange={e => setKhoangmachFastAttack(e.target.checked)} disabled={selectedProfile.status === 'Running'} />
+                                  <span className="slider"></span>
+                                </label>
+                              </div>
+
+                              <div className="hh3d-option">
+                                <div className="hh3d-option-label">
+                                  <span className="hh3d-option-title">Rời mỏ nhận thưởng</span>
+                                  <span className="hh3d-option-desc">Rời mỏ khi đủ điều kiện buff/thời gian</span>
+                                </div>
+                                <label className="switch">
+                                  <input type="checkbox" checked={khoangmach_leave_mine} onChange={e => setKhoangmachLeaveMine(e.target.checked)} disabled={selectedProfile.status === 'Running'} />
+                                  <span className="slider"></span>
+                                </label>
+                              </div>
+
+                              <div className="hh3d-option">
+                                <div className="hh3d-option-label">
+                                  <span className="hh3d-option-title">Báo ngoại tông vào mỏ</span>
+                                  <span className="hh3d-option-desc">Gửi thông báo khi có ngoại tông xâm nhập</span>
+                                </div>
+                                <label className="switch">
+                                  <input type="checkbox" checked={khoangmach_outer_notification} onChange={e => setKhoangmachOuterNotification(e.target.checked)} disabled={selectedProfile.status === 'Running'} />
+                                  <span className="slider"></span>
+                                </label>
+                              </div>
+                            </div>
+
+                            <div className="hh3d-inline-row">
+                              <div className="form-group" style={{ flex: 1 }}>
+                                <label>Chế độ nhận thưởng (% Buff)</label>
+                                <select 
+                                  className="select-field" 
+                                  value={khoangmach_reward_mode} 
+                                  onChange={e => setKhoangmachRewardMode(e.target.value)}
+                                  disabled={selectedProfile.status === 'Running'}
+                                >
+                                  <option value="any">Bất kỳ</option>
+                                  <option value="110">110%</option>
+                                  <option value="100">100%</option>
+                                  <option value="20">20%</option>
+                                </select>
+                              </div>
+
+                              <div className="form-group" style={{ flex: 1 }}>
+                                <label>Thời gian đạt tối thiểu</label>
+                                <select 
+                                  className="select-field" 
+                                  value={khoangmach_reward_time} 
+                                  onChange={e => setKhoangmachRewardTime(e.target.value)}
+                                  disabled={selectedProfile.status === 'Running'}
+                                >
+                                  <option value="max">Đạt tối đa</option>
+                                  <option value="20">20 phút</option>
+                                  <option value="10">10 phút</option>
+                                  <option value="4">4 phút</option>
+                                  <option value="2">2 phút</option>
+                                </select>
+                              </div>
+                            </div>
+
+                            <div className="form-group">
+                              <label>Chu kỳ quét mỏ (phút)</label>
+                              <input 
+                                type="number" 
+                                className="input-field" 
+                                value={khoangmach_check_interval} 
+                                onChange={e => setKhoangmachCheckInterval(e.target.value)}
+                                disabled={selectedProfile.status === 'Running'}
+                              />
+                            </div>
+
+                            <div className="form-group">
+                              <label>Mỏ khoáng sản muốn cướp / giữ</label>
+                              {selectedProfile.metadata?.mines && selectedProfile.metadata.mines.length > 0 ? (
+                                <select 
+                                  className="select-field" 
+                                  value={khoangmach_selected_mine} 
+                                  onChange={e => setKhoangmachSelectedMine(e.target.value)}
+                                  disabled={selectedProfile.status === 'Running'}
+                                >
+                                  <option value="">-- Chọn mỏ --</option>
+                                  {selectedProfile.metadata.mines.map(m => {
+                                    const valStr = JSON.stringify({ id: m.id, type: m.type });
+                                    return (
+                                      <option key={m.id} value={valStr}>
+                                        [{m.type === 'gold' ? 'VÀNG' : m.type === 'silver' ? 'BẠC' : 'ĐỒNG'}] {m.name || `Mỏ ID ${m.id}`}
+                                      </option>
+                                    );
+                                  })}
+                                </select>
+                              ) : (
+                                <div style={{ padding: '12px', background: 'rgba(255,255,255,0.02)', border: '1px dashed var(--border-glass)', borderRadius: '6px' }}>
+                                  <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '8px' }}>
+                                    ⚠️ Chưa có dữ liệu danh sách mỏ. Hãy chạy profile này ở chế độ Hiện (Headful) ít nhất 1 lần để quét và đồng bộ danh sách mỏ từ game, hoặc nhập thủ công JSON cấu hình mỏ:
+                                  </p>
+                                  <input 
+                                    type="text" 
+                                    className="input-field" 
+                                    placeholder='Ví dụ: {"id":12,"type":"gold"}' 
+                                    value={khoangmach_selected_mine} 
+                                    onChange={e => setKhoangmachSelectedMine(e.target.value)}
+                                    disabled={selectedProfile.status === 'Running'}
+                                  />
+                                </div>
+                              )}
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    )}
+
+                    {settingsTab === 'luyendan' && (
+                      <div className="hh3d-section">
+                        <div className="hh3d-section-title">🧪 Cấu hình Luyện Đan</div>
+
+                        <div className="hh3d-option" style={{ background: 'rgba(34, 197, 94, 0.03)', borderColor: 'rgba(34, 197, 94, 0.2)' }}>
+                          <div className="hh3d-option-label">
+                            <span className="hh3d-option-title" style={{ color: 'var(--accent-green)' }}>Kích hoạt Luyện Đan</span>
+                            <span className="hh3d-option-desc">Cho phép tự động quản lý phòng luyện đan, phân giải & cắn thuốc</span>
+                          </div>
+                          <label className="switch">
+                            <input 
+                              type="checkbox" 
+                              checked={autoLuyenDan} 
+                              onChange={e => setAutoLuyenDan(e.target.checked)} 
+                              disabled={selectedProfile.status === 'Running'} 
+                            />
+                            <span className="slider"></span>
+                          </label>
+                        </div>
+
+                        {autoLuyenDan && (
+                          <>
+                            <div className="hh3d-toggles-grid">
+                              <div className="hh3d-option">
+                                <div className="hh3d-option-label">
+                                  <span className="hh3d-option-title">Tự Bắt Đầu Mẻ Mới</span>
+                                  <span className="hh3d-option-desc">Tự click bắt đầu khi sẵn sàng</span>
+                                </div>
+                                <label className="switch">
+                                  <input type="checkbox" checked={luyenDanAutoStart} onChange={e => setLuyenDanAutoStart(e.target.checked)} disabled={selectedProfile.status === 'Running'} />
+                                  <span className="slider"></span>
+                                </label>
+                              </div>
+
+                              <div className="hh3d-option">
+                                <div className="hh3d-option-label">
+                                  <span className="hh3d-option-title">Tự Phân Giải Đan Thừa</span>
+                                  <span className="hh3d-option-desc">Tự động phân giải đan phẩm thấp</span>
+                                </div>
+                                <label className="switch">
+                                  <input type="checkbox" checked={luyenDanAutoDecompose} onChange={e => setLuyenDanAutoDecompose(e.target.checked)} disabled={selectedProfile.status === 'Running'} />
+                                  <span className="slider"></span>
+                                </label>
+                              </div>
+
+                              <div className="hh3d-option">
+                                <div className="hh3d-option-label">
+                                  <span className="hh3d-option-title">Tự Lọc Thuộc Tính (Tune)</span>
+                                  <span className="hh3d-option-desc">Tự động thay đổi thuộc tính đan</span>
+                                </div>
+                                <label className="switch">
+                                  <input type="checkbox" checked={luyenDanAutoTune} onChange={e => setLuyenDanAutoTune(e.target.checked)} disabled={selectedProfile.status === 'Running'} />
+                                  <span className="slider"></span>
+                                </label>
+                              </div>
+
+                              <div className="hh3d-option">
+                                <div className="hh3d-option-label">
+                                  <span className="hh3d-option-title">Tự Sử Dụng Đan Dược</span>
+                                  <span className="hh3d-option-desc">Tự động cắn đan dược thu hoạch</span>
+                                </div>
+                                <label className="switch">
+                                  <input type="checkbox" checked={luyenDanAutoUse} onChange={e => setLuyenDanAutoUse(e.target.checked)} disabled={selectedProfile.status === 'Running'} />
+                                  <span className="slider"></span>
+                                </label>
+                              </div>
+
+                              <div className="hh3d-option">
+                                <div className="hh3d-option-label">
+                                  <span className="hh3d-option-title">Tự Mời Bạn Bè</span>
+                                  <span className="hh3d-option-desc">Gửi lời mời bạn bè vào phòng</span>
+                                </div>
+                                <label className="switch">
+                                  <input type="checkbox" checked={luyenDanAutoInvite} onChange={e => setLuyenDanAutoInvite(e.target.checked)} disabled={selectedProfile.status === 'Running'} />
+                                  <span className="slider"></span>
+                                </label>
+                              </div>
+
+                              <div className="hh3d-option">
+                                <div className="hh3d-option-label">
+                                  <span className="hh3d-option-title">Tự Nhận Lời Mời</span>
+                                  <span className="hh3d-option-desc">Đồng ý lời mời vào phòng của bạn bè</span>
+                                </div>
+                                <label className="switch">
+                                  <input type="checkbox" checked={luyenDanAutoAcceptInvite} onChange={e => setLuyenDanAutoAcceptInvite(e.target.checked)} disabled={selectedProfile.status === 'Running'} />
+                                  <span className="slider"></span>
+                                </label>
+                              </div>
+
+                              <div className="hh3d-option">
+                                <div className="hh3d-option-label">
+                                  <span className="hh3d-option-title">Nhận Mọi Lời Mời</span>
+                                  <span className="hh3d-option-desc">Chấp nhận lời mời từ bất kỳ ai</span>
+                                </div>
+                                <label className="switch">
+                                  <input type="checkbox" checked={luyenDanAcceptAllInvites} onChange={e => setLuyenDanAcceptAllInvites(e.target.checked)} disabled={selectedProfile.status === 'Running'} />
+                                  <span className="slider"></span>
+                                </label>
+                              </div>
+
+                              <div className="hh3d-option">
+                                <div className="hh3d-option-label">
+                                  <span className="hh3d-option-title">Tự Rời Phòng Khi Xong</span>
+                                  <span className="hh3d-option-desc">Rời phòng sau khi mẻ đan kết thúc</span>
+                                </div>
+                                <label className="switch">
+                                  <input type="checkbox" checked={luyenDanAutoLeave} onChange={e => setLuyenDanAutoLeave(e.target.checked)} disabled={selectedProfile.status === 'Running'} />
+                                  <span className="slider"></span>
+                                </label>
+                              </div>
+                            </div>
+
+                            <div className="hh3d-inline-row">
+                              <div className="form-group" style={{ flex: 1 }}>
+                                <label>Số sao tối thiểu (luyenDanMinStars)</label>
+                                <select 
+                                  className="select-field" 
+                                  value={luyenDanMinStars} 
+                                  onChange={e => setLuyenDanMinStars(e.target.value)}
+                                  disabled={selectedProfile.status === 'Running'}
+                                >
+                                  <option value="1">1 Sao</option>
+                                  <option value="2">2 Sao</option>
+                                  <option value="3">3 Sao</option>
+                                  <option value="4">4 Sao</option>
+                                  <option value="5">5 Sao</option>
+                                </select>
+                              </div>
+
+                              <div className="form-group" style={{ flex: 1 }}>
+                                <label>Thời gian chờ mời (giây)</label>
+                                <input 
+                                  type="number" 
+                                  className="input-field" 
+                                  value={luyenDanWaitInviteSeconds} 
+                                  onChange={e => setLuyenDanWaitInviteSeconds(e.target.value)}
+                                  disabled={selectedProfile.status === 'Running'}
+                                />
+                              </div>
+                            </div>
+
+                            <div className="form-group">
+                              <label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <span>Chọn bạn bè hỗ trợ (Mời / Nhận lời mời)</span>
+                                <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>
+                                  Đã chọn: {luyenDanSelectedFriendIds ? luyenDanSelectedFriendIds.split(',').filter(Boolean).length : 0} người
+                                </span>
+                              </label>
+                              
+                              {selectedProfile.metadata?.friends && selectedProfile.metadata.friends.length > 0 ? (
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '6px' }}>
+                                  <input 
+                                    type="text" 
+                                    className="input-field" 
+                                    placeholder="Tìm kiếm bạn bè..." 
+                                    value={friendSearch} 
+                                    onChange={e => setFriendSearch(e.target.value)}
+                                    style={{ padding: '6px 10px', fontSize: '13px' }}
+                                  />
+                                  <div style={{ maxHeight: '150px', overflowY: 'auto', background: 'rgba(0,0,0,0.2)', border: '1px solid var(--border-glass)', borderRadius: '6px', padding: '8px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                                    {selectedProfile.metadata.friends
+                                      .filter(f => !friendSearch || (f.display_name || '').toLowerCase().includes(friendSearch.toLowerCase()) || String(f.user_id).includes(friendSearch))
+                                      .map(f => {
+                                        const uids = luyenDanSelectedFriendIds ? luyenDanSelectedFriendIds.split(',').filter(Boolean) : [];
+                                        const isChecked = uids.includes(String(f.user_id));
+                                        return (
+                                          <label key={f.user_id} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '13px', userSelect: 'none' }}>
+                                            <input 
+                                              type="checkbox" 
+                                              checked={isChecked} 
+                                              disabled={selectedProfile.status === 'Running'}
+                                              onChange={e => {
+                                                let newIds = [...uids];
+                                                if (e.target.checked) {
+                                                  newIds.push(String(f.user_id));
+                                                } else {
+                                                  newIds = newIds.filter(id => id !== String(f.user_id));
+                                                }
+                                                setLuyenDanSelectedFriendIds(newIds.join(','));
+                                              }}
+                                            />
+                                            <span>{f.display_name} (ID: {f.user_id})</span>
+                                          </label>
+                                        );
+                                      })}
+                                  </div>
+                                </div>
+                              ) : (
+                                <div style={{ padding: '12px', background: 'rgba(255,255,255,0.02)', border: '1px dashed var(--border-glass)', borderRadius: '6px', marginTop: '6px' }}>
+                                  <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '8px' }}>
+                                    ⚠️ Chưa có dữ liệu bạn bè được đồng bộ. Hãy khởi chạy profile này ở chế độ Hiện (Headful) ít nhất 1 lần để tải danh sách bạn bè từ game, hoặc nhập thủ công các ID (cách nhau bằng dấu phẩy):
+                                  </p>
+                                  <input 
+                                    type="text" 
+                                    className="input-field" 
+                                    placeholder="Ví dụ: 12345,67890" 
+                                    value={luyenDanSelectedFriendIds} 
+                                    onChange={e => setLuyenDanSelectedFriendIds(e.target.value)}
+                                    disabled={selectedProfile.status === 'Running'}
+                                  />
+                                </div>
+                              )}
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    )}
+
+                    {settingsTab === 'log' && (
+                      <div className="hh3d-log-panel">
+                        <div className="hh3d-log-toolbar">
+                          <span style={{ fontSize: '13px', fontWeight: 'bold' }}>Bộ lọc log:</span>
+                          <select 
+                            className="select-field" 
+                            style={{ width: 'auto', padding: '4px 10px', fontSize: '12px', height: 'auto' }}
+                            value={logFilter}
+                            onChange={e => setLogFilter(e.target.value)}
+                          >
+                            <option value="all">Tất cả ({ (logs[selectedId] || []).length })</option>
+                            <option value="info">Thông tin (Info)</option>
+                            <option value="success">Thành công (Success)</option>
+                            <option value="warning">Cảnh báo (Warning)</option>
+                            <option value="error">Lỗi (Error)</option>
+                          </select>
+                          <button 
+                            className="btn btn-secondary" 
+                            style={{ width: 'auto', padding: '6px 12px', fontSize: '12px', marginLeft: 'auto' }} 
+                            onClick={clearLogs}
+                          >
+                            <Trash2 size={12} style={{ marginRight: '4px' }} />
+                            Xóa Logs
+                          </button>
+                        </div>
+                        <div className="hh3d-log-screen">
+                          {((logs[selectedId] || []).filter(log => logFilter === 'all' || log.level === logFilter)).length === 0 ? (
+                            <span className="text-slate-600 italic">Chưa có log hệ thống. Vui lòng bấm chạy Profile...</span>
+                          ) : (
+                            ((logs[selectedId] || []).filter(log => logFilter === 'all' || log.level === logFilter)).map((log, idx) => (
+                              <div key={idx} className="hh3d-log-line">
+                                <span className="log-time" style={{ color: '#64748b' }}>[{log.timestamp}]</span>
+                                <span className={`log-badge ${log.level}`}>{log.level}</span>
+                                <span className={`log-text ${log.level}`}>{log.text}</span>
+                              </div>
+                            ))
+                          )}
+                          <div ref={terminalEndRef}></div>
+                        </div>
+                      </div>
+                    )}
                   </div>
 
-                  {/* Category 3: Mining Config */}
-                  <div className="glass-panel" style={{ padding: '20px' }}>
-                    <h4 className="panel-title" style={{ fontSize: '15px', color: 'var(--accent-orange)', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <Server size={16} />
-                      Tự Động Khoáng Mạch (Mining Settings)
-                    </h4>
-
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
-                      <div className="toggle-container">
-                        <div className="toggle-label"><span className="toggle-title">Kích hoạt Khoáng Mạch</span></div>
-                        <label className="switch">
-                          <input type="checkbox" checked={autoKhoangMach} onChange={e => setAutoKhoangMach(e.target.checked)} disabled={selectedProfile.status === 'Running'} />
-                          <span className="slider"></span>
-                        </label>
-                      </div>
-
-                      <div className="toggle-container">
-                        <div className="toggle-label"><span className="toggle-title">Tự Động Cướp Mỏ</span></div>
-                        <label className="switch">
-                          <input type="checkbox" checked={khoangmach_auto_takeover} onChange={e => setKhoangmachAutoTakeover(e.target.checked)} disabled={selectedProfile.status === 'Running'} />
-                          <span className="slider"></span>
-                        </label>
-                      </div>
-
-                      <div className="toggle-container">
-                        <div className="toggle-label"><span className="toggle-title">Tự Động Xoay Vòng Mỏ</span></div>
-                        <label className="switch">
-                          <input type="checkbox" checked={khoangmach_auto_takeover_rotation} onChange={e => setKhoangmachAutoTakeoverRotation(e.target.checked)} disabled={selectedProfile.status === 'Running'} />
-                          <span className="slider"></span>
-                        </label>
-                      </div>
-
-                      <div className="toggle-container">
-                        <div className="toggle-label"><span className="toggle-title">Tự Động Bơm Buff</span></div>
-                        <label className="switch">
-                          <input type="checkbox" checked={khoangmach_use_buff} onChange={e => setKhoangmachUseBuff(e.target.checked)} disabled={selectedProfile.status === 'Running'} />
-                          <span className="slider"></span>
-                        </label>
-                      </div>
-
-                      <div className="toggle-container">
-                        <div className="toggle-label"><span className="toggle-title">Chế Độ Tấn Công Nhanh</span></div>
-                        <label className="switch">
-                          <input type="checkbox" checked={khoangmach_fast_attack} onChange={e => setKhoangmachFastAttack(e.target.checked)} disabled={selectedProfile.status === 'Running'} />
-                          <span className="slider"></span>
-                        </label>
-                      </div>
+                  {settingsTab !== 'log' && (
+                    <div className="hh3d-settings-footer">
+                      <button 
+                        className="btn btn-primary" 
+                        style={{ width: 'auto' }} 
+                        onClick={handleUpdateProfile} 
+                        disabled={loading || selectedProfile.status === 'Running'}
+                      >
+                        💾 Lưu Toàn Bộ Cấu Hình
+                      </button>
+                      <button 
+                        className="btn btn-danger" 
+                        style={{ width: 'auto', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)', color: '#ef4444' }} 
+                        onClick={handleDeleteProfile} 
+                        disabled={loading || selectedProfile.status === 'Running'}
+                      >
+                        🗑️ Xóa Profile
+                      </button>
                     </div>
-
-                    <div className="inline-form-row" style={{ display: 'flex', gap: '15px', marginBottom: '12px' }}>
-                      <div className="form-group" style={{ flex: 1 }}>
-                        <label>Chế độ nhận thưởng (% Buff)</label>
-                        <select 
-                          className="select-field" 
-                          value={khoangmach_reward_mode} 
-                          onChange={e => setKhoangmachRewardMode(e.target.value)}
-                          disabled={selectedProfile.status === 'Running'}
-                        >
-                          <option value="any">Bất kỳ</option>
-                          <option value="110">110%</option>
-                          <option value="100">100%</option>
-                          <option value="20">20%</option>
-                        </select>
-                      </div>
-
-                      <div className="form-group" style={{ flex: 1 }}>
-                        <label>Thời gian đạt tối thiểu</label>
-                        <select 
-                          className="select-field" 
-                          value={khoangmach_reward_time} 
-                          onChange={e => setKhoangmachRewardTime(e.target.value)}
-                          disabled={selectedProfile.status === 'Running'}
-                        >
-                          <option value="max">Đạt tối đa</option>
-                          <option value="20">20 phút</option>
-                          <option value="10">10 phút</option>
-                          <option value="4">4 phút</option>
-                          <option value="2">2 phút</option>
-                        </select>
-                      </div>
-                    </div>
-
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
-                      <div className="toggle-container">
-                        <div className="toggle-label">
-                          <span className="toggle-title">Rời mỏ nhận thưởng</span>
-                        </div>
-                        <label className="switch">
-                          <input 
-                            type="checkbox" 
-                            checked={khoangmach_leave_mine} 
-                            onChange={e => setKhoangmachLeaveMine(e.target.checked)} 
-                            disabled={selectedProfile.status === 'Running'}
-                          />
-                          <span className="slider"></span>
-                        </label>
-                      </div>
-
-                      <div className="toggle-container">
-                        <div className="toggle-label">
-                          <span className="toggle-title">Báo ngoại tông vào mỏ</span>
-                        </div>
-                        <label className="switch">
-                          <input 
-                            type="checkbox" 
-                            checked={khoangmach_outer_notification} 
-                            onChange={e => setKhoangmachOuterNotification(e.target.checked)} 
-                            disabled={selectedProfile.status === 'Running'}
-                          />
-                          <span className="slider"></span>
-                        </label>
-                      </div>
-                    </div>
-
-                    <div className="inline-form-row" style={{ display: 'flex', gap: '15px' }}>
-                      <div className="form-group" style={{ flex: 1 }}>
-                        <label>Chu kỳ quét mỏ (phút)</label>
-                        <input 
-                          type="number" 
-                          className="input-field" 
-                          value={khoangmach_check_interval} 
-                          onChange={e => setKhoangmachCheckInterval(e.target.value)}
-                          disabled={selectedProfile.status === 'Running'}
-                        />
-                      </div>
-                    </div>
-
-                    {/* Mine Selection list */}
-                    <div className="form-group" style={{ marginTop: '10px' }}>
-                      <label>Mỏ khoáng sản muốn cướp / giữ</label>
-                      {selectedProfile.metadata?.mines && selectedProfile.metadata.mines.length > 0 ? (
-                        <select 
-                          className="select-field" 
-                          value={khoangmach_selected_mine} 
-                          onChange={e => setKhoangmachSelectedMine(e.target.value)}
-                          disabled={selectedProfile.status === 'Running'}
-                        >
-                          <option value="">-- Chọn mỏ --</option>
-                          {selectedProfile.metadata.mines.map(m => {
-                            const valStr = JSON.stringify({ id: m.id, type: m.type });
-                            return (
-                              <option key={m.id} value={valStr}>
-                                [{m.type === 'gold' ? 'VÀNG' : m.type === 'silver' ? 'BẠC' : 'ĐỒNG'}] {m.name || `Mỏ ID ${m.id}`}
-                              </option>
-                            );
-                          })}
-                        </select>
-                      ) : (
-                        <div style={{ padding: '12px', background: 'rgba(255,255,255,0.02)', border: '1px dashed var(--border-glass)', borderRadius: '6px', marginTop: '6px' }}>
-                          <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '8px' }}>
-                            ⚠️ Chưa có dữ liệu danh sách mỏ. Hãy chạy profile này ở chế độ Hiện (Headful) ít nhất 1 lần để quét và đồng bộ danh sách mỏ từ game, hoặc nhập thủ công JSON cấu hình mỏ:
-                          </p>
-                          <input 
-                            type="text" 
-                            className="input-field" 
-                            placeholder='Ví dụ: {"id":12,"type":"gold"}' 
-                            value={khoangmach_selected_mine} 
-                            onChange={e => setKhoangmachSelectedMine(e.target.value)}
-                            disabled={selectedProfile.status === 'Running'}
-                          />
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Category 4: Other Settings & Timer */}
-                  <div className="glass-panel" style={{ padding: '20px' }}>
-                    <h4 className="panel-title" style={{ fontSize: '15px', color: '#a855f7', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <Power size={16} />
-                      Cấu Hình Chi Tiết Khác (Timer & Dice)
-                    </h4>
-
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '16px' }}>
-                      <div className="form-group">
-                        <label>Lựa chọn Đổ Thạch</label>
-                        <select 
-                          className="select-field" 
-                          value={diceRollChoice} 
-                          onChange={e => setDiceRollChoice(e.target.value)}
-                          disabled={selectedProfile.status === 'Running'}
-                        >
-                          <option value="tai">Tài</option>
-                          <option value="xiu">Xỉu</option>
-                        </select>
-                      </div>
-
-                      <div className="form-group">
-                        <label>Lựa chọn Tiên Duyên & Số người Tặng Hoa</label>
-                        <select 
-                          className="select-field" 
-                          value={tienduyenChoice} 
-                          onChange={e => setTienduyenChoice(e.target.value)}
-                          disabled={selectedProfile.status === 'Running'}
-                        >
-                          <option value="1">Lựa chọn 1</option>
-                          <option value="2">Lựa chọn 2</option>
-                          <option value="3">Lựa chọn 3</option>
-                          <option value="4">Lựa chọn 4</option>
-                          <option value="5">Lựa chọn 5</option>
-                        </select>
-                      </div>
-                    </div>
-
-                    <div className="toggle-container" style={{ marginBottom: '16px' }}>
-                      <div className="toggle-label">
-                        <span className="toggle-title">Tối ưu Sát thương Hoang Vực</span>
-                        <span className="toggle-subtitle">Tự động chọn skill tối ưu nhất</span>
-                      </div>
-                      <label className="switch">
-                        <input 
-                          type="checkbox" 
-                          checked={hoangvucMaximizeDamage} 
-                          onChange={e => setHoangvucMaximizeDamage(e.target.checked)} 
-                          disabled={selectedProfile.status === 'Running'}
-                        />
-                        <span className="slider"></span>
-                      </label>
-                    </div>
-
-                    <div className="form-group">
-                      <label>Hẹn giờ chạy (Bắt đầu sau hh:mm)</label>
-                      <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                        <input 
-                          type="number" 
-                          className="input-field" 
-                          style={{ textAlign: 'center' }} 
-                          value={selfSchedule_h} 
-                          onChange={e => setSelfScheduleH(e.target.value)}
-                          placeholder="Hour (0-23)"
-                          min="0" max="23"
-                          disabled={selectedProfile.status === 'Running'}
-                        />
-                        <span style={{ fontSize: '18px', fontWeight: 'bold' }}>:</span>
-                        <input 
-                          type="number" 
-                          className="input-field" 
-                          style={{ textAlign: 'center' }} 
-                          value={selfSchedule_m} 
-                          onChange={e => setSelfScheduleM(e.target.value)}
-                          placeholder="Minute (0-59)"
-                          min="0" max="59"
-                          disabled={selectedProfile.status === 'Running'}
-                        />
-                      </div>
-                    </div>
-                  </div>
-
+                  )}
                 </div>
               </div>
             )}

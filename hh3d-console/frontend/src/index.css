@@ -660,3 +660,207 @@ input:checked + .slider:before {
   font-family: var(--font-mono);
   color: var(--accent-cyan);
 }
+
+/* ============================
+   HH3D-STYLE SETTINGS PANEL
+   ============================ */
+
+.hh3d-settings-layout {
+  display: grid;
+  grid-template-columns: 185px 1fr;
+  height: 100%;
+  gap: 0;
+  overflow: hidden;
+  border-radius: 12px;
+  border: 1px solid var(--border-glass);
+  background: rgba(10, 14, 23, 0.6);
+}
+
+/* Left sidebar with tabs */
+.hh3d-settings-tabs {
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--border-glass);
+  background: rgba(10, 14, 23, 0.7);
+  padding: 12px 8px;
+  gap: 4px;
+  overflow-y: auto;
+}
+
+.hh3d-settings-tab {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.2s ease;
+  width: 100%;
+}
+
+.hh3d-settings-tab:hover {
+  background: rgba(255,255,255,0.04);
+  color: var(--text-primary);
+}
+
+.hh3d-settings-tab.active {
+  background: rgba(0, 240, 255, 0.08);
+  border-color: rgba(0, 240, 255, 0.25);
+  color: var(--accent-cyan);
+}
+
+.hh3d-settings-tab .tab-icon {
+  font-size: 15px;
+  width: 20px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.hh3d-tab-divider {
+  height: 1px;
+  background: var(--border-glass);
+  margin: 6px 4px;
+}
+
+/* Right content panel */
+.hh3d-settings-content {
+  overflow-y: auto;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+/* Section group */
+.hh3d-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.hh3d-section-title {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--text-muted);
+  font-weight: 700;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border-glass);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Settings row with checkbox style (hh3d style) */
+.hh3d-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 9px 12px;
+  border-radius: 6px;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid var(--border-glass);
+  gap: 10px;
+  transition: background 0.2s;
+}
+
+.hh3d-option:hover {
+  background: rgba(255,255,255,0.04);
+}
+
+.hh3d-option-label {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.hh3d-option-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.hh3d-option-desc {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+/* Grid for toggles 2-column */
+.hh3d-toggles-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+/* Settings Select inline */
+.hh3d-inline-row {
+  display: flex;
+  gap: 12px;
+  align-items: stretch;
+}
+
+.hh3d-inline-row .form-group {
+  flex: 1;
+}
+
+/* Save footer */
+.hh3d-settings-footer {
+  border-top: 1px solid var(--border-glass);
+  padding: 12px 20px;
+  display: flex;
+  gap: 10px;
+  background: rgba(10,14,23,0.5);
+  flex-shrink: 0;
+}
+
+/* Log tab */
+.hh3d-log-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  gap: 10px;
+}
+
+.hh3d-log-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.hh3d-log-screen {
+  flex: 1;
+  background: #04070e;
+  border-radius: 6px;
+  border: 1px solid rgba(0, 240, 255, 0.08);
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  line-height: 1.55;
+  overflow-y: auto;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-height: 0;
+}
+
+.hh3d-log-line {
+  display: flex;
+  gap: 8px;
+  padding: 2px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.03);
+  animation: fadeIn 0.1s ease;
+  word-break: break-all;
+}
+
+.hh3d-log-line .log-time {
+  min-width: 75px;
+}
