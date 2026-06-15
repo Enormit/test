@@ -316,6 +316,78 @@ app.post('/api/profiles/:id/start', async (req, res) => {
     }
 });
 
+// Start a profile cleanly (bypass Cloudflare)
+app.post('/api/profiles/:id/start-clean', async (req, res) => {
+    const { id } = req.params;
+    if (activeBrowsers[id]) {
+        return res.status(400).json({ error: 'Profile is already running' });
+    }
+
+    const profiles = readProfiles();
+    const profile = profiles.find(p => p.id === id);
+    if (!profile) return res.status(404).json({ error: 'Profile not found' });
+
+    const firefoxPath = getFirefoxPath();
+    if (!firefoxPath) {
+        return res.status(500).json({ error: 'Mozilla Firefox installation not found on this system.' });
+    }
+
+    const profileDataDir = path.join(PROFILES_DIR, id);
+    if (!fs.existsSync(profileDataDir)) {
+        fs.mkdirSync(profileDataDir, { recursive: true });
+    }
+
+    // Set up the extensions folder and copy Violentmonkey XPI there
+    const extensionsDir = path.join(profileDataDir, 'extensions');
+    if (!fs.existsSync(extensionsDir)) {
+        fs.mkdirSync(extensionsDir, { recursive: true });
+    }
+    const sourceXpi = path.join(__dirname, 'violentmonkey.xpi');
+    const destXpi = path.join(extensionsDir, '{aecec67f-0d10-4fa7-b7c7-609a2db280cf}.xpi');
+    if (fs.existsSync(sourceXpi)) {
+        try {
+            fs.copyFileSync(sourceXpi, destXpi);
+        } catch (e) {}
+    }
+
+    // Write user.js config to bypass extensions scope disable
+    const userJsPath = path.join(profileDataDir, 'user.js');
+    const userJsContent = `user_pref("extensions.autoDisableScopes", 0);\nuser_pref("extensions.enabledScopes", 15);\nuser_pref("extensions.databaseSchema", 1);\nuser_pref("signon.autologin.proxy", true);\n`;
+    fs.writeFileSync(userJsPath, userJsContent);
+
+    sendLog(id, 'info', 'Khởi chạy trình duyệt gốc (không điều khiển tự động) để đăng nhập...');
+
+    const { spawn } = require('child_process');
+    // Launch natively without marionette/remote-debugging
+    const child = spawn(firefoxPath, [
+        '-profile', profileDataDir,
+        'https://hoathinh3d.co',
+        'http://localhost:3000/hh3d.user.js'
+    ], {
+        detached: true,
+        stdio: 'ignore'
+    });
+    child.unref();
+
+    activeBrowsers[id] = {
+        close: async () => {
+            try {
+                child.kill();
+            } catch (e) {}
+        }
+    };
+
+    broadcast({ type: 'STATUS', data: { id, status: 'Running' } });
+
+    child.on('exit', () => {
+        delete activeBrowsers[id];
+        sendLog(id, 'info', 'Trình duyệt gốc đã đóng.');
+        broadcast({ type: 'STATUS', data: { id, status: 'Stopped' } });
+    });
+
+    res.json({ success: true });
+});
+
 // Stop a profile
 app.post('/api/profiles/:id/stop', async (req, res) => {
     const { id } = req.params;
