@@ -23,6 +23,7 @@ function App() {
   const [proxyUsername, setProxyUsername] = useState('');
   const [proxyPassword, setProxyPassword] = useState('');
   const [headless, setHeadless] = useState(false);
+  const [activeTab, setActiveTab] = useState('logs');
 
   const terminalEndRef = useRef(null);
   const wsRef = useRef(null);
@@ -107,6 +108,10 @@ function App() {
       setHeadless(selectedProfile.headless || false);
     }
   }, [selectedId, profiles]);
+
+  useEffect(() => {
+    setActiveTab('logs');
+  }, [selectedId]);
 
   // Handle profile creation
   const handleCreateProfile = async (e) => {
@@ -477,47 +482,116 @@ function App() {
             </form>
           </div>
         ) : selectedProfile ? (
-          <div className="console-workspace">
-            {/* Control Column */}
-            <div className="control-panel">
-              <div className="glass-panel">
-                <div className="panel-header">
-                  <h3 className="panel-title">{selectedProfile.name}</h3>
-                  <span className={`badge ${selectedProfile.status === 'Running' ? 'running' : 'stopped'}`}>
-                    {selectedProfile.status === 'Running' ? 'LIVE' : 'OFFLINE'}
-                  </span>
-                </div>
-                <div className="panel-body">
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                    {selectedProfile.status === 'Running' ? (
-                      <button className="btn btn-danger" onClick={handleStop} disabled={loading}>
-                        <Square size={16} />
-                        Dừng Trình Duyệt (Stop)
+          <div className="console-workspace-tabbed" style={{ display: 'flex', flexDirection: 'column', height: '100%', gap: '16px' }}>
+            {/* Tab Header */}
+            <div className="tabs-header glass-panel" style={{ display: 'flex', padding: '10px 20px', gap: '12px', alignItems: 'center' }}>
+              <button 
+                className={`tab-btn ${activeTab === 'logs' ? 'active' : ''}`}
+                style={{
+                  background: activeTab === 'logs' ? 'rgba(0, 240, 255, 0.1)' : 'transparent',
+                  color: activeTab === 'logs' ? 'var(--accent-cyan)' : 'var(--text-secondary)',
+                  border: '1px solid',
+                  borderColor: activeTab === 'logs' ? 'rgba(0, 240, 255, 0.3)' : 'transparent',
+                  padding: '8px 16px',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontWeight: '600',
+                  fontSize: '14px',
+                  transition: 'all 0.2s'
+                }}
+                onClick={() => setActiveTab('logs')}
+              >
+                Màn hình Terminal Logs
+              </button>
+              <button 
+                className={`tab-btn ${activeTab === 'settings' ? 'active' : ''}`}
+                style={{
+                  background: activeTab === 'settings' ? 'rgba(0, 240, 255, 0.1)' : 'transparent',
+                  color: activeTab === 'settings' ? 'var(--accent-cyan)' : 'var(--text-secondary)',
+                  border: '1px solid',
+                  borderColor: activeTab === 'settings' ? 'rgba(0, 240, 255, 0.3)' : 'transparent',
+                  padding: '8px 16px',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontWeight: '600',
+                  fontSize: '14px',
+                  transition: 'all 0.2s'
+                }}
+                onClick={() => setActiveTab('settings')}
+              >
+                Cấu hình Proxy & Profile
+              </button>
+
+              <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Trạng thái:</span>
+                <span className={`badge ${selectedProfile.status === 'Running' ? 'running' : 'stopped'}`}>
+                  {selectedProfile.status === 'Running' ? 'LIVE' : 'OFFLINE'}
+                </span>
+              </div>
+            </div>
+
+            {/* Tab Body */}
+            {activeTab === 'logs' ? (
+              <div className="tab-content-logs" style={{ display: 'flex', flexDirection: 'column', flex: 1, gap: '16px', height: 'calc(100% - 70px)' }}>
+                {/* Clean inline toolbar for controls */}
+                <div className="glass-panel" style={{ padding: '16px 20px', display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
+                  <span style={{ fontWeight: '700', fontSize: '15px', marginRight: '12px' }}>Điều khiển {selectedProfile.name}:</span>
+                  {selectedProfile.status === 'Running' ? (
+                    <button className="btn btn-danger" style={{ width: 'auto', padding: '10px 20px' }} onClick={handleStop} disabled={loading}>
+                      <Square size={16} />
+                      Dừng Trình Duyệt (Stop)
+                    </button>
+                  ) : (
+                    <>
+                      <button className="btn btn-primary" style={{ width: 'auto', padding: '10px 20px' }} onClick={() => handleStart(false)} disabled={loading}>
+                        <Play size={16} />
+                        Chạy Trực Quan (Headful)
                       </button>
+                      <button className="btn btn-secondary" style={{ width: 'auto', borderColor: '#06b6d4', color: '#06b6d4', padding: '10px 20px' }} onClick={handleStartClean} disabled={loading}>
+                        <Eye size={16} />
+                        Đăng Nhập Sạch (Vượt CF)
+                      </button>
+                      <button className="btn btn-secondary" style={{ width: 'auto', padding: '10px 20px' }} onClick={() => handleStart(true)} disabled={loading}>
+                        <EyeOff size={16} />
+                        Chạy Ngầm (Headless)
+                      </button>
+                    </>
+                  )}
+                </div>
+
+                {/* Log screen takes full remaining height */}
+                <div className="glass-panel terminal-panel" style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+                  <div className="terminal-header">
+                    <div className="terminal-title">
+                      <Terminal size={16} />
+                      CONSOLE_TERMINAL://{selectedProfile.name}
+                    </div>
+                    <div className="terminal-actions">
+                      <button className="terminal-btn" onClick={clearLogs} title="Xóa logs màn hình">
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  </div>
+                  <div className="terminal-screen" style={{ flex: 1, margin: '16px', overflowY: 'auto' }}>
+                    {(logs[selectedId] || []).length === 0 ? (
+                      <span className="text-slate-600 italic">Chưa có log hệ thống. Vui lòng bấm chạy Profile...</span>
                     ) : (
-                      <>
-                        <button className="btn btn-primary" onClick={() => handleStart(false)} disabled={loading}>
-                          <Play size={16} />
-                          Chạy Trực Quan (Start Headful)
-                        </button>
-                        <button className="btn btn-secondary" style={{ borderColor: '#06b6d4', color: '#06b6d4' }} onClick={handleStartClean} disabled={loading}>
-                          <Eye size={16} />
-                          Đăng Nhập Sạch (Vượt CF)
-                        </button>
-                        <button className="btn btn-secondary" onClick={() => handleStart(true)} disabled={loading}>
-                          <EyeOff size={16} />
-                          Chạy Ngầm (Start Headless)
-                        </button>
-                      </>
+                      (logs[selectedId] || []).map((log, idx) => (
+                        <div key={idx} className="log-entry">
+                          <span className="log-time">[{log.timestamp}]</span>
+                          <span className={`log-badge ${log.level}`}>{log.level}</span>
+                          <span className={`log-text ${log.level}`}>{log.text}</span>
+                        </div>
+                      ))
                     )}
+                    <div ref={terminalEndRef}></div>
                   </div>
                 </div>
               </div>
-
-              {/* Edit configs */}
-              <div className="glass-panel" style={{ flex: 1 }}>
+            ) : (
+              <div className="tab-content-settings glass-panel" style={{ maxWidth: '600px', margin: '0 auto', width: '100%', display: 'flex', flexDirection: 'column' }}>
                 <div className="panel-header">
-                  <span className="panel-title" style={{ fontSize: '15px' }}>Cấu hình Proxy & Profile</span>
+                  <h3 className="panel-title">Cấu hình Proxy & Profile: {selectedProfile.name}</h3>
                 </div>
                 <div className="panel-body">
                   <div className="form-group">
@@ -598,7 +672,7 @@ function App() {
                   <div className="toggle-container">
                     <div className="toggle-label">
                       <span className="toggle-title">Mặc định chạy ngầm</span>
-                      <span className="toggle-subtitle">Tự ẩn Chrome khi bấm Start</span>
+                      <span className="toggle-subtitle">Tự ẩn Firefox khi bấm Start</span>
                     </div>
                     <label className="switch">
                       <input 
@@ -622,45 +696,17 @@ function App() {
                     </button>
                     <button 
                       className="btn btn-danger" 
-                      style={{ padding: '12px' }}
+                      style={{ padding: '12px', width: 'auto' }}
                       onClick={handleDeleteProfile} 
                       disabled={loading || selectedProfile.status === 'Running'}
                     >
                       <Trash2 size={14} />
+                      Xóa Profile
                     </button>
                   </div>
                 </div>
               </div>
-            </div>
-
-            {/* Terminal Log Column */}
-            <div className="glass-panel terminal-panel">
-              <div className="terminal-header">
-                <div className="terminal-title">
-                  <Terminal size={16} />
-                  CONSOLE_TERMINAL://{selectedProfile.name}
-                </div>
-                <div className="terminal-actions">
-                  <button className="terminal-btn" onClick={clearLogs} title="Xóa logs màn hình">
-                    <Trash2 size={14} />
-                  </button>
-                </div>
-              </div>
-              <div className="terminal-screen">
-                {(logs[selectedId] || []).length === 0 ? (
-                  <span className="text-slate-600 italic">Chưa có log hệ thống. Vui lòng bấm chạy Profile...</span>
-                ) : (
-                  (logs[selectedId] || []).map((log, idx) => (
-                    <div key={idx} className="log-entry">
-                      <span className="log-time">[{log.timestamp}]</span>
-                      <span className={`log-badge ${log.level}`}>{log.level}</span>
-                      <span className={`log-text ${log.level}`}>{log.text}</span>
-                    </div>
-                  ))
-                )}
-                <div ref={terminalEndRef}></div>
-              </div>
-            </div>
+            )}
           </div>
         ) : (
           <div className="glass-panel empty-state" style={{ flex: 1 }}>
