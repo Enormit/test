@@ -25,6 +25,33 @@ function App() {
   const [headless, setHeadless] = useState(false);
   const [activeTab, setActiveTab] = useState('logs');
 
+  // Tool settings state
+  const [settingsVipMode, setSettingsVipMode] = useState(false);
+  const [settingsAutoDiemDanh, setSettingsAutoDiemDanh] = useState(true);
+  const [settingsAutoThiLuyen, setSettingsAutoThiLuyen] = useState(true);
+  const [settingsAutoPhucLoi, setSettingsAutoPhucLoi] = useState(true);
+  const [settingsAutoClaimDailyTurns, setSettingsAutoClaimDailyTurns] = useState(true);
+  const [settingsLuyenDanAutoStart, setSettingsLuyenDanAutoStart] = useState(true);
+  const [settingsLuyenDanMinStars, setSettingsLuyenDanMinStars] = useState('4');
+
+  const fetchSettings = async (id) => {
+    try {
+      const res = await fetch(`${API_BASE}/profiles/${id}/settings`);
+      if (res.ok) {
+        const data = await res.json();
+        setSettingsVipMode(data.generalVipMode === 'true' || data.generalVipMode === true);
+        setSettingsAutoDiemDanh(data.autoDiemDanh !== 'false' && data.autoDiemDanh !== false);
+        setSettingsAutoThiLuyen(data.autoThiLuyen !== 'false' && data.autoThiLuyen !== false);
+        setSettingsAutoPhucLoi(data.autoPhucLoi !== 'false' && data.autoPhucLoi !== false);
+        setSettingsAutoClaimDailyTurns(data.autoClaimDailyTurns !== 'false' && data.autoClaimDailyTurns !== false);
+        setSettingsLuyenDanAutoStart(data.luyenDanAutoStart !== 'false' && data.luyenDanAutoStart !== false);
+        setSettingsLuyenDanMinStars(data.luyenDanMinStars || '4');
+      }
+    } catch (e) {
+      console.error('Error fetching settings:', e);
+    }
+  };
+
   const terminalEndRef = useRef(null);
   const wsRef = useRef(null);
 
@@ -106,6 +133,7 @@ function App() {
       setProxyUsername(selectedProfile.proxyUsername || '');
       setProxyPassword(selectedProfile.proxyPassword || '');
       setHeadless(selectedProfile.headless || false);
+      fetchSettings(selectedProfile.id);
     }
   }, [selectedId, profiles]);
 
@@ -149,6 +177,7 @@ function App() {
     if (!selectedId) return;
     setLoading(true);
     try {
+      // Update profile
       const res = await fetch(`${API_BASE}/profiles/${selectedId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -163,8 +192,24 @@ function App() {
         })
       });
       const updated = await res.json();
+
+      // Update settings
+      await fetch(`${API_BASE}/profiles/${selectedId}/settings`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          generalVipMode: settingsVipMode,
+          autoDiemDanh: settingsAutoDiemDanh,
+          autoThiLuyen: settingsAutoThiLuyen,
+          autoPhucLoi: settingsAutoPhucLoi,
+          autoClaimDailyTurns: settingsAutoClaimDailyTurns,
+          luyenDanAutoStart: settingsLuyenDanAutoStart,
+          luyenDanMinStars: settingsLuyenDanMinStars
+        })
+      });
+
       setProfiles(prev => prev.map(p => p.id === selectedId ? updated : p));
-      alert('Đã cập nhật cấu hình profile!');
+      alert('Đã cập nhật cấu hình profile và cài đặt tool!');
     } catch (err) {
       alert('Cập nhật thất bại: ' + err.message);
     } finally {
@@ -683,6 +728,121 @@ function App() {
                       />
                       <span className="slider"></span>
                     </label>
+                  </div>
+
+                  <hr style={{ border: '0', borderTop: '1px solid var(--border-glass)', margin: '16px 0' }} />
+                  <span className="panel-title" style={{ fontSize: '15px', display: 'block', marginBottom: '12px' }}>Cấu hình Tính Năng Tool (Userscript)</span>
+
+                  {/* VIP checkbox */}
+                  <div className="toggle-container" style={{ marginBottom: '10px' }}>
+                    <div className="toggle-label">
+                      <span className="toggle-title">Chế độ VIP (generalVipMode)</span>
+                      <span className="toggle-subtitle">Bật các tính năng dành cho VIP</span>
+                    </div>
+                    <label className="switch">
+                      <input 
+                        type="checkbox" 
+                        checked={settingsVipMode} 
+                        onChange={e => setSettingsVipMode(e.target.checked)} 
+                        disabled={selectedProfile.status === 'Running'}
+                      />
+                      <span className="slider"></span>
+                    </label>
+                  </div>
+
+                  {/* Task options */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '10px' }}>
+                    <div className="toggle-container">
+                      <div className="toggle-label">
+                        <span className="toggle-title">Tự động Điểm danh</span>
+                      </div>
+                      <label className="switch">
+                        <input 
+                          type="checkbox" 
+                          checked={settingsAutoDiemDanh} 
+                          onChange={e => setSettingsAutoDiemDanh(e.target.checked)} 
+                          disabled={selectedProfile.status === 'Running'}
+                        />
+                        <span className="slider"></span>
+                      </label>
+                    </div>
+
+                    <div className="toggle-container">
+                      <div className="toggle-label">
+                        <span className="toggle-title">Tự động Thí luyện</span>
+                      </div>
+                      <label className="switch">
+                        <input 
+                          type="checkbox" 
+                          checked={settingsAutoThiLuyen} 
+                          onChange={e => setSettingsAutoThiLuyen(e.target.checked)} 
+                          disabled={selectedProfile.status === 'Running'}
+                        />
+                        <span className="slider"></span>
+                      </label>
+                    </div>
+
+                    <div className="toggle-container">
+                      <div className="toggle-label">
+                        <span className="toggle-title">Tự động Phúc lợi</span>
+                      </div>
+                      <label className="switch">
+                        <input 
+                          type="checkbox" 
+                          checked={settingsAutoPhucLoi} 
+                          onChange={e => setSettingsAutoPhucLoi(e.target.checked)} 
+                          disabled={selectedProfile.status === 'Running'}
+                        />
+                        <span className="slider"></span>
+                      </label>
+                    </div>
+
+                    <div className="toggle-container">
+                      <div className="toggle-label">
+                        <span className="toggle-title">Tự nhận Trận Văn (VIP)</span>
+                      </div>
+                      <label className="switch">
+                        <input 
+                          type="checkbox" 
+                          checked={settingsAutoClaimDailyTurns} 
+                          onChange={e => setSettingsAutoClaimDailyTurns(e.target.checked)} 
+                          disabled={selectedProfile.status === 'Running'}
+                        />
+                        <span className="slider"></span>
+                      </label>
+                    </div>
+                  </div>
+
+                  {/* Luyện đan options */}
+                  <div className="toggle-container" style={{ marginBottom: '10px' }}>
+                    <div className="toggle-label">
+                      <span className="toggle-title">Tự động Luyện Đan</span>
+                    </div>
+                    <label className="switch">
+                      <input 
+                        type="checkbox" 
+                        checked={settingsLuyenDanAutoStart} 
+                        onChange={e => setSettingsLuyenDanAutoStart(e.target.checked)} 
+                        disabled={selectedProfile.status === 'Running'}
+                      />
+                      <span className="slider"></span>
+                    </label>
+                  </div>
+
+                  <div className="form-group" style={{ marginBottom: '16px' }}>
+                    <label>Luyện Đan: Số sao tối thiểu (luyenDanMinStars)</label>
+                    <select 
+                      className="select-field" 
+                      value={settingsLuyenDanMinStars} 
+                      onChange={e => setSettingsLuyenDanMinStars(e.target.value)}
+                      disabled={selectedProfile.status === 'Running'}
+                    >
+                      <option value="1">1 Sao</option>
+                      <option value="2">2 Sao</option>
+                      <option value="3">3 Sao</option>
+                      <option value="4">4 Sao</option>
+                      <option value="5">5 Sao</option>
+                    </select>
                   </div>
 
                   <div style={{ display: 'flex', gap: '10px', marginTop: '12px' }}>

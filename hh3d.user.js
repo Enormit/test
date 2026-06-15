@@ -119,6 +119,23 @@
             });
             observer.observe(container, { childList: true, subtree: true });
         };
+        // Sync settings from local NodeJS server and save to localStorage
+        try {
+            fetch('http://localhost:3000/api/profiles/' + profileId + '/settings')
+                .then(r => r.ok ? r.json() : null)
+                .then(settings => {
+                    if (settings) {
+                        for (const key in settings) {
+                            localStorage.setItem(key, String(settings[key]));
+                        }
+                        console.log('[SettingsSync] ✅ Đồng bộ cấu hình từ Dashboard thành công.');
+                    }
+                })
+                .catch(e => {
+                    console.warn('[SettingsSync] ⚠️ Lỗi kết nối đồng bộ cấu hình:', e.message);
+                });
+        } catch (e) {}
+
         observeNotifications();
     }
 

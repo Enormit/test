@@ -108,7 +108,16 @@ app.post('/api/profiles', (req, res) => {
         proxyUsername: proxyUsername || '',
         proxyPassword: proxyPassword || '',
         status: 'Stopped',
-        headless: false
+        headless: false,
+        settings: {
+            generalVipMode: false,
+            autoDiemDanh: true,
+            autoThiLuyen: true,
+            autoPhucLoi: true,
+            autoClaimDailyTurns: true,
+            luyenDanAutoStart: true,
+            luyenDanMinStars: '4'
+        }
     };
 
     profiles.push(newProfile);
@@ -166,6 +175,31 @@ app.delete('/api/profiles/:id', async (req, res) => {
     }
 
     res.json({ success: true });
+});
+
+// Get profile settings
+app.get('/api/profiles/:id/settings', (req, res) => {
+    const { id } = req.params;
+    const profiles = readProfiles();
+    const profile = profiles.find(p => p.id === id);
+    if (!profile) return res.status(404).json({ error: 'Profile not found' });
+    res.json(profile.settings || {});
+});
+
+// Update profile settings
+app.put('/api/profiles/:id/settings', (req, res) => {
+    const { id } = req.params;
+    const settings = req.body;
+    const profiles = readProfiles();
+    const index = profiles.findIndex(p => p.id === id);
+    if (index === -1) return res.status(404).json({ error: 'Profile not found' });
+
+    profiles[index].settings = {
+        ...profiles[index].settings,
+        ...settings
+    };
+    writeProfiles(profiles);
+    res.json(profiles[index].settings);
 });
 
 // Start a profile
@@ -287,16 +321,7 @@ app.post('/api/profiles/:id/start', async (req, res) => {
         await mainPage.goto(`https://hoathinh3d.co/?profileId=${id}`, { waitUntil: 'domcontentloaded' }).catch(() => {});
 
         // Open install page in new tab if headful mode (for Violentmonkey userscript install)
-        if (!isHeadless) {
-            setTimeout(async () => {
-                try {
-                    const installPage = await browser.newPage();
-                    await installPage.goto('http://localhost:3000/hh3d.user.js').catch(() => {});
-                } catch (e) {
-                    console.error('Failed to open Violentmonkey install tab:', e);
-                }
-            }, 3000);
-        }
+
 
 
 
