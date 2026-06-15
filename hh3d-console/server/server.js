@@ -214,7 +214,9 @@ app.post('/api/profiles/:id/start', async (req, res) => {
         'extensions.autoDisableScopes': 0,
         'extensions.enabledScopes': 15,
         'extensions.databaseSchema': 1,
-        'signon.autologin.proxy': true
+        'signon.autologin.proxy': true,
+        'dom.webdriver.enabled': false,
+        'usePrivacyResistFingerprinting': false
     };
 
     // Add proxy configurations to extraPrefsFirefox
