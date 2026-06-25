@@ -1,11 +1,11 @@
 // ==UserScript==
-// @name          HH3D Auto - v2.15
+// @name          HH3D Auto - v2.17
 // @namespace     hh3d-tool
-// @version       v2.15
+// @version       v2.17
 // @updateURL     https://raw.githubusercontent.com/Enormit/tool-automation/main/hh3d.user.js
 // @downloadURL   https://raw.githubusercontent.com/Enormit/tool-automation/main/hh3d.user.js
 // @description   Auto  HH3D
-// @author        Cre: [Unknown] - v2.15
+// @author        Cre: [Unknown] - v2.17
 // @include       *://hoathinh3d.co*/*
 // @exclude       *://hoathinh3d.co/khoang-mach*
 // @exclude       *://hoathinh3d.co/luyen-dan-duong*
@@ -2190,7 +2190,7 @@
                 const autoTune = localStorage.getItem('luyenDanAutoTune') !== 'false';
                 const autoUse = localStorage.getItem('luyenDanAutoUse') !== 'false';
                 const autoStart = localStorage.getItem('luyenDanAutoStart') !== 'false';
-                
+
                 // Cấu hình Đan Đồng
                 const autoInvite = localStorage.getItem('luyenDanAutoInvite') === 'true';
                 const waitSeconds = localStorage.getItem('luyenDanWaitInviteSeconds') || '60';
@@ -2417,11 +2417,11 @@
                 const waitOption = document.getElementById('luyendan-wait-time-option');
                 const acceptAllOption = document.getElementById('luyendan-accept-all-option');
                 const friendsListSection = document.getElementById('luyendan-friends-list-section');
-                
+
                 const updateFriendsVisibility = () => {
                     const inviteVal = autoInviteCheck?.checked || false;
                     const acceptVal = autoAcceptCheck?.checked || false;
-                    
+
                     if (waitOption) waitOption.style.display = inviteVal ? 'block' : 'none';
                     if (acceptAllOption) acceptAllOption.style.display = acceptVal ? 'block' : 'none';
                     if (friendsListSection) friendsListSection.style.display = (inviteVal || acceptVal) ? 'block' : 'none';
@@ -2433,7 +2433,7 @@
                 // Tải danh sách bạn bè bất đồng bộ
                 const friendsContainer = document.getElementById('luyendan-friends-container');
                 const searchInput = document.getElementById('luyendan-friend-search');
-                
+
                 if (friendsContainer) {
                     luyendan.sendLdRequest("/friends", "GET").then(friendsRes => {
                         const friends = friendsRes?.data?.friends || [];
@@ -2441,18 +2441,18 @@
                             friendsContainer.innerHTML = '<p style="font-size:11px; color:#888; text-align:center; padding:10px 0; margin:0;">📭 Không tìm thấy đạo hữu nào</p>';
                             return;
                         }
-                        
+
                         const savedIds = (localStorage.getItem('luyenDanSelectedFriendIds') || '').split(',').filter(Boolean);
-                        
+
                         const renderFriends = (filterText = '') => {
                             const normalizedFilter = filterText.toLowerCase().trim();
                             const filtered = friends.filter(f => !normalizedFilter || (f.name || '').toLowerCase().includes(normalizedFilter));
-                            
+
                             if (!filtered.length) {
                                 friendsContainer.innerHTML = '<p style="font-size:11px; color:#888; text-align:center; padding:10px 0; margin:0;">🔍 Không khớp tên bạn bè</p>';
                                 return;
                             }
-                            
+
                             friendsContainer.innerHTML = filtered.map(f => {
                                 const uid = String(f.userId != null ? f.userId : f.id);
                                 const isChecked = savedIds.includes(uid);
@@ -2468,7 +2468,7 @@
                         };
 
                         renderFriends();
-                        
+
                         if (searchInput) {
                             searchInput.addEventListener('input', (e) => {
                                 renderFriends(e.target.value);
@@ -2721,9 +2721,7 @@
         constructor(nonce) {
             this.nonce = nonce;
             this.ajaxUrl = ajaxUrl;
-            const VanDapfileName = "/VanDap.json";
-            const VanDapUrl = baseUrl + repoPath + branch + VanDapfileName;
-            this.QUESTION_DATA_URL = VanDapUrl;
+            this.QUESTION_DATA_URL = "https://raw.githubusercontent.com/phamquyet47204/tool-automation/main/VanDap.json";
             this.taskTracker = taskTracker;
             this.questionDataCache = null;
         }
@@ -2779,7 +2777,7 @@
                 }
                 const data = await response.json();
                 this.questionDataCache = data;
-                
+
                 // Lưu lại cache
                 try {
                     localStorage.setItem(cacheKey, JSON.stringify(data));
@@ -4962,7 +4960,7 @@
                 pct = Math.min(100, Math.max(0, (xpIn / per) * 100));
                 xpToNext = Math.max(0, next - xp);
             }
-            
+
             let levelName = 'Luyện Đan Sư · Bậc ' + level;
             if (m && m.level_names && m.level_names[String(level)]) {
                 levelName = String(m.level_names[String(level)]).trim();
@@ -4989,7 +4987,7 @@
                     const infoDiv = questItem.querySelector('.quest-alchemist-info');
                     if (infoDiv) infoDiv.remove();
                 }
-            } catch (e) {}
+            } catch (e) { }
         }
 
         async getNonce() {
@@ -5085,7 +5083,7 @@
                 if (autoAccept && data.dong_invites_in && data.dong_invites_in.length > 0) {
                     const acceptAll = localStorage.getItem('luyenDanAcceptAllInvites') !== 'false';
                     const selectedIds = (localStorage.getItem('luyenDanSelectedFriendIds') || '').split(',').filter(Boolean);
-                    
+
                     for (const inv of data.dong_invites_in) {
                         const oid = String(inv.owner_id);
                         if (acceptAll || selectedIds.includes(oid)) {
@@ -5111,7 +5109,7 @@
                     const serving = data.dong_serving;
                     const oid = serving.owner_id | 0;
                     const unstableLeftSec = data.craft ? (data.craft.unstable_left_sec | 0) : 0;
-                    
+
                     let canLeave = false;
                     if (furnaceState === 'exploded') {
                         canLeave = true;
@@ -5208,7 +5206,7 @@
                                     const decompRes = await this.sendLdRequest("/decompose", "POST", { pill_id: String(pid) });
                                     if (decompRes && (decompRes.success || decompRes.data)) {
                                         showNotification(`🧪 ♻️ Đã phân giải thành công đan ${stack.stars}★`, "success");
-                                        
+
                                         // Cập nhật DOM ngay lập tức để đồng bộ và tránh lặp lại quét
                                         if (stack.isDomFallback && stack.cell) {
                                             const qtyEl = stack.cell.querySelector('.ld-qty');
@@ -5467,10 +5465,10 @@
                             const filledSlots = slots.filter(s => s != null);
                             const isAllFilled = filledSlots.length >= 2;
                             const waitSeconds = parseInt(localStorage.getItem('luyenDanWaitInviteSeconds') || '60', 10);
-                            
+
                             if (!isAllFilled) {
                                 const selectedIds = (localStorage.getItem('luyenDanSelectedFriendIds') || '').split(',').filter(Boolean);
-                                
+
                                 if (!this.inviteSentTime) {
                                     console.log(`${this.logPrefix} Bắt đầu mời Đan Đồng...`);
                                     this.updateProgress("Gửi lời mời Đan Đồng");
@@ -7591,10 +7589,10 @@
 
         extractPtTokenFromHtml(html) {
             if (!html) return null;
-            const match = html.match(/pt_token\s*[:=]\s*['"]([a-f0-9]{32,})['"]/i) || 
-                          html.match(/ptToken\s*[:=]\s*['"]([a-f0-9]{32,})['"]/i) ||
-                          html.match(/"pt-token"\s*:\s*"([a-f0-9]{32,})"/i) ||
-                          html.match(/pt_token['"]?\s*:\s*['"]([a-f0-9]{32,})['"]/i);
+            const match = html.match(/pt_token\s*[:=]\s*['"]([a-f0-9]{32,})['"]/i) ||
+                html.match(/ptToken\s*[:=]\s*['"]([a-f0-9]{32,})['"]/i) ||
+                html.match(/"pt-token"\s*:\s*"([a-f0-9]{32,})"/i) ||
+                html.match(/pt_token['"]?\s*:\s*['"]([a-f0-9]{32,})['"]/i);
             return match ? match[1] : null;
         }
 
@@ -7629,49 +7627,87 @@
             return null;
         }
 
-        // ✨ Nhận lượt Khắc Trận Văn (Daily Turns)
-        async claimDailyTurns() {
-            const nonce = await getNonce();
-            if (!nonce) {
-                showNotification("❌ Lỗi: Không thể lấy nonce để nhận lượt Khắc Trận Văn", "error");
-                return false;
-            }
-
-            const ptToken = await this.getPtToken();
-            if (!ptToken) {
-                showNotification("❌ Lỗi: Không thể lấy Pháp Tượng token", "error");
-                return false;
-            }
-
-            const claimURL = weburl + "wp-json/phap-tuong/v1/claim-daily-turns";
-            console.log("✨ Đang nhận lượt Khắc Trận Văn:", claimURL);
+        // 🔑 Lấy nonce và token từ trang Pháp Tướng (logic từ ThamKhao.js)
+        async getPtConfig() {
+            const logPrefix = "[HH3D Khắc Trận Văn]";
             try {
-                const response = await fetch(claimURL, {
+                const response = await fetch(weburl + "/trieu-hoi-phap-tuong?t", {
+                    headers: {
+                        "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
+                        "sec-fetch-dest": "iframe",
+                        "sec-fetch-mode": "navigate",
+                        "sec-fetch-site": "same-origin",
+                        "referer": weburl + "/tu-bao-cac?t" + Math.random().toString(36).substring(2, 8)
+                    },
+                    credentials: "include"
+                });
+                const html = await response.text();
+
+                const regex = /PHAP_TUONG_CONFIG\s*=\s*(\{[\s\S]*?\});/;
+                const match = html.match(regex);
+
+                if (match && match[1]) {
+                    const config = eval("(" + match[1] + ")");
+                    console.log(logPrefix, "🔑 Nonce:", config.nonce);
+                    console.log(logPrefix, "🔒 Token:", config.token);
+                    return config;
+                } else {
+                    showNotification("❌ Không tìm thấy PHAP_TUONG_CONFIG trong HTML", "error");
+                    return null;
+                }
+            } catch (e) {
+                console.error("[HH3D Khắc Trận Văn]", e);
+                showNotification("❌ Lỗi khi tải trang Pháp Tướng để lấy nonce/token", "error");
+                return null;
+            }
+        }
+
+        // ✨ Nhận lượt Khắc Trận Văn (Daily Turns) - logic từ ThamKhao.js
+        async claimDailyTurns() {
+            const logPrefix = "[HH3D Khắc Trận Văn]";
+            const config = await this.getPtConfig();
+            if (!config?.nonce || !config?.token) return false;
+
+            try {
+                const response = await fetch(weburl + "wp-json/phap-tuong/v1/claim-daily-turns", {
+                    method: "POST",
                     credentials: "include",
                     headers: {
-                        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36",
-                        "Accept": "*/*",
-                        "Accept-Language": "vi,en-US;q=0.5",
-                        "x-wp-nonce": nonce,
-                        "x-pt-token": ptToken,
-                        "Content-Type": "application/json"
+                        "Content-Type": "application/json",
+                        "X-WP-Nonce": config.nonce,
+                        "X-Pt-Token": config.token
                     },
-                    method: "POST",
-                    mode: "cors"
+                    referrer: weburl + "/tu-bao-cac?t",
                 });
 
                 const data = await response.json();
+
+                // ✅ Thành công
                 if (data.success) {
-                    showNotification(`🎉 ${data.message || 'Nhận thành công lượt Khắc Trận Văn!'}`, "success");
+                    showNotification(`${logPrefix} ✨ ${data.message}`, "success");
+                    console.log(logPrefix, `🎁 Nhận thêm ${data.turns_claimed} lượt`);
                     return true;
-                } else {
-                    showNotification(`❌ ${data.message || 'Không thể nhận lượt Khắc Trận Văn'}`, "error");
-                    return false;
                 }
-            } catch (error) {
-                console.error("Lỗi khi claim daily turns:", error);
-                showNotification(`❌ Lỗi kết nối khi nhận lượt Khắc Trận Văn`, "error");
+
+                // ✅ Đã nhận rồi (coi như OK)
+                if (data.message && data.message.includes("Đạo hữu đã nhận lượt VIP hôm nay rồi")) {
+                    showNotification(`${logPrefix} ℹ️ ${data.message}`, "info");
+                    return true;
+                }
+
+                // ✅ Tính năng dành riêng cho VIP (coi như OK)
+                if (data.message && data.message.includes("Tính năng dành riêng cho VIP")) {
+                    showNotification(`${logPrefix} 🔒 ${data.message}`, "error");
+                    return true;
+                }
+
+                // ❌ Các lỗi khác
+                showNotification(`${logPrefix} ℹ️ ${data.message}`, "error");
                 return false;
+
+            } catch (err) {
+                console.error(logPrefix, "❌ Lỗi khi claim lượt VIP:", err);
+                return null;
             }
         }
 
@@ -10107,7 +10143,7 @@
                             const minVal = Math.floor(totalSec / 60);
                             const secVal = totalSec % 60;
                             const timeStr = `${String(minVal).padStart(2, '0')}:${String(secVal).padStart(2, '0')}`;
-                            
+
                             let text;
                             if (isSafe) {
                                 text = `đã điều hoả ${tuneCount} lần thời gian ${timeStr}`;
@@ -10365,7 +10401,7 @@
         */
         async scheduleTask(taskName, taskAction, interval) {
             if (this.timeoutIds[taskName]) clearTimeout(this.timeoutIds[taskName]);
-            
+
             // Kiểm tra xem quest này có bị tắt chạy tự động không (bao gồm cả luyenDan)
             const quest = QUEST_CONFIG.find(q => q.taskId === taskName);
             if (quest && quest.autorunEnabled) {
