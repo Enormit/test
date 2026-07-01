@@ -1,11 +1,11 @@
 // ==UserScript==
-// @name          HH3D Auto - v2.17
+// @name          HH3D Auto - v2.18
 // @namespace     hh3d-tool
-// @version       v2.17
+// @version       v2.18
 // @updateURL     https://raw.githubusercontent.com/Enormit/tool-automation/main/hh3d.user.js
 // @downloadURL   https://raw.githubusercontent.com/Enormit/tool-automation/main/hh3d.user.js
 // @description   Auto  HH3D
-// @author        Cre: [Unknown] - v2.17
+// @author        Cre: [Unknown] - v2.18
 // @include       *://hoathinh3d.co*/*
 // @exclude       *://hoathinh3d.co/khoang-mach*
 // @exclude       *://hoathinh3d.co/luyen-dan-duong*
@@ -2721,7 +2721,7 @@
         constructor(nonce) {
             this.nonce = nonce;
             this.ajaxUrl = ajaxUrl;
-            this.QUESTION_DATA_URL = "https://raw.githubusercontent.com/phamquyet47204/tool-automation/main/VanDap.json";
+            this.QUESTION_DATA_URL = "https://raw.githubusercontent.com/Enormit/tool-automation/refs/heads/main/VanDap.json";
             this.taskTracker = taskTracker;
             this.questionDataCache = null;
         }
@@ -5052,7 +5052,17 @@
                 body: body ? JSON.stringify(body) : undefined,
                 credentials: "include"
             });
-            return await response.json();
+
+            let res;
+            try {
+                res = await response.json();
+            } catch (err) {
+                res = { code: "parse_error", message: "Phản hồi không phải JSON" };
+            }
+            if (!response.ok || res.code) {
+                return { error: true, code: res.code || "http_error", message: res.message || `Lỗi HTTP ${response.status}` };
+            }
+            return res;
         }
 
         async doLuyenDan(isManual = false) {
@@ -5091,7 +5101,7 @@
                             this.updateProgress(`Nhận Đan Đồng ${inv.owner_name || oid}`);
                             try {
                                 const res = await this.sendLdRequest("/dong/respond", "POST", { owner_id: inv.owner_id, accept: true });
-                                if (res && (res.success || res.data)) {
+                                if (res && !res.error) {
                                     showNotification(`🧪 ✅ Đã tự động nhận làm Đan Đồng cho Đan Chủ: ${inv.owner_name || oid}`, "success");
                                     return 3000;
                                 }
@@ -5128,7 +5138,7 @@
                         this.updateProgress(`Rời Đan Đồng ${serving.owner_name || oid}`);
                         try {
                             const res = await this.sendLdRequest("/dong/leave", "POST", { owner_id: oid });
-                            if (res && (res.success || res.data)) {
+                            if (res && !res.error) {
                                 showNotification(`🧪 🚪 Đã tự động rời vai Đan Đồng của Đan Chủ ${serving.owner_name || oid}`, "success");
                                 return 3000;
                             }
@@ -5204,7 +5214,7 @@
                                 this.updateProgress(`Phân giải ${stack.stars}★...`);
                                 try {
                                     const decompRes = await this.sendLdRequest("/decompose", "POST", { pill_id: String(pid) });
-                                    if (decompRes && (decompRes.success || decompRes.data)) {
+                                    if (decompRes && !decompRes.error) {
                                         showNotification(`🧪 ♻️ Đã phân giải thành công đan ${stack.stars}★`, "success");
 
                                         // Cập nhật DOM ngay lập tức để đồng bộ và tránh lặp lại quét
@@ -5247,7 +5257,7 @@
                         console.log(`${this.logPrefix} Đan Đồng tự động điều hỏa hộ Đan Chủ (Độ ổn định: ${stability.toFixed(1)}%)...`);
                         try {
                             const tuneRes = await this.sendLdRequest("/tune", "POST", {});
-                            if (tuneRes && (tuneRes.success || tuneRes.data)) {
+                            if (tuneRes && !tuneRes.error) {
                                 showNotification(`🧪 🔥 Đan Đồng đã tự động Điều Hỏa hộ Đan Chủ!`, "success");
                                 return 10000;
                             }
@@ -5270,7 +5280,7 @@
                     const jobId = craft?.id || data.craftJobId;
                     if (jobId) {
                         const ackRes = await this.sendLdRequest("/ack-explosion", "POST", { job_id: jobId });
-                        if (ackRes && (ackRes.success || ackRes.data)) {
+                        if (ackRes && !ackRes.error) {
                             showNotification("🧪 ✅ Đã dọn dẹp lò đan bị nổ", "success");
                         } else {
                             showNotification("🧪 ❌ Lỗi khi dọn dẹp lò đan nổ", "error");
@@ -5291,53 +5301,70 @@
                     const jobId = craft?.id || data.craftJobId;
                     if (jobId) {
                         const collectRes = await this.sendLdRequest("/collect", "POST", { job_id: jobId });
-                        if (collectRes && (collectRes.success || collectRes.data)) {
-                            const pillName = collectRes.data?.pill_name || "Đan dược";
-                            const stars = collectRes.data?.stars || 1;
+                        // API trả về { ok: true, data: {...} } khi thành công
+                        if (collectRes && !collectRes.error && (collectRes.ok || collectRes.data)) {
+                            const collectData = collectRes.data || collectRes;
+                            const pillName = collectData.pill_name || collectData.tier_label || "Đan dược";
+                            const stars = parseInt(collectData.stars || collectData.star || 1, 10);
                             showNotification(`🧪 🏆 Thu hoạch thành công: ${pillName} ${"★".repeat(stars)}`, "success");
 
-                            // So sánh danh sách pills trước và sau thu hoạch để tìm pill mới
-                            const beforePills = data.pills || [];
-                            const afterPills = collectRes.data?.pills || [];
-                            const beforeIds = new Set(beforePills.map(p => String(p.id)));
-                            const newPill = afterPills.find(p => !beforeIds.has(String(p.id)));
+                            const minStars = parseInt(localStorage.getItem('luyenDanMinStars') || '4', 10);
+                            const autoUse = localStorage.getItem('luyenDanAutoUse') !== 'false';
+                            const autoDecompose = localStorage.getItem('luyenDanAutoDecompose') !== 'false';
 
-                            const pillId = newPill ? String(newPill.id) : (collectRes.data?.last_collect?.pill_id || `${collectRes.data?.tier || data.tier || "ha"}:${stars}`);
+                            // [v2.17.1-local] Lấy lại state mới để tìm pill_id thực tế trong pill_stacks
+                            let pillId = null;
+                            try {
+                                const freshState = await this.sendLdRequest("/state?fresh=1", "GET");
+                                const freshData = freshState?.data || freshState;
+                                const stacks = freshData?.pill_stacks || [];
+                                // Tìm stack khớp tier và stars vừa thu hoạch
+                                const craftedTier = collectData.tier || craft?.ui_tier || data.tier;
+                                const matchStack = stacks.find(s =>
+                                    s.tier === craftedTier && parseInt(s.stars || 0, 10) === stars
+                                ) || stacks.find(s => parseInt(s.stars || 0, 10) === stars)
+                                  || stacks[stacks.length - 1]; // fallback lấy đan cuối cùng trong túi
+                                if (matchStack) {
+                                    pillId = String(matchStack.stack_id || `${matchStack.tier}:${matchStack.stars}`);
+                                    console.log(`${this.logPrefix} Tìm thấy pill trong túi: ${pillId} (${matchStack.tier} ${matchStack.stars}★ x${matchStack.count})`);
+                                } else {
+                                    console.warn(`${this.logPrefix} Không tìm thấy đan trong túi sau thu hoạch. pill_stacks:`, stacks);
+                                }
+                            } catch (err) {
+                                console.error(`${this.logPrefix} Lỗi khi lấy state mới:`, err);
+                            }
 
                             if (pillId) {
-                                const minStars = parseInt(localStorage.getItem('luyenDanMinStars') || '4', 10);
-                                const autoUse = localStorage.getItem('luyenDanAutoUse') !== 'false';
-                                const autoDecompose = localStorage.getItem('luyenDanAutoDecompose') !== 'false';
-
                                 if (stars >= minStars) {
                                     if (autoUse) {
-                                        console.log(`${this.logPrefix} Đang tự động sử dụng đan phẩm chất cao (${stars}★)...`);
+                                        console.log(`${this.logPrefix} Tự động sử dụng đan chất cao (${stars}★)...`);
                                         this.updateProgress(`Sử dụng đan ${stars}★`);
                                         const useRes = await this.sendLdRequest("/use-pill", "POST", { pill_id: String(pillId) });
-                                        if (useRes && (useRes.success || useRes.data)) {
-                                            showNotification(`🧪 ✅ Đã sử dụng đan. Tu Vi nhận được: ${useRes.data?.tu_vi_granted || "thành công"}`, "success");
+                                        if (useRes && !useRes.error && (useRes.ok || useRes.data)) {
+                                            const useData = useRes.data || useRes;
+                                            showNotification(`🧪 ✅ Đã sử dụng đan. Tu Vi nhận: ${useData?.tu_vi_granted || useData?.tu_vi || "thành công"}`, "success");
                                         } else {
                                             showNotification(`🧪 ⚠️ Lỗi sử dụng đan: ${useRes?.message || 'không thành công'}`, "warning");
                                         }
                                     } else {
-                                        console.log(`${this.logPrefix} Đan phẩm chất tốt (${stars}★ >= ${minStars}★) nhưng tự động sử dụng tắt. Giữ lại túi đồ.`);
                                         showNotification(`🧪 📦 Nhận đan (${stars}★). Giữ lại trong túi đồ.`, "info");
                                         this.updateProgress(`Giữ đan ${stars}★`);
                                     }
                                 } else if (autoDecompose) {
-                                    console.log(`${this.logPrefix} Đang tự động phân giải đan phẩm chất kém (${stars}★ < ${minStars}★)...`);
+                                    console.log(`${this.logPrefix} Tự động phân giải đan chất kém (${stars}★ < ${minStars}★)...`);
                                     this.updateProgress(`Phân giải đan ${stars}★`);
                                     const decompRes = await this.sendLdRequest("/decompose", "POST", { pill_id: String(pillId) });
-                                    if (decompRes && (decompRes.success || decompRes.data)) {
-                                        showNotification(`🧪 ♻️ Đã tự động phân giải đan phẩm chất kém (${stars}★)`, "success");
+                                    if (decompRes && !decompRes.error && (decompRes.ok || decompRes.data)) {
+                                        showNotification(`🧪 ♻️ Đã phân giải đan phẩm chất kém (${stars}★)`, "success");
                                     } else {
                                         showNotification(`🧪 ⚠️ Lỗi phân giải đan: ${decompRes?.message || 'không thành công'}`, "warning");
                                     }
                                 } else {
-                                    console.log(`${this.logPrefix} Đan phẩm chất kém (${stars}★ < ${minStars}★) và tự động phân giải tắt. Giữ lại túi đồ.`);
                                     showNotification(`🧪 📦 Nhận đan (${stars}★). Giữ lại trong túi đồ.`, "info");
                                     this.updateProgress(`Giữ đan ${stars}★`);
                                 }
+                            } else {
+                                showNotification(`🧪 📦 Thu đan thành công (${stars}★) nhưng không xác định được ID đan trong túi.`, "info");
                             }
                         } else {
                             showNotification("🧪 ❌ Thu đan thất bại", "error");
@@ -5347,6 +5374,7 @@
                     }
                     return 10000;
                 }
+
 
                 if (furnace === "crafting") {
                     const unstableLeftSec = craft ? (craft.unstable_left_sec | 0) : 0;
@@ -5397,7 +5425,7 @@
                             this.updateProgress(`Điều Hỏa ${i + 1}/3`);
                             try {
                                 const tuneRes = await this.sendLdRequest("/tune", "POST", {});
-                                if (tuneRes && (tuneRes.success || tuneRes.data)) {
+                                if (tuneRes && !tuneRes.error) {
                                     successCount++;
                                     console.log(`${this.logPrefix} Điều Hỏa lần ${i + 1} thành công.`);
                                     const updatedTuneCount = tuneRes.data?.craft?.tune_count || tuneRes.data?.tune_count;
@@ -5443,9 +5471,11 @@
                         if (isUnlocked) {
                             const vec = rec.vector || {};
                             let hasEnoughMats = true;
-                            for (const el of ["kim", "moc", "thuy", "hoa", "tho"]) {
+                            // [v2.17.1-local] Kiểm tra TẤT CẢ nguyên liệu (kể cả linh_phong_thao, huyen_van_thao...)
+                            for (const el of Object.keys(vec)) {
                                 const need = vec[el] || 0;
                                 if ((materials[el] || 0) < need) {
+                                    console.log(`${this.logPrefix} Thiếu [${el}] cho phẩm [${tier}]: cần ${need}, có ${materials[el] || 0}`);
                                     hasEnoughMats = false;
                                     break;
                                 }
@@ -5504,7 +5534,7 @@
                         showNotification(`🧪 Khai lò luyện đan phẩm: ${selectedTier.toUpperCase()}...`, "info");
                         this.updateProgress(`Khai lò phẩm ${selectedTier.toUpperCase()}`);
                         const startRes = await this.sendLdRequest("/start", "POST", { tier: selectedTier });
-                        if (startRes && (startRes.success || startRes.data)) {
+                        if (startRes && !startRes.error) {
                             showNotification(`🧪 🔥 Khai lò Luyện Đan phẩm ${selectedTier.toUpperCase()} thành công!`, "success");
                             return 10000;
                         } else {
@@ -5520,7 +5550,7 @@
                             showNotification(`🧪 📦 Phát hiện gói linh dược ${bundle.name || bundleKey}. Đang tự động mở...`, "info");
                             this.updateProgress("Mở gói linh dược");
                             const openRes = await this.sendLdRequest("/open-mat-bundle", "POST", { job_id: String(bundleKey), bundle_key: String(bundleKey) });
-                            if (openRes && (openRes.success || openRes.data)) {
+                            if (openRes && !openRes.error) {
                                 showNotification(`🧪 ✅ Mở gói linh dược thành công!`, "success");
                                 return 3000;
                             } else {
@@ -10711,7 +10741,7 @@
                 localStorage.setItem('autorunEnabled', '0');
             }
             if (localStorage.getItem('autoLuyenDan') === null) {
-                localStorage.setItem('autoLuyenDan', '0');
+                localStorage.setItem('autoLuyenDan', '1'); // [v2.17.1-local] Mặc định BẬT tự động luyện đan
             }
 
             let autorunEnabled = localStorage.getItem('autorunEnabled') === '1';
