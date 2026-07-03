@@ -2250,8 +2250,8 @@
                             <option value="dong" ${autoTuneMode === 'dong' ? 'selected' : ''}>🤝 Chế độ 2: Không tự điều hoả (để Đan Đồng lo)</option>
                         </select>
                         <p class="settings-description">
-                            <b>Chế độ 1:</b> Đan Chủ tự bấm Điều Hoả (khi làm Đan Đồng sẽ không tự động bấm hộ).<br>
-                            <b>Chế độ 2:</b> Đan Chủ không tự bấm (tiết kiệm lượt/lực), nhường Đan Đồng bấm hộ.
+                            <b>Chế độ 1:</b> Đan Chủ tự bấm Điều Hoả (Đan Đồng nếu có cũng sẽ tự bấm hộ để an toàn tối đa).<br>
+                            <b>Chế độ 2:</b> Đan Chủ không tự bấm (để tiết kiệm lượt), nhường hoàn toàn cho Đan Đồng bấm hộ.
                         </p>
                     </div>
                 </div>
@@ -5249,9 +5249,9 @@
                         this.updateProgress(`Đan đồng (${tuneCount}/3)`);
                     }
 
-                    // Chỉ tự động điều hoả ở Chế độ 2 (Nhờ Đan Đồng lo) khi độ ổn định thấp
-                    if (autoTuneMode === 'dong' && stability <= 68) {
-                        console.log(`${this.logPrefix} [Chế độ 2] Đan Đồng tự động điều hỏa hộ Đan Chủ (Độ ổn định: ${stability.toFixed(1)}%)...`);
+                    // Đan Đồng luôn tự động điều hoả hộ Đan Chủ nếu bật tự động điều hoà (không tắt)
+                    if (autoTuneMode !== 'off' && stability <= 68) {
+                        console.log(`${this.logPrefix} Đan Đồng tự động điều hỏa hộ Đan Chủ (Độ ổn định: ${stability.toFixed(1)}%)...`);
                         try {
                             const tuneRes = await this.sendLdRequest("/tune", "POST", {});
                             if (tuneRes && (tuneRes.success || tuneRes.data)) {
