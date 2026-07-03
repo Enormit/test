@@ -2187,7 +2187,11 @@
             case 'luyenDan': {
                 const minStars = localStorage.getItem('luyenDanMinStars') || '4';
                 const autoDecompose = localStorage.getItem('luyenDanAutoDecompose') === 'true';
-                const autoTune = localStorage.getItem('luyenDanAutoTune') === 'true';
+                let autoTuneMode = localStorage.getItem('luyenDanAutoTuneMode');
+                if (!autoTuneMode) {
+                    const legacyAutoTune = localStorage.getItem('luyenDanAutoTune') === 'true';
+                    autoTuneMode = legacyAutoTune ? 'chu' : 'off';
+                }
                 const autoUse = localStorage.getItem('luyenDanAutoUse') === 'true';
                 const autoStart = localStorage.getItem('luyenDanAutoStart') === 'true';
                 
@@ -2197,9 +2201,6 @@
                 const autoAccept = localStorage.getItem('luyenDanAutoAcceptInvite') === 'true';
                 const acceptAll = localStorage.getItem('luyenDanAcceptAllInvites') === 'true';
                 const autoLeave = localStorage.getItem('luyenDanAutoLeave') === 'true';
-                // Chế độ điều hoả Đan Đồng và Đan Chủ cùng lo
-                const dongTuneMode = localStorage.getItem('luyenDanDongTuneMode') || 'auto';
-                const chuTuneWithDong = localStorage.getItem('luyenDanChuTuneWithDong') === 'true';
 
                 return `
                 <div class="settings-section">
@@ -2242,31 +2243,15 @@
                     </div>
 
                     <div class="settings-option">
-                        <label class="settings-checkbox-label">
-                            <input type="checkbox" id="luyendan-auto-tune" ${autoTune ? 'checked' : ''}>
-                            <span>Tự động điều hoà (giữ độ ổn định)</span>
-                        </label>
-                        <p class="settings-description">Tự động bấm "Điều Hoả" để giữ ổn định cho lò đan khi độ ổn định xuống thấp (<= 68%). Áp dụng khi bạn là Đan Chủ (lò của bạn).</p>
-                    </div>
-                </div>
-
-                <div class="settings-section" style="border-top: 1px solid rgba(255,255,255,0.08); padding-top: 15px; margin-top: 15px;">
-                    <h3>Chế Độ Điều Hoả Khi Làm <span style="color:#f59e0b;">Đan Đồng</span></h3>
-                    <div class="settings-option">
-                        <p class="settings-description" style="margin-bottom:8px;">Khi bạn đang hỗ trợ lò của Đan Chủ (vai Đan Đồng), chọn cách tool xử lý điều hoả:</p>
-                        <div style="display:flex; gap:0; border:1px solid rgba(255,255,255,0.2); border-radius:8px; overflow:hidden;">
-                            <label id="dong-tune-auto-label" style="flex:1; display:flex; align-items:center; justify-content:center; gap:6px; padding:9px 12px; cursor:pointer; font-size:12px; font-weight:600; transition:all 0.2s;">
-                                <input type="radio" name="dong-tune-mode" id="dong-tune-mode-auto" value="auto" ${dongTuneMode === 'auto' ? 'checked' : ''} style="display:none;">
-                                🔥 Tự điều hoả
-                            </label>
-                            <label id="dong-tune-wait-label" style="flex:1; display:flex; align-items:center; justify-content:center; gap:6px; padding:9px 12px; cursor:pointer; font-size:12px; font-weight:600; transition:all 0.2s; border-left:1px solid rgba(255,255,255,0.15);">
-                                <input type="radio" name="dong-tune-mode" id="dong-tune-mode-both" value="both" ${dongTuneMode === 'both' ? 'checked' : ''} style="display:none;">
-                                🤝 Cả 2 cùng lo
-                            </label>
-                        </div>
-                        <p class="settings-description" style="margin-top:8px;">
-                            <b>🔥 Tự điều hoả:</b> Chỉ Đan Đồng lo điều hoả. Đan Chủ nhường khi có Đan Đồng.<br>
-                            <b>🤝 Cả 2 cùng lo:</b> Đan Đồng vẫn tune. Đan Chủ cũng tune song song — phù hợp khi cả 2 online.
+                        <label for="luyendan-auto-tune-mode">Tự động điều hoà (giữ độ ổn định):</label>
+                        <select id="luyendan-auto-tune-mode" class="settings-select" style="width: 100%; margin-top: 6px;">
+                            <option value="off" ${autoTuneMode === 'off' ? 'selected' : ''}>❌ Tắt tự động điều hoà</option>
+                            <option value="chu" ${autoTuneMode === 'chu' ? 'selected' : ''}>🔥 Chế độ 1: Đan chủ tự điều hoả</option>
+                            <option value="dong" ${autoTuneMode === 'dong' ? 'selected' : ''}>🤝 Chế độ 2: Không tự điều hoả (để Đan Đồng lo)</option>
+                        </select>
+                        <p class="settings-description">
+                            <b>Chế độ 1:</b> Đan Chủ tự bấm Điều Hoả (khi làm Đan Đồng sẽ không tự động bấm hộ).<br>
+                            <b>Chế độ 2:</b> Đan Chủ không tự bấm (tiết kiệm lượt/lực), nhường Đan Đồng bấm hộ.
                         </p>
                     </div>
                 </div>
@@ -2311,14 +2296,6 @@
                             <span>Tự động rời Đan Đồng sau 5 phút</span>
                         </label>
                         <p class="settings-description">Sau khi hỗ trợ Điều Hỏa xong (hết 5 phút đầu) hoặc khi lò nổ, tool sẽ tự rời vị trí Đan Đồng.</p>
-                    </div>
-
-                    <div class="settings-option" style="border-top:1px solid rgba(255,255,255,0.06); padding-top:10px; margin-top:4px;">
-                        <label class="settings-checkbox-label">
-                            <input type="checkbox" id="luyendan-chu-tune-with-dong" ${chuTuneWithDong ? 'checked' : ''}>
-                            <span style="color:#f0b429;">⚡ [Đan Chủ] Cũng tự điều hoả khi có Đan Đồng trong lò</span>
-                        </label>
-                        <p class="settings-description">Bật khi bạn là <b>Đan Chủ</b> và muốn cùng tune song song với Đan Đồng (chế độ "Cả 2 cùng lo"). Mặc định tắt → Đan Chủ nhường Đan Đồng.</p>
                     </div>
 
                     <div class="settings-option" id="luyendan-friends-list-section" style="margin-top:12px; display: ${(autoInvite || autoAccept) ? 'block' : 'none'};">
@@ -2495,20 +2472,6 @@
                         friendsContainer.innerHTML = '<p style="font-size:11px; color:#ef4444; text-align:center; padding:10px 0; margin:0;">\u26a0\ufe0f L\u1ed7i t\u1ea3i danh s\u00e1ch b\u1ea1n b\u00e8</p>';
                     });
                 }
-
-                // Bind radio buttons ch\u1ebf \u0111\u1ed9 \u0111i\u1ec1u ho\u1ea3 \u0110an \u0110\u1ed3ng (visual highlight)
-                const updateDongTuneUI = () => {
-                    const autoLbl = document.getElementById('dong-tune-auto-label');
-                    const bothLbl = document.getElementById('dong-tune-wait-label');
-                    const isAuto = document.getElementById('dong-tune-mode-auto')?.checked;
-                    if (autoLbl) { autoLbl.style.background = isAuto ? 'rgba(245,158,11,0.25)' : 'rgba(255,255,255,0.04)'; autoLbl.style.color = isAuto ? '#f59e0b' : '#9ca3af'; }
-                    if (bothLbl) { bothLbl.style.background = !isAuto ? 'rgba(99,102,241,0.25)' : 'rgba(255,255,255,0.04)'; bothLbl.style.color = !isAuto ? '#818cf8' : '#9ca3af'; }
-                };
-                updateDongTuneUI();
-                const autoLbl = document.getElementById('dong-tune-auto-label');
-                const bothLbl = document.getElementById('dong-tune-wait-label');
-                if (autoLbl) autoLbl.addEventListener('click', () => setTimeout(updateDongTuneUI, 10));
-                if (bothLbl) bothLbl.addEventListener('click', () => setTimeout(updateDongTuneUI, 10));
                 break;
             }
 
@@ -2637,17 +2600,13 @@
                     const autoUse = document.getElementById('luyendan-auto-use')?.checked ?? false;
                     const autoStart = document.getElementById('luyendan-auto-start')?.checked ?? false;
                     const autoDecompose = document.getElementById('luyendan-auto-decompose')?.checked ?? false;
-                    const autoTune = document.getElementById('luyendan-auto-tune')?.checked ?? false;
+                    const autoTuneMode = document.getElementById('luyendan-auto-tune-mode')?.value || 'off';
 
                     const autoInvite = document.getElementById('luyendan-auto-invite')?.checked ?? false;
                     const waitSeconds = document.getElementById('luyendan-wait-seconds')?.value || '60';
                     const autoAccept = document.getElementById('luyendan-auto-accept')?.checked ?? false;
                     const acceptAll = document.getElementById('luyendan-accept-all')?.checked ?? false;
                     const autoLeave = document.getElementById('luyendan-auto-leave')?.checked ?? false;
-                    const chuTuneWithDong = document.getElementById('luyendan-chu-tune-with-dong')?.checked ?? false;
-
-                    const dongTuneModeEl = document.querySelector('input[name="dong-tune-mode"]:checked');
-                    const dongTuneMode = dongTuneModeEl ? dongTuneModeEl.value : 'auto';
 
                     const checkedCheckboxes = document.querySelectorAll('.luyendan-friend-checkbox:checked');
                     const selectedIds = Array.from(checkedCheckboxes).map(cb => cb.value).join(',');
@@ -2656,15 +2615,14 @@
                     localStorage.setItem('luyenDanAutoStart', String(autoStart));
                     localStorage.setItem('luyenDanAutoUse', String(autoUse));
                     localStorage.setItem('luyenDanAutoDecompose', String(autoDecompose));
-                    localStorage.setItem('luyenDanAutoTune', String(autoTune));
+                    localStorage.setItem('luyenDanAutoTuneMode', autoTuneMode);
+                    localStorage.setItem('luyenDanAutoTune', String(autoTuneMode !== 'off'));
 
                     localStorage.setItem('luyenDanAutoInvite', String(autoInvite));
                     localStorage.setItem('luyenDanWaitInviteSeconds', waitSeconds);
                     localStorage.setItem('luyenDanAutoAcceptInvite', String(autoAccept));
                     localStorage.setItem('luyenDanAcceptAllInvites', String(acceptAll));
                     localStorage.setItem('luyenDanAutoLeave', String(autoLeave));
-                    localStorage.setItem('luyenDanChuTuneWithDong', String(chuTuneWithDong));
-                    localStorage.setItem('luyenDanDongTuneMode', dongTuneMode);
                     localStorage.setItem('luyenDanSelectedFriendIds', selectedIds);
 
                     saved = true;
@@ -5278,27 +5236,26 @@
                     const tuneCount = craft ? (craft.tune_count | 0) : 0;
                     const stability = craft ? (craft.stability_pct != null ? parseFloat(craft.stability_pct) : 100) : 100;
                     const unstableLeftSec = craft ? (craft.unstable_left_sec | 0) : 0;
-                    const dongTuneMode = localStorage.getItem('luyenDanDongTuneMode') || 'auto';
+                    
+                    let autoTuneMode = localStorage.getItem('luyenDanAutoTuneMode');
+                    if (!autoTuneMode) {
+                        const legacyAutoTune = localStorage.getItem('luyenDanAutoTune') === 'true';
+                        autoTuneMode = legacyAutoTune ? 'chu' : 'off';
+                    }
 
                     if (unstableLeftSec > 0) {
-                        const modeTag = dongTuneMode === 'both' ? ' 🤝' : '';
-                        this.updateProgress(`Đan đồng (${tuneCount}/3) - ${stability.toFixed(0)}%${modeTag}`);
+                        this.updateProgress(`Đan đồng (${tuneCount}/3) - ${stability.toFixed(0)}%`);
                     } else {
                         this.updateProgress(`Đan đồng (${tuneCount}/3)`);
                     }
 
-                    // Cả 2 chế độ (auto & both) đều tự điều hoả khi stability thấp
-                    const autoTune = localStorage.getItem('luyenDanAutoTune') === 'true';
-                    if (autoTune && stability <= 68) {
-                        const modeLabel = dongTuneMode === 'both' ? '[Đan Đồng - Cả 2 cùng lo]' : '[Đan Đồng - Tự điều hoả]';
-                        console.log(`${this.logPrefix} ${modeLabel} Đan Đồng điều hỏa hộ Đan Chủ (Độ ổn định: ${stability.toFixed(1)}%)...`);
+                    // Chỉ tự động điều hoả ở Chế độ 2 (Nhờ Đan Đồng lo) khi độ ổn định thấp
+                    if (autoTuneMode === 'dong' && stability <= 68) {
+                        console.log(`${this.logPrefix} [Chế độ 2] Đan Đồng tự động điều hỏa hộ Đan Chủ (Độ ổn định: ${stability.toFixed(1)}%)...`);
                         try {
                             const tuneRes = await this.sendLdRequest("/tune", "POST", {});
                             if (tuneRes && (tuneRes.success || tuneRes.data)) {
-                                const msg = dongTuneMode === 'both'
-                                    ? `🧪 🤝 Đan Đồng đã Điều Hỏa! (Cả 2 cùng lo)`
-                                    : `🧪 🔥 Đan Đồng đã tự động Điều Hỏa hộ Đan Chủ!`;
-                                showNotification(msg, "success");
+                                showNotification(`🧪 🤝 Đan Đồng đã tự động Điều Hỏa hộ Đan Chủ!`, "success");
                                 return 10000;
                             }
                         } catch (err) {
@@ -5432,20 +5389,14 @@
                     if (!autoLuyenDan) {
                         return 10000;
                     }
-                    const autoTune = localStorage.getItem('luyenDanAutoTune') === 'true';
-                    const slots = data.dong_slots || [];
-                    const hasCompanion = slots.some(s => s != null);
+                    let autoTuneMode = localStorage.getItem('luyenDanAutoTuneMode');
+                    if (!autoTuneMode) {
+                        const legacyAutoTune = localStorage.getItem('luyenDanAutoTune') === 'true';
+                        autoTuneMode = legacyAutoTune ? 'chu' : 'off';
+                    }
 
-                    if (autoTune && stability <= 68) {
-                        // Kiểm tra chế độ: nếu Đan Chủ không bật "cùng lo" thì nhường Đan Đồng
-                        const chuTuneWithDong = localStorage.getItem('luyenDanChuTuneWithDong') === 'true';
-                        if (hasCompanion && !chuTuneWithDong) {
-                            console.log(`${this.logPrefix} Có Đan Đồng hỗ trợ trong lò, Đan Chủ nhường Đan Đồng điều hỏa (bật "Đan Chủ cũng tự điều hoả" nếu muốn cùng tune).`);
-                            return 10000;
-                        }
-                        if (hasCompanion && chuTuneWithDong) {
-                            console.log(`${this.logPrefix} [Cả 2 cùng lo] Đan Chủ cũng tự điều hoả song song với Đan Đồng (stability: ${stability.toFixed(1)}%)...`);
-                        }
+                    if (autoTuneMode === 'chu' && stability <= 68) {
+                        console.log(`${this.logPrefix} [Chế độ 1] Đan Chủ tự động điều hỏa (Độ ổn định: ${stability.toFixed(1)}%)...`);
                         let successCount = 0;
                         for (let i = 0; i < 3; i++) {
                             showNotification(`🧪 🔥 Điều Hỏa lần ${i + 1}/3...`, "warning");
