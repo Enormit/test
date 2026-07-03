@@ -2187,11 +2187,7 @@
             case 'luyenDan': {
                 const minStars = localStorage.getItem('luyenDanMinStars') || '4';
                 const autoDecompose = localStorage.getItem('luyenDanAutoDecompose') === 'true';
-                let autoTuneMode = localStorage.getItem('luyenDanAutoTuneMode');
-                if (!autoTuneMode) {
-                    const legacyAutoTune = localStorage.getItem('luyenDanAutoTune') === 'true';
-                    autoTuneMode = legacyAutoTune ? 'chu' : 'off';
-                }
+                const autoTune = localStorage.getItem('luyenDanAutoTune') === 'true';
                 const autoUse = localStorage.getItem('luyenDanAutoUse') === 'true';
                 const autoStart = localStorage.getItem('luyenDanAutoStart') === 'true';
 
@@ -2243,15 +2239,13 @@
                     </div>
 
                     <div class="settings-option">
-                        <label for="luyendan-auto-tune-mode">Tự động điều hoà (giữ độ ổn định):</label>
-                        <select id="luyendan-auto-tune-mode" class="settings-select" style="width: 100%; margin-top: 6px;">
-                            <option value="off" ${autoTuneMode === 'off' ? 'selected' : ''}>❌ Tắt tự động điều hoà</option>
-                            <option value="chu" ${autoTuneMode === 'chu' ? 'selected' : ''}>🔥 Chế độ 1: Đan chủ tự điều hoả</option>
-                            <option value="dong" ${autoTuneMode === 'dong' ? 'selected' : ''}>🤝 Chế độ 2: Không tự điều hoả (để Đan Đồng lo)</option>
-                        </select>
+                        <label class="settings-checkbox-label">
+                            <input type="checkbox" id="luyendan-auto-tune" ${autoTune ? 'checked' : ''}>
+                            <span>Tự động điều hoà (giữ độ ổn định)</span>
+                        </label>
                         <p class="settings-description">
-                            <b>Chế độ 1:</b> Đan Chủ tự bấm Điều Hoả (khi làm Đan Đồng sẽ không can thiệp hộ).<br>
-                            <b>Chế độ 2:</b> Đan Chủ không tự bấm, nhường hoàn toàn cho Đan Đồng bấm hộ.
+                            Tự động bấm "Điều Hoả" khi độ ổn định xuống thấp (<= 68%).<br>
+                            <i>* Lưu ý: Khi làm Đan Đồng (acc phụ) cũng sẽ tự động điều hoả giúp Đan Chủ nếu bật tuỳ chọn này, ngược lại nếu tắt thì cả Đan Đồng cũng tắt tự điều hoả.</i>
                         </p>
                     </div>
                 </div>
@@ -2616,7 +2610,7 @@
                     const autoUse = document.getElementById('luyendan-auto-use')?.checked ?? false;
                     const autoStart = document.getElementById('luyendan-auto-start')?.checked ?? false;
                     const autoDecompose = document.getElementById('luyendan-auto-decompose')?.checked ?? false;
-                    const autoTuneMode = document.getElementById('luyendan-auto-tune-mode')?.value || 'off';
+                    const autoTune = document.getElementById('luyendan-auto-tune')?.checked ?? false;
 
                     const autoInvite = document.getElementById('luyendan-auto-invite')?.checked ?? false;
                     const waitSeconds = document.getElementById('luyendan-wait-seconds')?.value || '60';
@@ -2631,8 +2625,7 @@
                     localStorage.setItem('luyenDanAutoStart', String(autoStart));
                     localStorage.setItem('luyenDanAutoUse', String(autoUse));
                     localStorage.setItem('luyenDanAutoDecompose', String(autoDecompose));
-                    localStorage.setItem('luyenDanAutoTuneMode', autoTuneMode);
-                    localStorage.setItem('luyenDanAutoTune', String(autoTuneMode !== 'off'));
+                    localStorage.setItem('luyenDanAutoTune', String(autoTune));
 
                     localStorage.setItem('luyenDanAutoInvite', String(autoInvite));
                     localStorage.setItem('luyenDanWaitInviteSeconds', waitSeconds);
@@ -5261,19 +5254,14 @@
                     this.updateProgress(`Đan đồng (${tuneCount}/3)`);
 
                     const stability = craft ? (craft.stability_pct != null ? parseFloat(craft.stability_pct) : 100) : 100;
-                    let autoTuneMode = localStorage.getItem('luyenDanAutoTuneMode');
-                    if (!autoTuneMode) {
-                        const legacyAutoTune = localStorage.getItem('luyenDanAutoTune') === 'true';
-                        autoTuneMode = legacyAutoTune ? 'chu' : 'off';
-                    }
+                    const autoTune = localStorage.getItem('luyenDanAutoTune') === 'true';
 
-                    // Chỉ tự động điều hoả ở Chế độ 2 (Nhờ Đan Đồng lo) khi độ ổn định thấp
-                    if (autoTuneMode === 'dong' && stability <= 68) {
-                        console.log(`${this.logPrefix} [Chế độ 2] Đan Đồng tự động điều hỏa hộ Đan Chủ (Độ ổn định: ${stability.toFixed(1)}%)...`);
+                    if (autoTune && stability <= 68) {
+                        console.log(`${this.logPrefix} Đan Đồng tự động điều hỏa hộ Đan Chủ (Độ ổn định: ${stability.toFixed(1)}%)...`);
                         try {
                             const tuneRes = await this.sendLdRequest("/tune", "POST", {});
                             if (tuneRes && !tuneRes.error) {
-                                showNotification(`🧪 🤝 Đan Đồng đã tự động Điều Hỏa hộ Đan Chủ!`, "success");
+                                showNotification(`🧪 🔥 Đan Đồng đã tự động Điều Hỏa giúp Đan Chủ!`, "success");
                                 return 10000;
                             }
                         } catch (err) {
@@ -5425,14 +5413,9 @@
                     if (!autoLuyenDan) {
                         return 10000;
                     }
-                    let autoTuneMode = localStorage.getItem('luyenDanAutoTuneMode');
-                    if (!autoTuneMode) {
-                        const legacyAutoTune = localStorage.getItem('luyenDanAutoTune') === 'true';
-                        autoTuneMode = legacyAutoTune ? 'chu' : 'off';
-                    }
-
-                    if (autoTuneMode === 'chu' && stability <= 68) {
-                        console.log(`${this.logPrefix} [Chế độ 1] Đan Chủ tự động điều hỏa (Độ ổn định: ${stability.toFixed(1)}%)...`);
+                    const autoTune = localStorage.getItem('luyenDanAutoTune') === 'true';
+                    if (autoTune && stability <= 68) {
+                        console.log(`${this.logPrefix} Đan Chủ tự động điều hỏa (Độ ổn định: ${stability.toFixed(1)}%)...`);
                         let successCount = 0;
                         for (let i = 0; i < 3; i++) {
                             showNotification(`🧪 🔥 Điều Hỏa lần ${i + 1}/3...`, "warning");
