@@ -1,11 +1,11 @@
 // ==UserScript==
-// @name          HH3D Auto - v2.18
+// @name          HH3D Auto - v2.19
 // @namespace     hh3d-tool
-// @version       v2.18
-// @updateURL     https://raw.githubusercontent.com/Enormit/tool-automation/main/hh3d.user.js
-// @downloadURL   https://raw.githubusercontent.com/Enormit/tool-automation/main/hh3d.user.js
+// @version       v2.19
+// @updateURL     https://raw.githubusercontent.com/Enormit/tool-automation/main/Main.js
+// @downloadURL   https://raw.githubusercontent.com/Enormit/tool-automation/main/Main.js
 // @description   Auto  HH3D
-// @author        Cre: [Unknown] - v2.18
+// @author        Cre: [Unknown] - v2.19
 // @include       *://hoathinh3d.co*/*
 // @exclude       *://hoathinh3d.co/khoang-mach*
 // @exclude       *://hoathinh3d.co/luyen-dan-duong*
