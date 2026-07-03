@@ -1,4 +1,4 @@
-// ==UserScript==
+﻿// ==UserScript==
 // @name          HH3D Auto - v2.15
 // @namespace     hh3d-tool
 // @version       v2.15
@@ -2194,7 +2194,7 @@
                 }
                 const autoUse = localStorage.getItem('luyenDanAutoUse') === 'true';
                 const autoStart = localStorage.getItem('luyenDanAutoStart') === 'true';
-                
+
                 // Cấu hình Đan Đồng
                 const autoInvite = localStorage.getItem('luyenDanAutoInvite') === 'true';
                 const waitSeconds = localStorage.getItem('luyenDanWaitInviteSeconds') || '60';
@@ -2250,8 +2250,8 @@
                             <option value="dong" ${autoTuneMode === 'dong' ? 'selected' : ''}>🤝 Chế độ 2: Không tự điều hoả (để Đan Đồng lo)</option>
                         </select>
                         <p class="settings-description">
-                            <b>Chế độ 1:</b> Đan Chủ tự bấm Điều Hoả (khi làm Đan Đồng sẽ không can thiệp hộ).<br>
-                            <b>Chế độ 2:</b> Đan Chủ không tự bấm, nhường hoàn toàn cho Đan Đồng bấm hộ.
+                            <b>Chế độ 1:</b> Đan Chủ tự bấm Điều Hoả (Đan Đồng nếu có cũng sẽ tự bấm hộ để an toàn tối đa).<br>
+                            <b>Chế độ 2:</b> Đan Chủ không tự bấm (để tiết kiệm lượt), nhường hoàn toàn cho Đan Đồng bấm hộ.
                         </p>
                     </div>
                 </div>
@@ -2426,11 +2426,11 @@
                 const waitOption = document.getElementById('luyendan-wait-time-option');
                 const acceptAllOption = document.getElementById('luyendan-accept-all-option');
                 const friendsListSection = document.getElementById('luyendan-friends-list-section');
-                
+
                 const updateFriendsVisibility = () => {
                     const inviteVal = autoInviteCheck?.checked || false;
                     const acceptVal = autoAcceptCheck?.checked || false;
-                    
+
                     if (waitOption) waitOption.style.display = inviteVal ? 'block' : 'none';
                     if (acceptAllOption) acceptAllOption.style.display = acceptVal ? 'block' : 'none';
                     if (friendsListSection) friendsListSection.style.display = (inviteVal || acceptVal) ? 'block' : 'none';
@@ -2442,7 +2442,7 @@
                 // Tải danh sách bạn bè bất đồng bộ
                 const friendsContainer = document.getElementById('luyendan-friends-container');
                 const searchInput = document.getElementById('luyendan-friend-search');
-                
+
                 if (friendsContainer) {
                     luyendan.sendLdRequest("/friends", "GET").then(friendsRes => {
                         const friends = friendsRes?.data?.friends || [];
@@ -2773,7 +2773,7 @@
                 }
                 const data = await response.json();
                 this.questionDataCache = data;
-                
+
                 // Lưu lại cache
                 try {
                     localStorage.setItem(cacheKey, JSON.stringify(data));
@@ -4956,7 +4956,7 @@
                 pct = Math.min(100, Math.max(0, (xpIn / per) * 100));
                 xpToNext = Math.max(0, next - xp);
             }
-            
+
             let levelName = 'Luyện Đan Sư · Bậc ' + level;
             if (m && m.level_names && m.level_names[String(level)]) {
                 levelName = String(m.level_names[String(level)]).trim();
@@ -4983,7 +4983,7 @@
                     const infoDiv = questItem.querySelector('.quest-alchemist-info');
                     if (infoDiv) infoDiv.remove();
                 }
-            } catch (e) {}
+            } catch (e) { }
         }
 
         async getNonce() {
@@ -5079,7 +5079,7 @@
                 if (autoAccept && data.dong_invites_in && data.dong_invites_in.length > 0) {
                     const acceptAll = localStorage.getItem('luyenDanAcceptAllInvites') === 'true';
                     const selectedIds = (localStorage.getItem('luyenDanSelectedFriendIds') || '').split(',').filter(Boolean);
-                    
+
                     for (const inv of data.dong_invites_in) {
                         const oid = String(inv.owner_id);
                         if (acceptAll || selectedIds.includes(oid)) {
@@ -5105,7 +5105,7 @@
                     const serving = data.dong_serving;
                     const oid = serving.owner_id | 0;
                     const unstableLeftSec = data.craft ? (data.craft.unstable_left_sec | 0) : 0;
-                    
+
                     let canLeave = false;
                     if (furnaceState === 'exploded') {
                         canLeave = true;
@@ -5202,7 +5202,7 @@
                                     const decompRes = await this.sendLdRequest("/decompose", "POST", { pill_id: String(pid) });
                                     if (decompRes && (decompRes.success || decompRes.data)) {
                                         showNotification(`🧪 ♻️ Đã phân giải thành công đan ${stack.stars}★`, "success");
-                                        
+
                                         // Cập nhật DOM ngay lập tức để đồng bộ và tránh lặp lại quét
                                         if (stack.isDomFallback && stack.cell) {
                                             const qtyEl = stack.cell.querySelector('.ld-qty');
@@ -5236,7 +5236,7 @@
                     const tuneCount = craft ? (craft.tune_count | 0) : 0;
                     const stability = craft ? (craft.stability_pct != null ? parseFloat(craft.stability_pct) : 100) : 100;
                     const unstableLeftSec = craft ? (craft.unstable_left_sec | 0) : 0;
-                    
+
                     let autoTuneMode = localStorage.getItem('luyenDanAutoTuneMode');
                     if (!autoTuneMode) {
                         const legacyAutoTune = localStorage.getItem('luyenDanAutoTune') === 'true';
@@ -5249,9 +5249,9 @@
                         this.updateProgress(`Đan đồng (${tuneCount}/3)`);
                     }
 
-                    // Chỉ tự động điều hoả ở Chế độ 2 (Nhờ Đan Đồng lo) khi độ ổn định thấp
-                    if (autoTuneMode === 'dong' && stability <= 68) {
-                        console.log(`${this.logPrefix} [Chế độ 2] Đan Đồng tự động điều hỏa hộ Đan Chủ (Độ ổn định: ${stability.toFixed(1)}%)...`);
+                    // Đan Đồng luôn tự động điều hoả hộ Đan Chủ nếu bật tự động điều hoà (không tắt)
+                    if (autoTuneMode !== 'off' && stability <= 68) {
+                        console.log(`${this.logPrefix} Đan Đồng tự động điều hỏa hộ Đan Chủ (Độ ổn định: ${stability.toFixed(1)}%)...`);
                         try {
                             const tuneRes = await this.sendLdRequest("/tune", "POST", {});
                             if (tuneRes && (tuneRes.success || tuneRes.data)) {
@@ -5471,10 +5471,10 @@
                             const filledSlots = slots.filter(s => s != null);
                             const isAllFilled = filledSlots.length >= 2;
                             const waitSeconds = parseInt(localStorage.getItem('luyenDanWaitInviteSeconds') || '60', 10);
-                            
+
                             if (!isAllFilled) {
                                 const selectedIds = (localStorage.getItem('luyenDanSelectedFriendIds') || '').split(',').filter(Boolean);
-                                
+
                                 if (!this.inviteSentTime) {
                                     console.log(`${this.logPrefix} Bắt đầu mời Đan Đồng...`);
                                     this.updateProgress("Gửi lời mời Đan Đồng");
@@ -7595,10 +7595,10 @@
 
         extractPtTokenFromHtml(html) {
             if (!html) return null;
-            const match = html.match(/pt_token\s*[:=]\s*['"]([a-f0-9]{32,})['"]/i) || 
-                          html.match(/ptToken\s*[:=]\s*['"]([a-f0-9]{32,})['"]/i) ||
-                          html.match(/"pt-token"\s*:\s*"([a-f0-9]{32,})"/i) ||
-                          html.match(/pt_token['"]?\s*:\s*['"]([a-f0-9]{32,})['"]/i);
+            const match = html.match(/pt_token\s*[:=]\s*['"]([a-f0-9]{32,})['"]/i) ||
+                html.match(/ptToken\s*[:=]\s*['"]([a-f0-9]{32,})['"]/i) ||
+                html.match(/"pt-token"\s*:\s*"([a-f0-9]{32,})"/i) ||
+                html.match(/pt_token['"]?\s*:\s*['"]([a-f0-9]{32,})['"]/i);
             return match ? match[1] : null;
         }
 
@@ -10111,7 +10111,7 @@
                             const minVal = Math.floor(totalSec / 60);
                             const secVal = totalSec % 60;
                             const timeStr = `${String(minVal).padStart(2, '0')}:${String(secVal).padStart(2, '0')}`;
-                            
+
                             let text;
                             if (isSafe) {
                                 text = `đã điều hoả ${tuneCount} lần thời gian ${timeStr}`;
@@ -10369,7 +10369,7 @@
         */
         async scheduleTask(taskName, taskAction, interval) {
             if (this.timeoutIds[taskName]) clearTimeout(this.timeoutIds[taskName]);
-            
+
             // Kiểm tra xem quest này có bị tắt chạy tự động không (bao gồm cả luyenDan)
             const quest = QUEST_CONFIG.find(q => q.taskId === taskName);
             if (quest && quest.autorunEnabled) {
