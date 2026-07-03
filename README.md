@@ -77,18 +77,20 @@ Hãy cài đặt phiên bản Tampermonkey phù hợp với trình duyệt của
 
 ## 🚀 Cách cài đặt & Cập nhật Userscript (Main.js)
 
-Sau khi Tampermonkey đã được cài đặt và cấp quyền, bạn tiến hành cài đặt file script điều khiển chính.
+Sau khi Tampermonkey đã được cài đặt và cấp quyền, bạn tiến hành cài đặt file script điều khiển chính theo một trong hai cách dưới đây:
 
-### Cách 1: Cài đặt trực tuyến (Khuyên dùng và dễ cập nhật nhất)
-1. Click vào đường dẫn sau: 👉 [Cài đặt Main.js (Raw Link)](https://raw.githubusercontent.com/Enormit/tool-automation/main/Main.js)
-2. Tab cài đặt của Tampermonkey sẽ hiện ra -> Click nút **Install** (Cài đặt) hoặc **Update** (Cập nhật) để hoàn thành.
+### Cách 1: Cài đặt tự động qua link raw (Khuyên dùng và dễ cập nhật nhất)
+1. Click trực tiếp vào đường dẫn sau: 👉 [Cài đặt Main.js (Tự động)](https://raw.githubusercontent.com/Enormit/tool-automation/main/Main.js)
+2. Tab cài đặt của Tampermonkey sẽ tự động mở ra.
+3. Click nút **Install** (Cài đặt) hoặc **Update** (Cập nhật) để hoàn thành.
 
-### Cách 2: Cài đặt thủ công (Dán Code)
-1. Mở file [Main.js](file:///c:/Users/phamq/Downloads/New%20folder/Main.js) trên máy của bạn và copy toàn bộ code (`Ctrl + A` -> `Ctrl + C`).
-2. Click biểu tượng **Tampermonkey** trên trình duyệt -> Chọn **Create a new script...** (Tạo script mới).
-3. Xóa toàn bộ nội dung code mặc định hiển thị trong ô nhập liệu.
-4. Dán code của `Main.js` vào (`Ctrl + V`).
-5. Chọn **File** -> **Save** (hoặc nhấn `Ctrl + S`).
+### Cách 2: Cài đặt thủ công bằng cách dán code Raw (Nếu không tự động nhận diện)
+1. Truy cập vào link raw của script trên trình duyệt: 👉 [Main.js (Raw Code)](https://raw.githubusercontent.com/Enormit/tool-automation/main/Main.js)
+2. Trên trang web chứa toàn bộ code thô hiện ra, nhấn tổ hợp phím **`Ctrl + A`** để chọn tất cả code, sau đó nhấn **`Ctrl + C`** để copy.
+3. Click vào biểu tượng **Tampermonkey** trên thanh công cụ trình duyệt -> Chọn **Create a new script...** (Tạo bản script mới).
+4. Xóa sạch toàn bộ nội dung code mẫu mặc định hiển thị trong khung soạn thảo.
+5. Nhấn **`Ctrl + V`** để dán toàn bộ code của `Main.js` vừa copy vào.
+6. Chọn menu **File** -> **Save** (hoặc nhấn tổ hợp phím **`Ctrl + S`**).
 
 ---
 
