@@ -56,7 +56,7 @@ Cách này chạy độc lập dưới dạng một Chrome Extension, có giao d
 
 ### Bước 1: Cài đặt Extension Tampermonkey
 Hãy cài đặt phiên bản Tampermonkey phù hợp với trình duyệt của bạn:
-- **Chrome / Edge / Cốc Cốc / Brave:** [Tampermonkey trên Chrome Web Store](https://chromewebstore.google.com/detail/tampermonkey/dhdgffkkebhmfjgjjgbiipcnlhgmocsg)
+- **Chrome / Edge / Cốc Cốc / Brave:** [Tampermonkey trên Chrome Web Store](https://chromewebstore.google.com/detail/dhdgffkkebhmkfjojejmpbldmpobfkfo?utm_source=item-share-cb)
 - **Firefox:** [Tampermonkey trên Firefox Add-ons](https://addons.mozilla.org/en-US/firefox/addon/tampermonkey/)
 
 ### Bước 2: Bật Chế độ nhà phát triển (Developer Mode) trên Chrome
