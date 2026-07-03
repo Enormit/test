@@ -1,11 +1,11 @@
 // ==UserScript==
-// @name          HH3D Auto - v2.15
+// @name          HH3D Auto - v2.18
 // @namespace     hh3d-tool
-// @version       v2.15
+// @version       v2.18
 // @updateURL     https://raw.githubusercontent.com/Enormit/tool-automation/main/hh3d.user.js
 // @downloadURL   https://raw.githubusercontent.com/Enormit/tool-automation/main/hh3d.user.js
 // @description   Auto  HH3D
-// @author        Cre: [Unknown] - v2.15
+// @author        Cre: [Unknown] - v2.18
 // @include       *://hoathinh3d.co*/*
 // @exclude       *://hoathinh3d.co/khoang-mach*
 // @exclude       *://hoathinh3d.co/luyen-dan-duong*
@@ -357,7 +357,29 @@
             // 1. Lấy nội dung HTML (Fetch hoặc quét trang hiện tại)
             if (targetUrl) {
                 const response = await fetch(targetUrl);
-                if (!response.ok) return null;
+                if (!response.ok) {
+                    console.warn(`${logPrefix} ⚠️ Fetch bị chặn (${response.status}) cho URL: ${targetUrl}. Thử dùng token từ cache/hData...`);
+                    // Fallback 1: dùng cachedSecurityToken nếu có
+                    if (cachedSecurityToken) {
+                        console.log(`${logPrefix} ♻️ Dùng cachedSecurityToken: ${cachedSecurityToken.substring(0, 8)}...`);
+                        return cachedSecurityToken;
+                    }
+                    // Fallback 2: dùng token từ hData (đã parse từ lần load trang trước)
+                    if (hData && hData.securityToken) {
+                        console.log(`${logPrefix} ♻️ Dùng hData.securityToken: ${hData.securityToken.substring(0, 8)}...`);
+                        cachedSecurityToken = hData.securityToken;
+                        return hData.securityToken;
+                    }
+                    // Fallback 3: scan trang hiện tại
+                    const currentHtml = document.documentElement.outerHTML;
+                    const fallbackMatch = currentHtml.match(/"securityToken"\s*:\s*"([^"]+)"/);
+                    if (fallbackMatch && fallbackMatch[1]) {
+                        console.log(`${logPrefix} ♻️ Lấy token từ trang hiện tại: ${fallbackMatch[1].substring(0, 8)}...`);
+                        cachedSecurityToken = fallbackMatch[1];
+                        return fallbackMatch[1];
+                    }
+                    return null;
+                }
                 htmlContent = await response.text();
             } else {
                 htmlContent = document.documentElement.outerHTML;
@@ -2190,13 +2212,15 @@
                 const autoTune = localStorage.getItem('luyenDanAutoTune') !== 'false';
                 const autoUse = localStorage.getItem('luyenDanAutoUse') !== 'false';
                 const autoStart = localStorage.getItem('luyenDanAutoStart') !== 'false';
-                
+
                 // Cấu hình Đan Đồng
                 const autoInvite = localStorage.getItem('luyenDanAutoInvite') === 'true';
                 const waitSeconds = localStorage.getItem('luyenDanWaitInviteSeconds') || '60';
                 const autoAccept = localStorage.getItem('luyenDanAutoAcceptInvite') === 'true';
                 const acceptAll = localStorage.getItem('luyenDanAcceptAllInvites') !== 'false';
                 const autoLeave = localStorage.getItem('luyenDanAutoLeave') === 'true';
+                // Đan Chủ cũng tự tune khi có Đan Đồng (chế độ cả 2 cùng lo)
+                const chuTuneWithDong = localStorage.getItem('luyenDanChuTuneWithDong') === 'true';
 
                 return `
                 <div class="settings-section">
@@ -2243,7 +2267,29 @@
                             <input type="checkbox" id="luyendan-auto-tune" ${autoTune ? 'checked' : ''}>
                             <span>Tự động điều hoà (giữ độ ổn định)</span>
                         </label>
-                        <p class="settings-description">Tự động bấm "Điều Hoả" để giữ ổn định cho lò đan khi độ ổn định xuống thấp (<= 68%).</p>
+                        <p class="settings-description">Tự động bấm "Điều Hoả" để giữ ổn định cho lò đan khi độ ổn định xuống thấp (<= 68%). Áp dụng khi bạn là Đan Chủ (lò của bạn).</p>
+                    </div>
+                </div>
+
+                <div class="settings-section" style="border-top: 1px solid rgba(255,255,255,0.08); padding-top: 15px; margin-top: 15px;">
+                    <h3>Chế Độ Điều Hoả Khi Làm <span style="color:#f59e0b;">Đan Đồng</span></h3>
+
+                    <div class="settings-option">
+                        <p class="settings-description" style="margin-bottom:8px;">Khi bạn đang hỗ trợ lò của Đan Chủ (vai Đan Đồng), chọn cách tool xử lý điều hoả:</p>
+                        <div style="display:flex; gap:0; border:1px solid rgba(255,255,255,0.2); border-radius:8px; overflow:hidden;">
+                            <label id="dong-tune-auto-label" style="flex:1; display:flex; align-items:center; justify-content:center; gap:6px; padding:9px 12px; cursor:pointer; font-size:12px; font-weight:600; transition:all 0.2s;">
+                                <input type="radio" name="dong-tune-mode" id="dong-tune-mode-auto" value="auto" ${(localStorage.getItem('luyenDanDongTuneMode') || 'auto') === 'auto' ? 'checked' : ''} style="display:none;">
+                                🔥 Tự điều hoả
+                            </label>
+                            <label id="dong-tune-wait-label" style="flex:1; display:flex; align-items:center; justify-content:center; gap:6px; padding:9px 12px; cursor:pointer; font-size:12px; font-weight:600; transition:all 0.2s; border-left:1px solid rgba(255,255,255,0.15);">
+                                <input type="radio" name="dong-tune-mode" id="dong-tune-mode-wait" value="both" ${(localStorage.getItem('luyenDanDongTuneMode') || 'auto') === 'both' ? 'checked' : ''} style="display:none;">
+                                🤝 Cả 2 cùng lo
+                            </label>
+                        </div>
+                        <p class="settings-description" style="margin-top:8px;">
+                            <b>🔥 Tự điều hoả:</b> Chỉ Đan Đồng lo điều hoả. Đan Chủ sẽ nhường (không bấm tune) khi có Đan Đồng trong lò.<br>
+                            <b>🤝 Cả 2 cùng lo:</b> Đan Đồng vẫn điều hoả như thường. Đan Chủ cũng tự điều hoả song song — phù hợp khi cả 2 đều online.
+                        </p>
                     </div>
                 </div>
 
@@ -2287,6 +2333,14 @@
                             <span>Tự động rời Đan Đồng sau 5 phút</span>
                         </label>
                         <p class="settings-description">Sau khi hỗ trợ Điều Hỏa xong (hết 5 phút đầu) hoặc khi lò nổ, tool sẽ tự rời vị trí Đan Đồng.</p>
+                    </div>
+
+                    <div class="settings-option" style="border-top:1px solid rgba(255,255,255,0.06); padding-top:10px; margin-top:4px;">
+                        <label class="settings-checkbox-label">
+                            <input type="checkbox" id="luyendan-chu-tune-with-dong" ${chuTuneWithDong ? 'checked' : ''}>
+                            <span style="color:#f0b429;">⚡ [Đan Chủ] Cũng tự điều hoả khi có Đan Đồng trong lò</span>
+                        </label>
+                        <p class="settings-description">Bật khi bạn là <b>Đan Chủ</b> và muốn script của bạn tự điều hoả song song với Đan Đồng (chế độ "Cả 2 cùng lo"). Mặc định tắt → Đan Chủ nhường Đan Đồng điều hoả.</p>
                     </div>
 
                     <div class="settings-option" id="luyendan-friends-list-section" style="margin-top:12px; display: ${(autoInvite || autoAccept) ? 'block' : 'none'};">
@@ -2417,11 +2471,11 @@
                 const waitOption = document.getElementById('luyendan-wait-time-option');
                 const acceptAllOption = document.getElementById('luyendan-accept-all-option');
                 const friendsListSection = document.getElementById('luyendan-friends-list-section');
-                
+
                 const updateFriendsVisibility = () => {
                     const inviteVal = autoInviteCheck?.checked || false;
                     const acceptVal = autoAcceptCheck?.checked || false;
-                    
+
                     if (waitOption) waitOption.style.display = inviteVal ? 'block' : 'none';
                     if (acceptAllOption) acceptAllOption.style.display = acceptVal ? 'block' : 'none';
                     if (friendsListSection) friendsListSection.style.display = (inviteVal || acceptVal) ? 'block' : 'none';
@@ -2433,7 +2487,7 @@
                 // Tải danh sách bạn bè bất đồng bộ
                 const friendsContainer = document.getElementById('luyendan-friends-container');
                 const searchInput = document.getElementById('luyendan-friend-search');
-                
+
                 if (friendsContainer) {
                     luyendan.sendLdRequest("/friends", "GET").then(friendsRes => {
                         const friends = friendsRes?.data?.friends || [];
@@ -2441,18 +2495,18 @@
                             friendsContainer.innerHTML = '<p style="font-size:11px; color:#888; text-align:center; padding:10px 0; margin:0;">📭 Không tìm thấy đạo hữu nào</p>';
                             return;
                         }
-                        
+
                         const savedIds = (localStorage.getItem('luyenDanSelectedFriendIds') || '').split(',').filter(Boolean);
-                        
+
                         const renderFriends = (filterText = '') => {
                             const normalizedFilter = filterText.toLowerCase().trim();
                             const filtered = friends.filter(f => !normalizedFilter || (f.name || '').toLowerCase().includes(normalizedFilter));
-                            
+
                             if (!filtered.length) {
                                 friendsContainer.innerHTML = '<p style="font-size:11px; color:#888; text-align:center; padding:10px 0; margin:0;">🔍 Không khớp tên bạn bè</p>';
                                 return;
                             }
-                            
+
                             friendsContainer.innerHTML = filtered.map(f => {
                                 const uid = String(f.userId != null ? f.userId : f.id);
                                 const isChecked = savedIds.includes(uid);
@@ -2468,7 +2522,7 @@
                         };
 
                         renderFriends();
-                        
+
                         if (searchInput) {
                             searchInput.addEventListener('input', (e) => {
                                 renderFriends(e.target.value);
@@ -2479,6 +2533,28 @@
                         friendsContainer.innerHTML = '<p style="font-size:11px; color:#ef4444; text-align:center; padding:10px 0; margin:0;">⚠️ Lỗi tải danh sách bạn bè</p>';
                     });
                 }
+
+                // Bind radio buttons chế độ điều hoả Đan Đồng (visual highlight)
+                const updateDongTuneUI = () => {
+                    const autoLabel = document.getElementById('dong-tune-auto-label');
+                    const waitLabel = document.getElementById('dong-tune-wait-label');
+                    const isAuto = document.getElementById('dong-tune-mode-auto')?.checked;
+                    if (autoLabel) {
+                        autoLabel.style.background = isAuto ? 'rgba(245,158,11,0.25)' : 'rgba(255,255,255,0.04)';
+                        autoLabel.style.color = isAuto ? '#f59e0b' : '#9ca3af';
+                    }
+                    if (waitLabel) {
+                        waitLabel.style.background = !isAuto ? 'rgba(99,102,241,0.25)' : 'rgba(255,255,255,0.04)';
+                        waitLabel.style.color = !isAuto ? '#818cf8' : '#9ca3af';
+                    }
+                };
+                // Khởi tạo trạng thái hiển thị ban đầu
+                updateDongTuneUI();
+                // Gắn sự kiện click cho cả label để bắt khi click vào label (radio ẩn)
+                const autoLabel = document.getElementById('dong-tune-auto-label');
+                const waitLabel = document.getElementById('dong-tune-wait-label');
+                if (autoLabel) autoLabel.addEventListener('click', () => setTimeout(updateDongTuneUI, 10));
+                if (waitLabel) waitLabel.addEventListener('click', () => setTimeout(updateDongTuneUI, 10));
                 break;
             }
 
@@ -2614,6 +2690,11 @@
                     const autoAccept = document.getElementById('luyendan-auto-accept')?.checked ?? false;
                     const acceptAll = document.getElementById('luyendan-accept-all')?.checked ?? true;
                     const autoLeave = document.getElementById('luyendan-auto-leave')?.checked ?? false;
+                    const chuTuneWithDong = document.getElementById('luyendan-chu-tune-with-dong')?.checked ?? false;
+
+                    // Chế độ điều hoả khi làm Đan Đồng
+                    const dongTuneModeEl = document.querySelector('input[name="dong-tune-mode"]:checked');
+                    const dongTuneMode = dongTuneModeEl ? dongTuneModeEl.value : 'auto';
 
                     const checkedCheckboxes = document.querySelectorAll('.luyendan-friend-checkbox:checked');
                     const selectedIds = Array.from(checkedCheckboxes).map(cb => cb.value).join(',');
@@ -2629,7 +2710,9 @@
                     localStorage.setItem('luyenDanAutoAcceptInvite', String(autoAccept));
                     localStorage.setItem('luyenDanAcceptAllInvites', String(acceptAll));
                     localStorage.setItem('luyenDanAutoLeave', String(autoLeave));
+                    localStorage.setItem('luyenDanChuTuneWithDong', String(chuTuneWithDong));
                     localStorage.setItem('luyenDanSelectedFriendIds', selectedIds);
+                    localStorage.setItem('luyenDanDongTuneMode', dongTuneMode);
 
                     saved = true;
                     break;
@@ -2721,9 +2804,7 @@
         constructor(nonce) {
             this.nonce = nonce;
             this.ajaxUrl = ajaxUrl;
-            const VanDapfileName = "/VanDap.json";
-            const VanDapUrl = baseUrl + repoPath + branch + VanDapfileName;
-            this.QUESTION_DATA_URL = VanDapUrl;
+            this.QUESTION_DATA_URL = "https://raw.githubusercontent.com/Enormit/tool-automation/refs/heads/main/VanDap.json";
             this.taskTracker = taskTracker;
             this.questionDataCache = null;
         }
@@ -2779,7 +2860,7 @@
                 }
                 const data = await response.json();
                 this.questionDataCache = data;
-                
+
                 // Lưu lại cache
                 try {
                     localStorage.setItem(cacheKey, JSON.stringify(data));
@@ -4962,7 +5043,7 @@
                 pct = Math.min(100, Math.max(0, (xpIn / per) * 100));
                 xpToNext = Math.max(0, next - xp);
             }
-            
+
             let levelName = 'Luyện Đan Sư · Bậc ' + level;
             if (m && m.level_names && m.level_names[String(level)]) {
                 levelName = String(m.level_names[String(level)]).trim();
@@ -4989,7 +5070,7 @@
                     const infoDiv = questItem.querySelector('.quest-alchemist-info');
                     if (infoDiv) infoDiv.remove();
                 }
-            } catch (e) {}
+            } catch (e) { }
         }
 
         async getNonce() {
@@ -5054,7 +5135,17 @@
                 body: body ? JSON.stringify(body) : undefined,
                 credentials: "include"
             });
-            return await response.json();
+
+            let res;
+            try {
+                res = await response.json();
+            } catch (err) {
+                res = { code: "parse_error", message: "Phản hồi không phải JSON" };
+            }
+            if (!response.ok || res.code) {
+                return { error: true, code: res.code || "http_error", message: res.message || `Lỗi HTTP ${response.status}` };
+            }
+            return res;
         }
 
         async doLuyenDan(isManual = false) {
@@ -5085,7 +5176,7 @@
                 if (autoAccept && data.dong_invites_in && data.dong_invites_in.length > 0) {
                     const acceptAll = localStorage.getItem('luyenDanAcceptAllInvites') !== 'false';
                     const selectedIds = (localStorage.getItem('luyenDanSelectedFriendIds') || '').split(',').filter(Boolean);
-                    
+
                     for (const inv of data.dong_invites_in) {
                         const oid = String(inv.owner_id);
                         if (acceptAll || selectedIds.includes(oid)) {
@@ -5093,7 +5184,7 @@
                             this.updateProgress(`Nhận Đan Đồng ${inv.owner_name || oid}`);
                             try {
                                 const res = await this.sendLdRequest("/dong/respond", "POST", { owner_id: inv.owner_id, accept: true });
-                                if (res && (res.success || res.data)) {
+                                if (res && !res.error) {
                                     showNotification(`🧪 ✅ Đã tự động nhận làm Đan Đồng cho Đan Chủ: ${inv.owner_name || oid}`, "success");
                                     return 3000;
                                 }
@@ -5111,7 +5202,7 @@
                     const serving = data.dong_serving;
                     const oid = serving.owner_id | 0;
                     const unstableLeftSec = data.craft ? (data.craft.unstable_left_sec | 0) : 0;
-                    
+
                     let canLeave = false;
                     if (furnaceState === 'exploded') {
                         canLeave = true;
@@ -5130,7 +5221,7 @@
                         this.updateProgress(`Rời Đan Đồng ${serving.owner_name || oid}`);
                         try {
                             const res = await this.sendLdRequest("/dong/leave", "POST", { owner_id: oid });
-                            if (res && (res.success || res.data)) {
+                            if (res && !res.error) {
                                 showNotification(`🧪 🚪 Đã tự động rời vai Đan Đồng của Đan Chủ ${serving.owner_name || oid}`, "success");
                                 return 3000;
                             }
@@ -5206,9 +5297,9 @@
                                 this.updateProgress(`Phân giải ${stack.stars}★...`);
                                 try {
                                     const decompRes = await this.sendLdRequest("/decompose", "POST", { pill_id: String(pid) });
-                                    if (decompRes && (decompRes.success || decompRes.data)) {
+                                    if (decompRes && !decompRes.error) {
                                         showNotification(`🧪 ♻️ Đã phân giải thành công đan ${stack.stars}★`, "success");
-                                        
+
                                         // Cập nhật DOM ngay lập tức để đồng bộ và tránh lặp lại quét
                                         if (stack.isDomFallback && stack.cell) {
                                             const qtyEl = stack.cell.querySelector('.ld-qty');
@@ -5240,17 +5331,32 @@
                 if (data.dong_serving) {
                     countdownTimer.remove('luyenDan');
                     const tuneCount = craft ? (craft.tune_count | 0) : 0;
-                    this.updateProgress(`Đan đồng (${tuneCount}/3)`);
-
-                    // Tự động điều hỏa hộ Đan Chủ nếu độ ổn định thấp
-                    const autoTune = localStorage.getItem('luyenDanAutoTune') !== 'false';
                     const stability = craft ? (craft.stability_pct != null ? parseFloat(craft.stability_pct) : 100) : 100;
+                    const unstableLeftSec = craft ? (craft.unstable_left_sec | 0) : 0;
+
+                    // Đọc chế độ điều hoả Đan Đồng: 'auto' = chỉ mình tự lo, 'both' = cả 2 cùng lo
+                    const dongTuneMode = localStorage.getItem('luyenDanDongTuneMode') || 'auto';
+
+                    // Cập nhật tiến trình hiển thị kèm độ ổn định và chế độ
+                    if (unstableLeftSec > 0) {
+                        const modeTag = dongTuneMode === 'both' ? ' 🤝' : '';
+                        this.updateProgress(`Đan đồng (${tuneCount}/3) - ${stability.toFixed(0)}%${modeTag}`);
+                    } else {
+                        this.updateProgress(`Đan đồng (${tuneCount}/3)`);
+                    }
+
+                    // Cả 2 chế độ (auto & both) đều tự điều hoả khi stability thấp
+                    const autoTune = localStorage.getItem('luyenDanAutoTune') !== 'false';
                     if (autoTune && stability <= 68) {
-                        console.log(`${this.logPrefix} Đan Đồng tự động điều hỏa hộ Đan Chủ (Độ ổn định: ${stability.toFixed(1)}%)...`);
+                        const modeLabel = dongTuneMode === 'both' ? '[Cả 2 cùng lo]' : '[Tự điều hoả]';
+                        console.log(`${this.logPrefix} ${modeLabel} Đan Đồng điều hỏa hộ Đan Chủ (Độ ổn định: ${stability.toFixed(1)}%)...`);
                         try {
                             const tuneRes = await this.sendLdRequest("/tune", "POST", {});
-                            if (tuneRes && (tuneRes.success || tuneRes.data)) {
-                                showNotification(`🧪 🔥 Đan Đồng đã tự động Điều Hỏa hộ Đan Chủ!`, "success");
+                            if (tuneRes && !tuneRes.error) {
+                                const msg = dongTuneMode === 'both'
+                                    ? `🧪 🤝 Đan Đồng đã Điều Hỏa! (Cả 2 cùng lo - Đan Chủ cũng đang lo)`
+                                    : `🧪 🔥 Đan Đồng đã tự động Điều Hỏa hộ Đan Chủ!`;
+                                showNotification(msg, "success");
                                 return 10000;
                             }
                         } catch (err) {
@@ -5272,7 +5378,7 @@
                     const jobId = craft?.id || data.craftJobId;
                     if (jobId) {
                         const ackRes = await this.sendLdRequest("/ack-explosion", "POST", { job_id: jobId });
-                        if (ackRes && (ackRes.success || ackRes.data)) {
+                        if (ackRes && !ackRes.error) {
                             showNotification("🧪 ✅ Đã dọn dẹp lò đan bị nổ", "success");
                         } else {
                             showNotification("🧪 ❌ Lỗi khi dọn dẹp lò đan nổ", "error");
@@ -5293,53 +5399,70 @@
                     const jobId = craft?.id || data.craftJobId;
                     if (jobId) {
                         const collectRes = await this.sendLdRequest("/collect", "POST", { job_id: jobId });
-                        if (collectRes && (collectRes.success || collectRes.data)) {
-                            const pillName = collectRes.data?.pill_name || "Đan dược";
-                            const stars = collectRes.data?.stars || 1;
+                        // API trả về { ok: true, data: {...} } khi thành công
+                        if (collectRes && !collectRes.error && (collectRes.ok || collectRes.data)) {
+                            const collectData = collectRes.data || collectRes;
+                            const pillName = collectData.pill_name || collectData.tier_label || "Đan dược";
+                            const stars = parseInt(collectData.stars || collectData.star || 1, 10);
                             showNotification(`🧪 🏆 Thu hoạch thành công: ${pillName} ${"★".repeat(stars)}`, "success");
 
-                            // So sánh danh sách pills trước và sau thu hoạch để tìm pill mới
-                            const beforePills = data.pills || [];
-                            const afterPills = collectRes.data?.pills || [];
-                            const beforeIds = new Set(beforePills.map(p => String(p.id)));
-                            const newPill = afterPills.find(p => !beforeIds.has(String(p.id)));
+                            const minStars = parseInt(localStorage.getItem('luyenDanMinStars') || '4', 10);
+                            const autoUse = localStorage.getItem('luyenDanAutoUse') !== 'false';
+                            const autoDecompose = localStorage.getItem('luyenDanAutoDecompose') !== 'false';
 
-                            const pillId = newPill ? String(newPill.id) : (collectRes.data?.last_collect?.pill_id || `${collectRes.data?.tier || data.tier || "ha"}:${stars}`);
+                            // [v2.17.1-local] Lấy lại state mới để tìm pill_id thực tế trong pill_stacks
+                            let pillId = null;
+                            try {
+                                const freshState = await this.sendLdRequest("/state?fresh=1", "GET");
+                                const freshData = freshState?.data || freshState;
+                                const stacks = freshData?.pill_stacks || [];
+                                // Tìm stack khớp tier và stars vừa thu hoạch
+                                const craftedTier = collectData.tier || craft?.ui_tier || data.tier;
+                                const matchStack = stacks.find(s =>
+                                    s.tier === craftedTier && parseInt(s.stars || 0, 10) === stars
+                                ) || stacks.find(s => parseInt(s.stars || 0, 10) === stars)
+                                  || stacks[stacks.length - 1]; // fallback lấy đan cuối cùng trong túi
+                                if (matchStack) {
+                                    pillId = String(matchStack.stack_id || `${matchStack.tier}:${matchStack.stars}`);
+                                    console.log(`${this.logPrefix} Tìm thấy pill trong túi: ${pillId} (${matchStack.tier} ${matchStack.stars}★ x${matchStack.count})`);
+                                } else {
+                                    console.warn(`${this.logPrefix} Không tìm thấy đan trong túi sau thu hoạch. pill_stacks:`, stacks);
+                                }
+                            } catch (err) {
+                                console.error(`${this.logPrefix} Lỗi khi lấy state mới:`, err);
+                            }
 
                             if (pillId) {
-                                const minStars = parseInt(localStorage.getItem('luyenDanMinStars') || '4', 10);
-                                const autoUse = localStorage.getItem('luyenDanAutoUse') !== 'false';
-                                const autoDecompose = localStorage.getItem('luyenDanAutoDecompose') !== 'false';
-
                                 if (stars >= minStars) {
                                     if (autoUse) {
-                                        console.log(`${this.logPrefix} Đang tự động sử dụng đan phẩm chất cao (${stars}★)...`);
+                                        console.log(`${this.logPrefix} Tự động sử dụng đan chất cao (${stars}★)...`);
                                         this.updateProgress(`Sử dụng đan ${stars}★`);
                                         const useRes = await this.sendLdRequest("/use-pill", "POST", { pill_id: String(pillId) });
-                                        if (useRes && (useRes.success || useRes.data)) {
-                                            showNotification(`🧪 ✅ Đã sử dụng đan. Tu Vi nhận được: ${useRes.data?.tu_vi_granted || "thành công"}`, "success");
+                                        if (useRes && !useRes.error && (useRes.ok || useRes.data)) {
+                                            const useData = useRes.data || useRes;
+                                            showNotification(`🧪 ✅ Đã sử dụng đan. Tu Vi nhận: ${useData?.tu_vi_granted || useData?.tu_vi || "thành công"}`, "success");
                                         } else {
                                             showNotification(`🧪 ⚠️ Lỗi sử dụng đan: ${useRes?.message || 'không thành công'}`, "warning");
                                         }
                                     } else {
-                                        console.log(`${this.logPrefix} Đan phẩm chất tốt (${stars}★ >= ${minStars}★) nhưng tự động sử dụng tắt. Giữ lại túi đồ.`);
                                         showNotification(`🧪 📦 Nhận đan (${stars}★). Giữ lại trong túi đồ.`, "info");
                                         this.updateProgress(`Giữ đan ${stars}★`);
                                     }
                                 } else if (autoDecompose) {
-                                    console.log(`${this.logPrefix} Đang tự động phân giải đan phẩm chất kém (${stars}★ < ${minStars}★)...`);
+                                    console.log(`${this.logPrefix} Tự động phân giải đan chất kém (${stars}★ < ${minStars}★)...`);
                                     this.updateProgress(`Phân giải đan ${stars}★`);
                                     const decompRes = await this.sendLdRequest("/decompose", "POST", { pill_id: String(pillId) });
-                                    if (decompRes && (decompRes.success || decompRes.data)) {
-                                        showNotification(`🧪 ♻️ Đã tự động phân giải đan phẩm chất kém (${stars}★)`, "success");
+                                    if (decompRes && !decompRes.error && (decompRes.ok || decompRes.data)) {
+                                        showNotification(`🧪 ♻️ Đã phân giải đan phẩm chất kém (${stars}★)`, "success");
                                     } else {
                                         showNotification(`🧪 ⚠️ Lỗi phân giải đan: ${decompRes?.message || 'không thành công'}`, "warning");
                                     }
                                 } else {
-                                    console.log(`${this.logPrefix} Đan phẩm chất kém (${stars}★ < ${minStars}★) và tự động phân giải tắt. Giữ lại túi đồ.`);
                                     showNotification(`🧪 📦 Nhận đan (${stars}★). Giữ lại trong túi đồ.`, "info");
                                     this.updateProgress(`Giữ đan ${stars}★`);
                                 }
+                            } else {
+                                showNotification(`🧪 📦 Thu đan thành công (${stars}★) nhưng không xác định được ID đan trong túi.`, "info");
                             }
                         } else {
                             showNotification("🧪 ❌ Thu đan thất bại", "error");
@@ -5349,6 +5472,7 @@
                     }
                     return 10000;
                 }
+
 
                 if (furnace === "crafting") {
                     const unstableLeftSec = craft ? (craft.unstable_left_sec | 0) : 0;
@@ -5389,9 +5513,14 @@
                     const hasCompanion = slots.some(s => s != null);
 
                     if (autoTune && stability <= 68) {
-                        if (hasCompanion) {
-                            console.log(`${this.logPrefix} Có Đan Đồng hỗ trợ trong lò, nhường Đan Đồng điều hỏa.`);
+                        // Kiểm tra chế độ: nếu Đan Chủ không bật "cùng lo" thì nhường Đan Đồng
+                        const chuTuneWithDong = localStorage.getItem('luyenDanChuTuneWithDong') === 'true';
+                        if (hasCompanion && !chuTuneWithDong) {
+                            console.log(`${this.logPrefix} Có Đan Đồng hỗ trợ trong lò, Đan Chủ nhường Đan Đồng điều hỏa (bật "Cả 2 cùng lo" nếu muốn cùng điều hoả).`);
                             return 10000;
+                        }
+                        if (hasCompanion && chuTuneWithDong) {
+                            console.log(`${this.logPrefix} [Cả 2 cùng lo] Đan Chủ cũng tự điều hoả song song với Đan Đồng (stability: ${stability.toFixed(1)}%)...`);
                         }
                         let successCount = 0;
                         for (let i = 0; i < 3; i++) {
@@ -5399,7 +5528,7 @@
                             this.updateProgress(`Điều Hỏa ${i + 1}/3`);
                             try {
                                 const tuneRes = await this.sendLdRequest("/tune", "POST", {});
-                                if (tuneRes && (tuneRes.success || tuneRes.data)) {
+                                if (tuneRes && !tuneRes.error) {
                                     successCount++;
                                     console.log(`${this.logPrefix} Điều Hỏa lần ${i + 1} thành công.`);
                                     const updatedTuneCount = tuneRes.data?.craft?.tune_count || tuneRes.data?.tune_count;
@@ -5445,9 +5574,11 @@
                         if (isUnlocked) {
                             const vec = rec.vector || {};
                             let hasEnoughMats = true;
-                            for (const el of ["kim", "moc", "thuy", "hoa", "tho"]) {
+                            // [v2.17.1-local] Kiểm tra TẤT CẢ nguyên liệu (kể cả linh_phong_thao, huyen_van_thao...)
+                            for (const el of Object.keys(vec)) {
                                 const need = vec[el] || 0;
                                 if ((materials[el] || 0) < need) {
+                                    console.log(`${this.logPrefix} Thiếu [${el}] cho phẩm [${tier}]: cần ${need}, có ${materials[el] || 0}`);
                                     hasEnoughMats = false;
                                     break;
                                 }
@@ -5467,10 +5598,10 @@
                             const filledSlots = slots.filter(s => s != null);
                             const isAllFilled = filledSlots.length >= 2;
                             const waitSeconds = parseInt(localStorage.getItem('luyenDanWaitInviteSeconds') || '60', 10);
-                            
+
                             if (!isAllFilled) {
                                 const selectedIds = (localStorage.getItem('luyenDanSelectedFriendIds') || '').split(',').filter(Boolean);
-                                
+
                                 if (!this.inviteSentTime) {
                                     console.log(`${this.logPrefix} Bắt đầu mời Đan Đồng...`);
                                     this.updateProgress("Gửi lời mời Đan Đồng");
@@ -5506,7 +5637,7 @@
                         showNotification(`🧪 Khai lò luyện đan phẩm: ${selectedTier.toUpperCase()}...`, "info");
                         this.updateProgress(`Khai lò phẩm ${selectedTier.toUpperCase()}`);
                         const startRes = await this.sendLdRequest("/start", "POST", { tier: selectedTier });
-                        if (startRes && (startRes.success || startRes.data)) {
+                        if (startRes && !startRes.error) {
                             showNotification(`🧪 🔥 Khai lò Luyện Đan phẩm ${selectedTier.toUpperCase()} thành công!`, "success");
                             return 10000;
                         } else {
@@ -5522,7 +5653,7 @@
                             showNotification(`🧪 📦 Phát hiện gói linh dược ${bundle.name || bundleKey}. Đang tự động mở...`, "info");
                             this.updateProgress("Mở gói linh dược");
                             const openRes = await this.sendLdRequest("/open-mat-bundle", "POST", { job_id: String(bundleKey), bundle_key: String(bundleKey) });
-                            if (openRes && (openRes.success || openRes.data)) {
+                            if (openRes && !openRes.error) {
                                 showNotification(`🧪 ✅ Mở gói linh dược thành công!`, "success");
                                 return 3000;
                             } else {
@@ -6656,13 +6787,13 @@
             const autoTakeover = localStorage.getItem('khoangmach_auto_takeover') === 'true';
             const autoTakeoverRotation = localStorage.getItem('khoangmach_auto_takeover_rotation') === 'true';
             const rewardMode = localStorage.getItem('khoangmach_reward_mode') || 'any';
-            const rewardTimeSelected = localStorage.getItem('khoangmach_reward_time');
-            const rewardTime = rewardTimeSelected;
+            const rewardTimeSelected = localStorage.getItem('khoangmach_reward_time') || 'max'; // mặc định chờ tối đa nếu chưa cài
             const outerNotification = localStorage.getItem('khoangmach_outer_notification') === 'true';
 
-            this.securityToken = await getSecurityToken(this.khoangMachUrl);
+            // Ưu tiên dùng hData token (có sẵn từ page load) để tránh bị Cloudflare chặn
+            this.securityToken = (hData && hData.securityToken) || await getSecurityToken(this.khoangMachUrl);
             if (!this.securityToken) {
-                showNotification('Lỗi: Không lấy được security_token cho khoáng mạch.', 'error');
+                showNotification('Lỗi: Không lấy được security_token cho khoáng mạch. Hãy vào trang /khoang-mach thủ công 1 lần để vượt Cloudflare.', 'error');
                 throw new Error('Không lấy được security_token cho khoáng mạch.');
             }
             console.log(`${this.logPrefix} Bắt đầu quy trình cho mỏ ID: ${selectedMineInfo.id}.`);
@@ -6724,25 +6855,34 @@
                 console.log(`[Khoáng mạch] Vị trí: ${myIndex}, Tên: ${myInfo.name}, Time: ${myInfo.time_spent}`);
 
                 // Kiểm tra thời gian
-                if (myInfo.time_spent !== "Đạt tối đa") {
-                    const timeMatch = myInfo.time_spent.match(/(\d+)\s*phút/);
+                const timeSpent = myInfo.time_spent || '';
+                console.log(`[Khoáng mạch] ⏱️ Thời gian khai thác: ${timeSpent || '0 phút'} | Chế độ: ${rewardTimeSelected}`);
+                if (timeSpent !== "Đạt tối đa") {
+                    const timeMatch = timeSpent.match(/(\d+)\s*phút/);
                     const minutesSpent = timeMatch ? parseInt(timeMatch[1]) : 0;
 
                     let shouldWait = false;
                     let nextTime = null;
 
                     if (rewardTimeSelected === 'max') {
-                        // Chờ đến khi đạt tối đa (30 phút)
+                        // Chưa đạt tối đa → tính thời gian còn lại và chờ
                         shouldWait = true;
-                        nextTime = Date.now() + Math.max(30 * 60 * 1000 - (minutesSpent * 60 * 1000), 0);
-                        showNotification(`Khoáng mạch chưa đủ thời gian.<br>Hiện đạt: <b>${myInfo.time_spent}</b><br>Cần: <b>Đạt tối đa</b>`, 'warn');
+                        const remainingMs = Math.max(30 * 60 * 1000 - (minutesSpent * 60 * 1000), 60 * 1000);
+                        nextTime = Date.now() + remainingMs;
+                        const msg = `Khoáng mạch chưa đủ thời gian. Hiện: ${timeSpent || '0 phút'} | Cần: Đạt tối đa | Còn: ${Math.round(remainingMs/60000)} phút`;
+                        console.log(`[Khoáng mạch] ${msg}`);
+                        showNotification(`Khoáng mạch chưa đủ thời gian.<br>Hiện đạt: <b>${timeSpent || '0 phút'}</b><br>Cần: <b>Đạt tối đa</b><br>Còn: <b>${Math.round(remainingMs/60000)} phút</b>`, 'warn');
                     } else {
                         // Kiểm tra với thời gian cụ thể
                         const requiredMinutes = parseInt(rewardTimeSelected);
-                        if (minutesSpent < requiredMinutes) {
+                        if (!isNaN(requiredMinutes) && minutesSpent < requiredMinutes) {
                             shouldWait = true;
-                            nextTime = Date.now() + Math.max((requiredMinutes - minutesSpent) * 60 * 1000, 0);
-                            showNotification(`Khoáng mạch chưa đủ thời gian.<br>Hiện đạt: <b>${myInfo.time_spent}</b><br>Cần: <b>${requiredMinutes} phút</b>`, 'warn');
+                            nextTime = Date.now() + Math.max((requiredMinutes - minutesSpent) * 60 * 1000, 60 * 1000);
+                            const msg = `Khoáng mạch chưa đủ thời gian. Hiện: ${timeSpent || '0 phút'} | Cần: ${requiredMinutes} phút`;
+                            console.log(`[Khoáng mạch] ${msg}`);
+                            showNotification(`Khoáng mạch chưa đủ thời gian.<br>Hiện đạt: <b>${timeSpent || '0 phút'}</b><br>Cần: <b>${requiredMinutes} phút</b>`, 'warn');
+                        } else if (!isNaN(requiredMinutes)) {
+                            console.log(`[Khoáng mạch] ✅ Đã đủ ${minutesSpent}/${requiredMinutes} phút. Tiến hành nhận thưởng...`);
                         }
                     }
 
@@ -6750,6 +6890,8 @@
                         taskTracker.adjustTaskTime(accountId, 'khoangmach', nextTime);
                         break;
                     }
+                } else {
+                    console.log(`[Khoáng mạch] ✅ Thời gian Đạt tối đa. Tiến hành nhận thưởng...`);
                 }
 
                 // Kiểm tra trạng thái bonus
@@ -7591,10 +7733,10 @@
 
         extractPtTokenFromHtml(html) {
             if (!html) return null;
-            const match = html.match(/pt_token\s*[:=]\s*['"]([a-f0-9]{32,})['"]/i) || 
-                          html.match(/ptToken\s*[:=]\s*['"]([a-f0-9]{32,})['"]/i) ||
-                          html.match(/"pt-token"\s*:\s*"([a-f0-9]{32,})"/i) ||
-                          html.match(/pt_token['"]?\s*:\s*['"]([a-f0-9]{32,})['"]/i);
+            const match = html.match(/pt_token\s*[:=]\s*['"]([a-f0-9]{32,})['"]/i) ||
+                html.match(/ptToken\s*[:=]\s*['"]([a-f0-9]{32,})['"]/i) ||
+                html.match(/"pt-token"\s*:\s*"([a-f0-9]{32,})"/i) ||
+                html.match(/pt_token['"]?\s*:\s*['"]([a-f0-9]{32,})['"]/i);
             return match ? match[1] : null;
         }
 
@@ -7629,49 +7771,87 @@
             return null;
         }
 
-        // ✨ Nhận lượt Khắc Trận Văn (Daily Turns)
-        async claimDailyTurns() {
-            const nonce = await getNonce();
-            if (!nonce) {
-                showNotification("❌ Lỗi: Không thể lấy nonce để nhận lượt Khắc Trận Văn", "error");
-                return false;
-            }
-
-            const ptToken = await this.getPtToken();
-            if (!ptToken) {
-                showNotification("❌ Lỗi: Không thể lấy Pháp Tượng token", "error");
-                return false;
-            }
-
-            const claimURL = weburl + "wp-json/phap-tuong/v1/claim-daily-turns";
-            console.log("✨ Đang nhận lượt Khắc Trận Văn:", claimURL);
+        // 🔑 Lấy nonce và token từ trang Pháp Tướng (logic từ ThamKhao.js)
+        async getPtConfig() {
+            const logPrefix = "[HH3D Khắc Trận Văn]";
             try {
-                const response = await fetch(claimURL, {
+                const response = await fetch(weburl + "/trieu-hoi-phap-tuong?t", {
+                    headers: {
+                        "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
+                        "sec-fetch-dest": "iframe",
+                        "sec-fetch-mode": "navigate",
+                        "sec-fetch-site": "same-origin",
+                        "referer": weburl + "/tu-bao-cac?t" + Math.random().toString(36).substring(2, 8)
+                    },
+                    credentials: "include"
+                });
+                const html = await response.text();
+
+                const regex = /PHAP_TUONG_CONFIG\s*=\s*(\{[\s\S]*?\});/;
+                const match = html.match(regex);
+
+                if (match && match[1]) {
+                    const config = eval("(" + match[1] + ")");
+                    console.log(logPrefix, "🔑 Nonce:", config.nonce);
+                    console.log(logPrefix, "🔒 Token:", config.token);
+                    return config;
+                } else {
+                    showNotification("❌ Không tìm thấy PHAP_TUONG_CONFIG trong HTML", "error");
+                    return null;
+                }
+            } catch (e) {
+                console.error("[HH3D Khắc Trận Văn]", e);
+                showNotification("❌ Lỗi khi tải trang Pháp Tướng để lấy nonce/token", "error");
+                return null;
+            }
+        }
+
+        // ✨ Nhận lượt Khắc Trận Văn (Daily Turns) - logic từ ThamKhao.js
+        async claimDailyTurns() {
+            const logPrefix = "[HH3D Khắc Trận Văn]";
+            const config = await this.getPtConfig();
+            if (!config?.nonce || !config?.token) return false;
+
+            try {
+                const response = await fetch(weburl + "wp-json/phap-tuong/v1/claim-daily-turns", {
+                    method: "POST",
                     credentials: "include",
                     headers: {
-                        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36",
-                        "Accept": "*/*",
-                        "Accept-Language": "vi,en-US;q=0.5",
-                        "x-wp-nonce": nonce,
-                        "x-pt-token": ptToken,
-                        "Content-Type": "application/json"
+                        "Content-Type": "application/json",
+                        "X-WP-Nonce": config.nonce,
+                        "X-Pt-Token": config.token
                     },
-                    method: "POST",
-                    mode: "cors"
+                    referrer: weburl + "/tu-bao-cac?t",
                 });
 
                 const data = await response.json();
+
+                // ✅ Thành công
                 if (data.success) {
-                    showNotification(`🎉 ${data.message || 'Nhận thành công lượt Khắc Trận Văn!'}`, "success");
+                    showNotification(`${logPrefix} ✨ ${data.message}`, "success");
+                    console.log(logPrefix, `🎁 Nhận thêm ${data.turns_claimed} lượt`);
                     return true;
-                } else {
-                    showNotification(`❌ ${data.message || 'Không thể nhận lượt Khắc Trận Văn'}`, "error");
-                    return false;
                 }
-            } catch (error) {
-                console.error("Lỗi khi claim daily turns:", error);
-                showNotification(`❌ Lỗi kết nối khi nhận lượt Khắc Trận Văn`, "error");
+
+                // ✅ Đã nhận rồi (coi như OK)
+                if (data.message && data.message.includes("Đạo hữu đã nhận lượt VIP hôm nay rồi")) {
+                    showNotification(`${logPrefix} ℹ️ ${data.message}`, "info");
+                    return true;
+                }
+
+                // ✅ Tính năng dành riêng cho VIP (coi như OK)
+                if (data.message && data.message.includes("Tính năng dành riêng cho VIP")) {
+                    showNotification(`${logPrefix} 🔒 ${data.message}`, "error");
+                    return true;
+                }
+
+                // ❌ Các lỗi khác
+                showNotification(`${logPrefix} ℹ️ ${data.message}`, "error");
                 return false;
+
+            } catch (err) {
+                console.error(logPrefix, "❌ Lỗi khi claim lượt VIP:", err);
+                return null;
             }
         }
 
@@ -10107,7 +10287,7 @@
                             const minVal = Math.floor(totalSec / 60);
                             const secVal = totalSec % 60;
                             const timeStr = `${String(minVal).padStart(2, '0')}:${String(secVal).padStart(2, '0')}`;
-                            
+
                             let text;
                             if (isSafe) {
                                 text = `đã điều hoả ${tuneCount} lần thời gian ${timeStr}`;
@@ -10365,7 +10545,7 @@
         */
         async scheduleTask(taskName, taskAction, interval) {
             if (this.timeoutIds[taskName]) clearTimeout(this.timeoutIds[taskName]);
-            
+
             // Kiểm tra xem quest này có bị tắt chạy tự động không (bao gồm cả luyenDan)
             const quest = QUEST_CONFIG.find(q => q.taskId === taskName);
             if (quest && quest.autorunEnabled) {
@@ -10675,7 +10855,7 @@
                 localStorage.setItem('autorunEnabled', '0');
             }
             if (localStorage.getItem('autoLuyenDan') === null) {
-                localStorage.setItem('autoLuyenDan', '0');
+                localStorage.setItem('autoLuyenDan', '1'); // [v2.17.1-local] Mặc định BẬT tự động luyện đan
             }
 
             let autorunEnabled = localStorage.getItem('autorunEnabled') === '1';
