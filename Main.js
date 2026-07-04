@@ -1,11 +1,11 @@
-// ==UserScript==
-// @name          HH3D Auto - v2.19
+﻿// ==UserScript==
+// @name          HH3D Auto - v2.20
 // @namespace     hh3d-tool
-// @version       v2.19
+// @version       v2.20
 // @updateURL     https://raw.githubusercontent.com/Enormit/tool-automation/main/Main.js
 // @downloadURL   https://raw.githubusercontent.com/Enormit/tool-automation/main/Main.js
 // @description   Auto  HH3D
-// @author        Cre: [Unknown] - v2.19
+// @author        Cre: [Unknown] - v2.20
 // @include       *://hoathinh3d.co*/*
 // @exclude       *://hoathinh3d.co/khoang-mach*
 // @exclude       *://hoathinh3d.co/luyen-dan-duong*
@@ -2186,6 +2186,7 @@
 
             case 'luyenDan': {
                 const minStars = localStorage.getItem('luyenDanMinStars') || '4';
+                const targetTier = localStorage.getItem('luyenDanTargetTier') || 'auto';
                 const autoDecompose = localStorage.getItem('luyenDanAutoDecompose') === 'true';
                 const autoTune = localStorage.getItem('luyenDanAutoTune') === 'true';
                 const autoUse = localStorage.getItem('luyenDanAutoUse') === 'true';
@@ -2201,6 +2202,18 @@
                 return `
                 <div class="settings-section">
                     <h3>Cài đặt Luyện Đan</h3>
+
+                    <div class="settings-option">
+                        <label for="luyendan-target-tier">Loại đan sẽ luyện:</label>
+                        <select id="luyendan-target-tier" class="settings-select" style="width: 100%; margin-top: 6px;">
+                            <option value="auto" ${targetTier === 'auto' ? 'selected' : ''}>Tự động (Ưu tiên phẩm cao nhất)</option>
+                            <option value="cuc" ${targetTier === 'cuc' ? 'selected' : ''}>Cực Phẩm Đan</option>
+                            <option value="thuong" ${targetTier === 'thuong' ? 'selected' : ''}>Thượng Phẩm Đan</option>
+                            <option value="trung" ${targetTier === 'trung' ? 'selected' : ''}>Trung Phẩm Đan</option>
+                            <option value="ha" ${targetTier === 'ha' ? 'selected' : ''}>Hạ Phẩm Đan</option>
+                        </select>
+                        <p class="settings-description">Chọn phẩm đan cụ thể muốn luyện hoặc để tự động.</p>
+                    </div>
 
                     <div class="settings-option">
                         <label for="luyendan-min-stars">Mức sao tối thiểu để giữ/sử dụng (Sao):</label>
@@ -2607,6 +2620,7 @@
 
                 case 'luyenDan': {
                     const minStars = document.getElementById('luyendan-min-stars')?.value || '4';
+                    const targetTier = document.getElementById('luyendan-target-tier')?.value || 'auto';
                     const autoUse = document.getElementById('luyendan-auto-use')?.checked ?? false;
                     const autoStart = document.getElementById('luyendan-auto-start')?.checked ?? false;
                     const autoDecompose = document.getElementById('luyendan-auto-decompose')?.checked ?? false;
@@ -2622,6 +2636,7 @@
                     const selectedIds = Array.from(checkedCheckboxes).map(cb => cb.value).join(',');
 
                     localStorage.setItem('luyenDanMinStars', minStars);
+                    localStorage.setItem('luyenDanTargetTier', targetTier);
                     localStorage.setItem('luyenDanAutoStart', String(autoStart));
                     localStorage.setItem('luyenDanAutoUse', String(autoUse));
                     localStorage.setItem('luyenDanAutoDecompose', String(autoDecompose));
@@ -5326,7 +5341,7 @@
                                 const matchStack = stacks.find(s =>
                                     s.tier === craftedTier && parseInt(s.stars || 0, 10) === stars
                                 ) || stacks.find(s => parseInt(s.stars || 0, 10) === stars)
-                                  || stacks[stacks.length - 1]; // fallback lấy đan cuối cùng trong túi
+                                    || stacks[stacks.length - 1]; // fallback lấy đan cuối cùng trong túi
                                 if (matchStack) {
                                     pillId = String(matchStack.stack_id || `${matchStack.tier}:${matchStack.stars}`);
                                     console.log(`${this.logPrefix} Tìm thấy pill trong túi: ${pillId} (${matchStack.tier} ${matchStack.stars}★ x${matchStack.count})`);
@@ -5459,7 +5474,11 @@
                         console.log(`${this.logPrefix} Tự động khai lò đã tắt, giữ lò trống.`);
                         return 15000;
                     }
-                    const TiersOrder = ["cuc", "thuong", "trung", "ha"];
+                    const targetTier = localStorage.getItem('luyenDanTargetTier') || 'auto';
+                    let TiersOrder = ["cuc", "thuong", "trung", "ha"];
+                    if (targetTier !== 'auto') {
+                        TiersOrder = [targetTier];
+                    }
                     let selectedTier = null;
 
                     for (const tier of TiersOrder) {
