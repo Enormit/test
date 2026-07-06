@@ -1,7 +1,7 @@
 // ==UserScript==
-// @name          HH3D Auto - v2.20
+// @name          HH3D Auto - v2.21
 // @namespace     hh3d-tool
-// @version       v2.20
+// @version       v2.21
 // @updateURL     https://raw.githubusercontent.com/Enormit/tool-automation/main/Main.js
 // @downloadURL   https://raw.githubusercontent.com/Enormit/tool-automation/main/Main.js
 // @description   Auto  HH3D
@@ -5178,12 +5178,15 @@
                 if (autoLuyenDan && autoDecompose) {
                     let stacks = [];
                     if (data.pill_stacks && data.pill_stacks.length > 0) {
-                        stacks = data.pill_stacks.map(s => ({
-                            tier: s.tier,
-                            stars: parseInt(s.stars || 0, 10),
-                            count: parseInt(s.count || 0, 10),
-                            stack_id: s.stack_id || `${s.tier}:${s.stars}`
-                        }));
+                        stacks = data.pill_stacks.map(s => {
+                            const parsedStars = parseInt(s.stars || s.star || 0, 10);
+                            return {
+                                tier: s.tier,
+                                stars: parsedStars,
+                                count: parseInt(s.count || 0, 10),
+                                stack_id: s.stack_id || `${s.tier}:${parsedStars}`
+                            };
+                        });
                     } else if (data.pills && data.pills.length > 0) {
                         const map = {};
                         data.pills.forEach(p => {
@@ -5339,12 +5342,12 @@
                                 // Tìm stack khớp tier và stars vừa thu hoạch
                                 const craftedTier = collectData.tier || craft?.ui_tier || data.tier;
                                 const matchStack = stacks.find(s =>
-                                    s.tier === craftedTier && parseInt(s.stars || 0, 10) === stars
-                                ) || stacks.find(s => parseInt(s.stars || 0, 10) === stars)
-                                    || stacks[stacks.length - 1]; // fallback lấy đan cuối cùng trong túi
+                                    s.tier === craftedTier && parseInt(s.stars || s.star || 0, 10) === stars
+                                ) || stacks.find(s => parseInt(s.stars || s.star || 0, 10) === stars); // Bỏ fallback lấy bừa đan cuối cùng tránh phân giải nhầm đan 4★
                                 if (matchStack) {
-                                    pillId = String(matchStack.stack_id || `${matchStack.tier}:${matchStack.stars}`);
-                                    console.log(`${this.logPrefix} Tìm thấy pill trong túi: ${pillId} (${matchStack.tier} ${matchStack.stars}★ x${matchStack.count})`);
+                                    const matchStars = parseInt(matchStack.stars || matchStack.star || 0, 10);
+                                    pillId = String(matchStack.stack_id || `${matchStack.tier}:${matchStars}`);
+                                    console.log(`${this.logPrefix} Tìm thấy pill trong túi: ${pillId} (${matchStack.tier} ${matchStars}★ x${matchStack.count})`);
                                 } else {
                                     console.warn(`${this.logPrefix} Không tìm thấy đan trong túi sau thu hoạch. pill_stacks:`, stacks);
                                 }
