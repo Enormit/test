@@ -1,7 +1,7 @@
 // ==UserScript==
-// @name          HH3D Auto - v2.21
+// @name          HH3D Auto - v2.22
 // @namespace     hh3d-tool
-// @version       v2.21
+// @version       v2.22
 // @updateURL     https://raw.githubusercontent.com/Enormit/tool-automation/main/Main.js
 // @downloadURL   https://raw.githubusercontent.com/Enormit/tool-automation/main/Main.js
 // @description   Auto  HH3D
@@ -2739,7 +2739,7 @@
         constructor(nonce) {
             this.nonce = nonce;
             this.ajaxUrl = ajaxUrl;
-            this.QUESTION_DATA_URL = "https://raw.githubusercontent.com/Enormit/tool-automation/refs/heads/main/VanDap.json";
+            this.QUESTION_DATA_URL = "https://raw.githubusercontent.com/Enormit/tool-data/main/VanDap.json";
             this.taskTracker = taskTracker;
             this.questionDataCache = null;
         }
