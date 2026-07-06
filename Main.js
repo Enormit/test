@@ -1,7 +1,7 @@
 // ==UserScript==
-// @name          HH3D Auto - v2.22
+// @name          HH3D Auto - v2.23
 // @namespace     hh3d-tool
-// @version       v2.22
+// @version       v2.23
 // @updateURL     https://raw.githubusercontent.com/Enormit/tool-automation/main/Main.js
 // @downloadURL   https://raw.githubusercontent.com/Enormit/tool-automation/main/Main.js
 // @description   Auto  HH3D
@@ -5338,12 +5338,50 @@
                             try {
                                 const freshState = await this.sendLdRequest("/state?fresh=1", "GET");
                                 const freshData = freshState?.data || freshState;
-                                const stacks = freshData?.pill_stacks || [];
+                                
+                                const getStacksFromData = (d) => {
+                                    if (!d) return [];
+                                    if (d.pill_stacks && d.pill_stacks.length > 0) {
+                                        return d.pill_stacks.map(s => ({
+                                            tier: s.tier,
+                                            stars: parseInt(s.stars || s.star || 0, 10),
+                                            count: parseInt(s.count || 0, 10),
+                                            stack_id: s.stack_id || `${s.tier}:${parseInt(s.stars || s.star || 0, 10)}`
+                                        }));
+                                    }
+                                    if (d.pills && d.pills.length > 0) {
+                                        const map = {};
+                                        d.pills.forEach(p => {
+                                            const stars = parseInt(p.stars || p.star || 0, 10);
+                                            const sid = p.id || `${p.tier}:${stars}`;
+                                            const key = `${p.tier}-${stars}`;
+                                            if (!map[key]) {
+                                                map[key] = { tier: p.tier, stars, count: 0, stack_id: sid };
+                                            }
+                                            map[key].count++;
+                                        });
+                                        return Object.keys(map).map(k => map[k]);
+                                    }
+                                    return [];
+                                };
+
+                                const stacks = getStacksFromData(freshData);
                                 // Tìm stack khớp tier và stars vừa thu hoạch
                                 const craftedTier = collectData.tier || craft?.ui_tier || data.tier;
+                                const cleanTierName = (t) => {
+                                    if (!t) return '';
+                                    const s = String(t).toLowerCase();
+                                    if (s.includes('cuc')) return 'cuc';
+                                    if (s.includes('thuong')) return 'thuong';
+                                    if (s.includes('trung')) return 'trung';
+                                    if (s.includes('ha')) return 'ha';
+                                    return s;
+                                };
+                                const targetTierClean = cleanTierName(craftedTier);
                                 const matchStack = stacks.find(s =>
-                                    s.tier === craftedTier && parseInt(s.stars || s.star || 0, 10) === stars
-                                ) || stacks.find(s => parseInt(s.stars || s.star || 0, 10) === stars); // Bỏ fallback lấy bừa đan cuối cùng tránh phân giải nhầm đan 4★
+                                    cleanTierName(s.tier) === targetTierClean && parseInt(s.stars || s.star || 0, 10) === stars
+                                ) || stacks.find(s => parseInt(s.stars || s.star || 0, 10) === stars);
+
                                 if (matchStack) {
                                     const matchStars = parseInt(matchStack.stars || matchStack.star || 0, 10);
                                     pillId = String(matchStack.stack_id || `${matchStack.tier}:${matchStars}`);
