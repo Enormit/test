@@ -1,17 +1,17 @@
 // ==UserScript==
-// @name          HH3D Auto - v2.22
+// @name          HH3D Auto - v2.3.0
 // @namespace     hh3d-tool
-// @version       v2.22
+// @version       v2.3.0
 // @updateURL     https://raw.githubusercontent.com/Enormit/tool-automation/main/Main.js
 // @downloadURL   https://raw.githubusercontent.com/Enormit/tool-automation/main/Main.js
 // @description   Auto  HH3D
 // @author        Enormit
-// @include       *://hoathinh3d.co*/*
-// @exclude       *://hoathinh3d.co/khoang-mach*
-// @exclude       *://hoathinh3d.co/luyen-dan-duong*
-// @exclude       *://hoathinh3d.co/tu-bao-cac-hh3d*
-// @exclude       *://hoathinh3d.co/me-cung*
-// @exclude       *://hoathinh3d.co/dua-top-hh3d*
+// @include       *://hoathinh3d.*/*
+// @exclude       *://hoathinh3d.*/khoang-mach*
+// @exclude       *://hoathinh3d.*/luyen-dan-duong*
+// @exclude       *://hoathinh3d.*/tu-bao-cac-hh3d*
+// @exclude       *://hoathinh3d.*/me-cung*
+// @exclude       *://hoathinh3d.*/dua-top-hh3d*
 // @require       https://cdn.jsdelivr.net/npm/sweetalert2@11.26.12/dist/sweetalert2.all.min.js
 // @run-at        document-start
 // @grant         unsafeWindow
@@ -6662,7 +6662,8 @@
                         showNotification('Không thể vào lại mỏ sau khi nhận thưởng.', 'error');
                         return false;
                     } else {
-                        taskTracker.adjustTaskTime(accountId, 'khoangmach', timePlus('30:00'));
+                        // Không đặt thời gian chờ lớn để duy trì việc kiểm tra mỗi X phút
+                        // taskTracker.adjustTaskTime(accountId, 'khoangmach', timePlus('30:00'));
                         return true;
                     }
                 }
@@ -6676,7 +6677,8 @@
                     const d = await r.json();
                     if (d.success) {
                         showNotification(d.data.message, 'success');
-                        taskTracker.adjustTaskTime(accountId, 'khoangmach', timePlus('30:00'));
+                        // Không đặt thời gian chờ lớn để duy trì việc kiểm tra mỗi X phút
+                        // taskTracker.adjustTaskTime(accountId, 'khoangmach', timePlus('30:00'));
                         return true;
                     } else {
                         showNotification(d.data.message || 'Lỗi nhận thưởng.', 'error');
@@ -6843,7 +6845,8 @@
                     }
 
                     if (shouldWait) {
-                        taskTracker.adjustTaskTime(accountId, 'khoangmach', nextTime);
+                        // Không đặt thời gian chờ lớn để duy trì việc kiểm tra mỗi X phút
+                        // taskTracker.adjustTaskTime(accountId, 'khoangmach', nextTime);
                         break;
                     }
                 }
@@ -8119,10 +8122,10 @@
             style.innerHTML = `
                     #hh3d-notification-container {
                         position: fixed;
-                        top: 30px;
+                        top: 60px; /* Di chuyển xuống dưới nút toggle mới */
                         left: 10px;
-                        width: 300px;
-                        max-height: 350px;
+                        width: 320px;
+                        max-height: 400px;
                         overflow-y: auto;
                         display: none;
                         flex-direction: column;
@@ -8134,6 +8137,61 @@
                         box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
                         z-index: 999999;
                         pointer-events: auto;
+                    }
+
+                    #hh3d-noti-toggle {
+                        position: fixed;
+                        top: 10px;
+                        left: 10px;
+                        width: 42px;
+                        height: 42px;
+                        background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+                        border-radius: 50%;
+                        z-index: 1000001;
+                        cursor: pointer;
+                        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        font-size: 18px;
+                        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                        border: 1px solid rgba(255, 255, 255, 0.1);
+                        user-select: none;
+                    }
+                    #hh3d-noti-toggle:hover {
+                        transform: scale(1.1);
+                        box-shadow: 0 6px 16px rgba(59, 130, 246, 0.6);
+                    }
+                    #hh3d-noti-toggle:active {
+                        transform: scale(0.95);
+                    }
+
+                    @media (max-width: 768px) {
+                        #hh3d-noti-toggle {
+                            width: 36px;
+                            height: 36px;
+                            font-size: 16px;
+                            top: 8px;
+                            left: 8px;
+                        }
+                        #hh3d-notification-container {
+                            top: 52px;
+                            width: 280px;
+                        }
+                    }
+                    @media (max-width: 480px) {
+                        #hh3d-noti-toggle {
+                            width: 30px;
+                            height: 30px;
+                            font-size: 13px;
+                            top: 5px;
+                            left: 5px;
+                        }
+                        #hh3d-notification-container {
+                            top: 42px;
+                            width: 250px;
+                            left: 5px;
+                        }
                     }
 
                     .hh3d-notification-item {
@@ -8195,7 +8253,6 @@
             toggle = document.createElement('div');
             toggle.id = 'hh3d-noti-toggle';
             toggle.title = 'Lịch sử thông báo';
-            toggle.style.cssText = 'position:fixed;top:5px;left:5px;width:20px;height:20px;background:#3b82f6;border-radius:50%;z-index:1000001;cursor:pointer;box-shadow:0 0 6px rgba(59,130,246,0.6);display:flex;align-items:center;justify-content:center;font-size:11px;';
             toggle.innerHTML = '🔔';
 
             toggle.addEventListener('click', () => {
@@ -9941,6 +9998,281 @@
                         opacity: 1;
                         transform: translateY(0);
                     }
+                }
+
+                @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+                /* Refresh menu UI to match DuaTopVanDap.js glassmorphism style while keeping original size */
+                .custom-script-menu {
+                    background: linear-gradient(145deg, rgba(15, 23, 42, 0.97), rgba(30, 41, 59, 0.97)) !important;
+                    border: 1px solid rgba(99, 102, 241, 0.3) !important;
+                    border-radius: 16px !important;
+                    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6), 0 0 60px rgba(99, 102, 241, 0.1) !important;
+                    font-family: 'Inter', sans-serif !important;
+                    color: #e2e8f0 !important;
+                    backdrop-filter: blur(20px) !important;
+                    box-sizing: border-box !important;
+                    padding: 12px !important;
+                    gap: 8px !important;
+                    min-width: 350px !important;
+                    max-width: 350px !important;
+                }
+
+                #xu-info.xu-info-container,
+                .custom-script-settings-panel,
+                .custom-script-mua-dan-settings-panel,
+                #reward-progress-wrap .nv-overview {
+                    background: rgba(255, 255, 255, 0.03) !important;
+                    border: 1px solid rgba(255, 255, 255, 0.06) !important;
+                    border-radius: 12px !important;
+                    padding: 10px 12px !important;
+                    margin-bottom: 8px !important;
+                    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+                }
+
+                .custom-script-menu-button,
+                .custom-script-menu-link,
+                .custom-script-auto-btn,
+                .custom-script-phuc-loi-btn,
+                .custom-script-dice-roll-btn,
+                .custom-script-hoang-vuc-btn,
+                .custom-script-khoang-mach-button,
+                .custom-script-hoat-dong-ngay-btn,
+                .custom-script-tang-hoa-btn,
+                .custom-script-mua-ruong-btn,
+                .custom-script-khac-tran-van-btn,
+                .custom-script-khac-tran-van-vip-btn,
+                .custom-script-cau-nguyen-btn,
+                .custom-script-mua-dan-button,
+                .custom-script-mua-dan-action-btn,
+                .quest-action-btn,
+                .quest-extra-btn,
+                .general-link-btn,
+                #profile-refresh-btn {
+                    font-family: 'Inter', sans-serif !important;
+                    border-radius: 8px !important;
+                    font-weight: 600 !important;
+                    padding: 8px 12px !important;
+                    font-size: 12px !important;
+                    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+                    cursor: pointer !important;
+                    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+                    display: inline-flex !important;
+                    align-items: center !important;
+                    justify-content: center !important;
+                    gap: 6px !important;
+                    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2) !important;
+                    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3) !important;
+                }
+
+                .custom-script-menu-button:hover,
+                .custom-script-menu-link:hover,
+                .custom-script-auto-btn:hover,
+                .custom-script-phuc-loi-btn:hover,
+                .custom-script-dice-roll-btn:hover,
+                .custom-script-hoang-vuc-btn:hover,
+                .custom-script-khoang-mach-button:hover,
+                .custom-script-hoat-dong-ngay-btn:hover,
+                .custom-script-tang-hoa-btn:hover,
+                .custom-script-mua-ruong-btn:hover,
+                .custom-script-khac-tran-van-btn:hover,
+                .custom-script-khac-tran-van-vip-btn:hover,
+                .custom-script-cau-nguyen-btn:hover,
+                .custom-script-mua-dan-button:hover,
+                .custom-script-mua-dan-action-btn:hover,
+                .quest-action-btn:hover:not(:disabled),
+                .quest-extra-btn:hover:not(:disabled),
+                .general-link-btn:hover,
+                #profile-refresh-btn:hover {
+                    transform: translateY(-1px) !important;
+                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3), 0 0 8px rgba(99, 102, 241, 0.2) !important;
+                    filter: brightness(1.1) !important;
+                }
+
+                .custom-script-menu-button:active,
+                .custom-script-menu-link:active,
+                .quest-action-btn:active:not(:disabled) {
+                    transform: translateY(0) !important;
+                }
+
+                /* Tím (Primary/Auto) */
+                .custom-script-auto-btn,
+                .quest-action-btn,
+                .autorun-main-btn {
+                    background: linear-gradient(135deg, #8b5cf6, #6d28d9) !important;
+                    color: #fff !important;
+                    border-color: rgba(139, 92, 246, 0.3) !important;
+                }
+
+                /* Xanh lá (Success) */
+                .custom-script-phuc-loi-btn,
+                .custom-script-mua-ruong-btn,
+                .custom-script-khac-tran-van-vip-btn,
+                #profile-refresh-btn {
+                    background: linear-gradient(135deg, #22c55e, #16a34a) !important;
+                    color: #fff !important;
+                    border-color: rgba(34, 197, 94, 0.3) !important;
+                }
+
+                /* Cam/Vàng (Warning/Check) */
+                .custom-script-dice-roll-btn,
+                .custom-script-hoat-dong-ngay-btn,
+                .custom-script-mua-dan-tong-btn,
+                .custom-script-mua-dan-tubao-btn {
+                    background: linear-gradient(135deg, #f59e0b, #d97706) !important;
+                    color: #fff !important;
+                    border-color: rgba(245, 158, 11, 0.3) !important;
+                }
+
+                /* Xanh lam (Blue / Info) */
+                .custom-script-hoang-vuc-btn,
+                .custom-script-khoang-mach-button,
+                .custom-script-khac-tran-van-btn,
+                .custom-script-mua-dan-button,
+                .general-link-btn {
+                    background: linear-gradient(135deg, #3b82f6, #1d4ed8) !important;
+                    color: #fff !important;
+                    border-color: rgba(59, 130, 246, 0.3) !important;
+                }
+
+                /* Hồng (Tang Hoa / Cau Nguyen) */
+                .custom-script-tang-hoa-btn,
+                .custom-script-cau-nguyen-btn,
+                .quest-extra-btn {
+                    background: linear-gradient(135deg, #ec4899, #be185d) !important;
+                    color: #fff !important;
+                    border-color: rgba(236, 72, 153, 0.3) !important;
+                }
+
+                /* Trạng thái Disabled */
+                .custom-script-menu-button:disabled,
+                .custom-script-menu-link:disabled,
+                .custom-script-auto-btn:disabled,
+                .custom-script-phuc-loi-btn:disabled,
+                .custom-script-dice-roll-btn:disabled,
+                .custom-script-hoang-vuc-btn:disabled,
+                .custom-script-khoang-mach-button:disabled,
+                .custom-script-hoat-dong-ngay-btn:disabled,
+                .custom-script-tang-hoa-btn:disabled,
+                .custom-script-mua-ruong-btn:disabled,
+                .custom-script-khac-tran-van-btn:disabled,
+                .custom-script-khac-tran-van-vip-btn:disabled,
+                .custom-script-cau-nguyen-btn:disabled,
+                .custom-script-mua-dan-button:disabled,
+                .custom-script-mua-dan-action-btn:disabled,
+                .quest-action-btn:disabled,
+                .quest-extra-btn:disabled,
+                .general-link-btn:disabled {
+                    background: #334155 !important;
+                    color: #94a3b8 !important;
+                    border-color: rgba(255, 255, 255, 0.05) !important;
+                    cursor: not-allowed !important;
+                    transform: none !important;
+                    box-shadow: none !important;
+                    opacity: 0.6 !important;
+                }
+
+                /* Dropdowns / Inputs / Selects */
+                .custom-script-dice-roll-select,
+                .custom-script-tang-hoa-select,
+                .custom-script-mua-ruong-select,
+                .custom-script-mua-dan-config-row select,
+                .quest-select,
+                .quest-input,
+                .bicanh-input,
+                .bicanh-socket,
+                .promo-form input {
+                    background: #0f172a !important;
+                    border: 1px solid rgba(99, 102, 241, 0.2) !important;
+                    border-radius: 6px !important;
+                    color: #f1f5f9 !important;
+                    padding: 6px 10px !important;
+                    font-size: 11px !important;
+                    font-family: 'Inter', sans-serif !important;
+                    outline: none !important;
+                    transition: all 0.2s !important;
+                }
+
+                .custom-script-dice-roll-select:focus,
+                .quest-select:focus,
+                .quest-input:focus,
+                .promo-form input:focus {
+                    border-color: #818cf8 !important;
+                    box-shadow: 0 0 0 2px rgba(129, 140, 248, 0.2) !important;
+                }
+
+                /* Icon bánh răng settings */
+                .custom-script-phuc-loi-icon-btn,
+                .custom-script-hoang-vuc-settings-btn,
+                .custom-script-mua-dan-settings-btn,
+                .quest-settings-btn {
+                    width: 30px !important;
+                    height: 30px !important;
+                    background: rgba(255, 255, 255, 0.06) !important;
+                    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+                    color: #94a3b8 !important;
+                    border-radius: 50% !important;
+                    display: inline-flex !important;
+                    align-items: center !important;
+                    justify-content: center !important;
+                    cursor: pointer !important;
+                    transition: all 0.2s !important;
+                    margin-top: 0px !important;
+                }
+
+                .custom-script-phuc-loi-icon-btn:hover,
+                .custom-script-hoang-vuc-settings-btn:hover,
+                .custom-script-mua-dan-settings-btn:hover,
+                .quest-settings-btn:hover {
+                    background: rgba(99, 102, 241, 0.2) !important;
+                    border-color: rgba(99, 102, 241, 0.4) !important;
+                    color: #fff !important;
+                }
+
+                /* Progress bar */
+                #reward-progress-wrap .nv-progress-bar {
+                    background: rgba(255, 255, 255, 0.05) !important;
+                    border-radius: 10px !important;
+                    height: 8px !important;
+                }
+
+                #reward-progress-wrap .nv-progress-fill {
+                    background: linear-gradient(90deg, #f5c542, #fb923c) !important;
+                    box-shadow: 0 0 8px rgba(245, 197, 66, 0.5) !important;
+                    border-radius: 10px !important;
+                }
+
+                #reward-progress-wrap .nv-progress-fill.full {
+                    background: linear-gradient(90deg, #22d3a0, #10b981) !important;
+                    box-shadow: 0 0 8px rgba(34, 211, 160, 0.6) !important;
+                }
+
+                /* Quest items list */
+                #reward-progress-wrap .nv-quest-item {
+                    background: rgba(255, 255, 255, 0.02) !important;
+                    border: 1px solid rgba(255, 255, 255, 0.05) !important;
+                    border-radius: 8px !important;
+                    padding: 6px 8px !important;
+                    margin-bottom: 4px !important;
+                }
+
+                #reward-progress-wrap .nv-quest-item.done {
+                    background: rgba(34, 211, 160, 0.08) !important;
+                    border-color: rgba(34, 211, 160, 0.2) !important;
+                    color: #22d3a0 !important;
+                }
+
+                /* Chips */
+                #reward-progress-wrap .nv-chip.chip-done {
+                    background: rgba(34, 211, 160, 0.12) !important;
+                    color: #22d3a0 !important;
+                    border: 1px solid rgba(34, 211, 160, 0.2) !important;
+                }
+
+                #reward-progress-wrap .nv-chip.chip-pend {
+                    background: rgba(255, 255, 255, 0.04) !important;
+                    color: #64748b !important;
+                    border: 1px solid rgba(255, 255, 255, 0.08) !important;
                 }
                 `;
 
