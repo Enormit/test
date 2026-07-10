@@ -1,7 +1,7 @@
 // ==UserScript==
-// @name          HH3D Auto - v2.3.8
+// @name          HH3D Auto - v2.3.9
 // @namespace     hh3d-tool
-// @version       v2.3.8
+// @version       v2.3.9
 // @updateURL     https://raw.githubusercontent.com/Enormit/tool-automation/main/Main.js
 // @downloadURL   https://raw.githubusercontent.com/Enormit/tool-automation/main/Main.js
 // @description   Auto  HH3D
@@ -8368,7 +8368,11 @@
                     display: flex !important;
                     flex-direction: column !important;
                     position: absolute;
-                    background-color: #242323ff;
+                    background: rgba(36, 35, 35, 0.7) !important;
+                    backdrop-filter: blur(12px) !important;
+                    -webkit-backdrop-filter: blur(12px) !important;
+                    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+                    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37) !important;
                     min-width: 350px !important;
                     z-index: 1001;
                     border-radius: 5px;
