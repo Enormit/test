@@ -1,9 +1,9 @@
 // ==UserScript==
-// @name          HH3D Auto - v2.4.1
+// @name          HH3D Auto - v2.4.2
 // @namespace     hh3d-tool
-// @version       v2.4.1
-// @updateURL     https://raw.githubusercontent.com/Enormit/tool-automation/main/Main.js
-// @downloadURL   https://raw.githubusercontent.com/Enormit/tool-automation/main/Main.js
+// @version       v2.4.2
+// @updateURL     https://raw.githubusercontent.com/Enormit/test/main/Main.js
+// @downloadURL   https://raw.githubusercontent.com/Enormit/test/main/Main.js
 // @description   Auto  HH3D
 // @author        Enormit
 // @include       *://hoathinh3d.*/*
