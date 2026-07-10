@@ -1,7 +1,7 @@
 // ==UserScript==
-// @name          HH3D Auto - v2.3.1
+// @name          HH3D Auto - v2.3.2
 // @namespace     hh3d-tool
-// @version       v2.3.1
+// @version       v2.3.2
 // @updateURL     https://raw.githubusercontent.com/Enormit/tool-automation/main/Main.js
 // @downloadURL   https://raw.githubusercontent.com/Enormit/tool-automation/main/Main.js
 // @description   Auto  HH3D
@@ -9375,7 +9375,7 @@
                     padding-top: 8px;
                     border-top: 1px solid rgba(255, 255, 255, 0.05);
                     width: 100%;
-                    max-height: 220px !important;
+                    max-height: 270px !important;
                     overflow-y: auto !important;
                     box-sizing: border-box !important;
                 }
@@ -9400,8 +9400,8 @@
                     flex-direction: row !important;
                     align-items: center;
                     gap: 8px;
-                    padding: 6px 8px !important;
-                    margin-bottom: 4px;
+                    padding: 4px 8px !important;
+                    margin-bottom: 3px !important;
                     background: rgba(255, 255, 255, 0.02);
                     border: 1px solid rgba(255, 255, 255, 0.05);
                     border-radius: 6px;
@@ -10270,8 +10270,8 @@
                     background: rgba(255, 255, 255, 0.02) !important;
                     border: 1px solid rgba(255, 255, 255, 0.05) !important;
                     border-radius: 8px !important;
-                    padding: 6px 8px !important;
-                    margin-bottom: 4px !important;
+                    padding: 4px 8px !important;
+                    margin-bottom: 3px !important;
                 }
 
                 #reward-progress-wrap .nv-quest-item.done {
