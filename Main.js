@@ -1,7 +1,7 @@
 // ==UserScript==
-// @name          HH3D Auto - v2.3.5
+// @name          HH3D Auto - v2.3.6
 // @namespace     hh3d-tool
-// @version       v2.3.5
+// @version       v2.3.6
 // @updateURL     https://raw.githubusercontent.com/Enormit/tool-automation/main/Main.js
 // @downloadURL   https://raw.githubusercontent.com/Enormit/tool-automation/main/Main.js
 // @description   Auto  HH3D
@@ -9097,7 +9097,7 @@
                     align-items: center;
                     justify-content: space-between;
                     gap: 5px;
-                    font-size: 10px;
+                    font-size: 12px;
                     color: #d0d8f0;
                 }
 
@@ -9119,7 +9119,7 @@
                 .xu-display strong {
                     color: #f5c542;
                     font-weight: 700;
-                    font-size: 11px;
+                    font-size: 13px;
                 }
 
                 .autorun-main-btn {
@@ -9132,7 +9132,7 @@
                     padding: 3px 10px !important;
                     border-radius: 5px;
                     cursor: pointer;
-                    font-size: 9px;
+                    font-size: 11px;
                     font-weight: 600;
                     transition: all 0.2s;
                     text-align: center;
@@ -9319,14 +9319,14 @@
 
                 #reward-progress-wrap .nv-ov-header h3 {
                     margin: 0 !important;
-                    font-size: 11px;
+                    font-size: 13px;
                     font-weight: 700;
                     color: #e0e6f0;
                     flex: 1;
                 }
 
                 #reward-progress-wrap .nv-ov-header .percent {
-                    font-size: 11px;
+                    font-size: 13px;
                     font-weight: 800;
                     color: #f5c542;
                     flex-shrink: 0;
@@ -9363,7 +9363,7 @@
                 #reward-progress-wrap .nv-ov-summary {
                     display: block !important;
                     margin: 0 0 4px !important;
-                    font-size: 10px;
+                    font-size: 12px;
                     color: #9ca3af;
                     width: 100%;
                 }
@@ -9379,7 +9379,7 @@
 
                 #reward-progress-wrap .nv-chip {
                     display: inline-block !important;
-                    font-size: 9px;
+                    font-size: 11px;
                     padding: 1px 5px !important;
                     border-radius: 8px;
                     font-weight: 600;
@@ -9408,7 +9408,7 @@
                     padding: 3px 6px !important;
                     border-radius: 5px;
                     cursor: pointer;
-                    font-size: 9px;
+                    font-size: 11px;
                     font-weight: 600;
                     transition: all 0.2s;
                     margin-top: 3px;
@@ -10122,7 +10122,7 @@
                     border-radius: 6px !important;
                     font-weight: 600 !important;
                     padding: 5px 10px !important;
-                    font-size: 11px !important;
+                    font-size: 12px !important;
                     border: 1px solid rgba(255, 255, 255, 0.08) !important;
                     cursor: pointer !important;
                     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
@@ -10256,7 +10256,7 @@
                     border-radius: 5px !important;
                     color: #f1f5f9 !important;
                     padding: 4px 8px !important;
-                    font-size: 10px !important;
+                    font-size: 12px !important;
                     font-family: 'Inter', sans-serif !important;
                     outline: none !important;
                     transition: all 0.2s !important;
@@ -10349,7 +10349,7 @@
                 #reward-progress-wrap .nv-quest-item {
                     padding: 4px 6px !important;
                     margin-bottom: 3px !important;
-                    font-size: 10px !important;
+                    font-size: 12px !important;
                 }
                 #reward-progress-wrap .nv-quest-icon {
                     font-size: 13px !important;
@@ -10361,7 +10361,7 @@
                 #reward-progress-wrap .quest-action-btn,
                 #reward-progress-wrap .quest-extra-btn {
                     padding: 3px 6px !important;
-                    font-size: 9px !important;
+                    font-size: 11px !important;
                     min-width: 50px !important;
                     height: 20px !important;
                     line-height: 14px !important;
@@ -10371,12 +10371,12 @@
                 }
                 #reward-progress-wrap .quest-select {
                     padding: 2px 3px !important;
-                    font-size: 9px !important;
+                    font-size: 11px !important;
                     height: 20px !important;
                 }
                 #reward-progress-wrap .quest-input {
                     padding: 2px 3px !important;
-                    font-size: 9px !important;
+                    font-size: 11px !important;
                     height: 20px !important;
                     width: 32px !important;
                 }
@@ -10385,7 +10385,7 @@
                     font-size: 11px !important;
                 }
                 #reward-progress-wrap .nv-quest-status {
-                    font-size: 9px !important;
+                    font-size: 11px !important;
                     padding: 1px 4px !important;
                 }
                 `;
