@@ -1,7 +1,7 @@
 // ==UserScript==
-// @name          HH3D Auto - v2.3.9
+// @name          HH3D Auto - v2.4.0
 // @namespace     hh3d-tool
-// @version       v2.3.9
+// @version       v2.4.0
 // @updateURL     https://raw.githubusercontent.com/Enormit/tool-automation/main/Main.js
 // @downloadURL   https://raw.githubusercontent.com/Enormit/tool-automation/main/Main.js
 // @description   Auto  HH3D
@@ -10055,7 +10055,13 @@
                     to {
                         opacity: 1;
                         transform: translateY(0);
-                    }
+                }
+                
+                /* Giảm 25% độ lớn chuông thông báo */
+                .load-notification > a {
+                    transform: scale(0.75) !important;
+                    transform-origin: center !important;
+                    display: inline-flex !important;
                 }
                 `;
 
