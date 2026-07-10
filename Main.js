@@ -1,7 +1,7 @@
 // ==UserScript==
-// @name          HH3D Auto - v2.3.3
+// @name          HH3D Auto - v2.3.4
 // @namespace     hh3d-tool
-// @version       v2.3.3
+// @version       v2.3.4
 // @updateURL     https://raw.githubusercontent.com/Enormit/tool-automation/main/Main.js
 // @downloadURL   https://raw.githubusercontent.com/Enormit/tool-automation/main/Main.js
 // @description   Auto  HH3D
@@ -9073,13 +9073,13 @@
                     background: rgba(255, 255, 255, 0.03);
                     border: 1px solid rgba(245, 197, 66, 0.2);
                     border-radius: 8px;
-                    padding: 8px 10px !important;
-                    margin-bottom: 8px;
+                    padding: 5px 8px !important;
+                    margin-bottom: 5px;
                     position: relative;
                     overflow: hidden;
                     width: 100%;
                     box-sizing: border-box;
-                    font-size: 12px;
+                    font-size: 11px;
                 }
 
                 #xu-info.xu-info-container:before {
@@ -9289,8 +9289,8 @@
                     background: rgba(255, 255, 255, 0.03);
                     border: 1px solid rgba(245, 197, 66, 0.2);
                     border-radius: 8px;
-                    padding: 10px 12px !important;
-                    margin-bottom: 8px;
+                    padding: 6px 8px !important;
+                    margin-bottom: 5px;
                     position: relative;
                     overflow: hidden;
                     width: 100%;
@@ -10094,8 +10094,8 @@
                     background: rgba(255, 255, 255, 0.03) !important;
                     border: 1px solid rgba(255, 255, 255, 0.06) !important;
                     border-radius: 12px !important;
-                    padding: 10px 12px !important;
-                    margin-bottom: 8px !important;
+                    padding: 5px 8px !important;
+                    margin-bottom: 5px !important;
                     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
                 }
 
@@ -10344,10 +10344,10 @@
                     border: 1px solid rgba(255, 255, 255, 0.08) !important;
                 }
 
-                /* Extremely compact quest items to display all without scrolling */
+                /* Compact quest items - slightly taller for readability */
                 #reward-progress-wrap .nv-quest-item {
-                    padding: 2px 6px !important;
-                    margin-bottom: 2px !important;
+                    padding: 4px 6px !important;
+                    margin-bottom: 3px !important;
                     font-size: 10px !important;
                 }
                 #reward-progress-wrap .nv-quest-icon {
@@ -10359,28 +10359,28 @@
                 }
                 #reward-progress-wrap .quest-action-btn,
                 #reward-progress-wrap .quest-extra-btn {
-                    padding: 2px 6px !important;
+                    padding: 3px 6px !important;
                     font-size: 9px !important;
                     min-width: 50px !important;
-                    height: 18px !important;
+                    height: 20px !important;
                     line-height: 14px !important;
                 }
                 #reward-progress-wrap .quest-extra-btn {
                     min-width: 24px !important;
                 }
                 #reward-progress-wrap .quest-select {
-                    padding: 1px 3px !important;
+                    padding: 2px 3px !important;
                     font-size: 9px !important;
-                    height: 18px !important;
+                    height: 20px !important;
                 }
                 #reward-progress-wrap .quest-input {
-                    padding: 1px 3px !important;
+                    padding: 2px 3px !important;
                     font-size: 9px !important;
-                    height: 18px !important;
+                    height: 20px !important;
                     width: 32px !important;
                 }
                 #reward-progress-wrap .quest-toggle {
-                    padding: 2px 4px !important;
+                    padding: 3px 4px !important;
                     font-size: 11px !important;
                 }
                 #reward-progress-wrap .nv-quest-status {
