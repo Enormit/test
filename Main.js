@@ -1,7 +1,7 @@
 // ==UserScript==
-// @name          HH3D Auto - v2.4.2
+// @name          HH3D Auto - v2.4.3
 // @namespace     hh3d-tool
-// @version       v2.4.2
+// @version       v2.4.3
 // @updateURL     https://raw.githubusercontent.com/Enormit/test/main/Main.js
 // @downloadURL   https://raw.githubusercontent.com/Enormit/test/main/Main.js
 // @description   Auto  HH3D
@@ -1929,18 +1929,18 @@
             modal.id = 'guide-modal';
             modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;z-index:100000;';
             modal.innerHTML = `
-            <div style="background:#1a1b2e;border-radius:12px;padding:20px 24px;max-width:520px;width:90%;max-height:80vh;overflow-y:auto;color:#c0caf5;font-size:13px;line-height:1.7;box-shadow:0 8px 32px rgba(0,0,0,0.5);border:1px solid #33467C;">
+            <div style="background:rgba(26, 27, 46, 0.7);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-radius:12px;padding:20px 24px;max-width:520px;width:90%;max-height:80vh;overflow-y:auto;color:#c0caf5;font-size:13px;line-height:1.7;box-shadow:0 8px 32px rgba(0,0,0,0.5);border:1px solid rgba(255,255,255,0.1);">
                 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
                     <h3 style="margin:0;color:#7aa2f7;font-size:16px;">📖 Hướng Dẫn Sử Dụng</h3>
                     <button id="guide-close-btn" style="background:none;border:none;color:#888;font-size:20px;cursor:pointer;padding:0 4px;">&times;</button>
                 </div>
-                <div style="border-top:1px solid #33467C;padding-top:12px;">
+                <div style="border-top:1px solid rgba(255,255,255,0.1);padding-top:12px;">
                     <p><strong style="color:#bb9af7;">Bắt Đầu / Dừng Lại:</strong> Chạy tự động tất cả nhiệm vụ.</p>
                     <p><strong style="color:#bb9af7;">🤖:</strong> Bật/tắt chế độ tự động chạy khi load trang.</p>
                     <p><strong style="color:#bb9af7;">🔄 Nút làm mới:</strong> Tải lại thông tin xu và tiến độ nhiệm vụ.</p>
                     <p><strong style="color:#bb9af7;">⚙️ Cài đặt:</strong> Cấu hình chi tiết cho từng nhiệm vụ.</p>
                     <p><strong style="color:#bb9af7;">💎 Hấp Thụ:</strong> Nhập mã CODE để nhận thưởng.</p>
-                    <hr style="border-color:#33467C;margin:10px 0;">
+                    <hr style="border-color:rgba(255,255,255,0.1);margin:10px 0;">
                     <p><strong style="color:#9ece6a;">📋 Danh sách nhiệm vụ:</strong></p>
                     <ul style="padding-left:18px;margin:4px 0;">
                         <li>Nhấn nút hành động (Đánh, Nhận, Khắc,...) để chạy thủ công.</li>
@@ -1948,7 +1948,7 @@
                         <li>Bấm vào icon trên mỗi task để bật/tắt tự động chạy mỗi task.</li>
                         <li>⏳ Thời gian đếm ngược hiển thị khi task đang chờ lượt tiếp.</li>
                     </ul>
-                    <hr style="border-color:#33467C;margin:10px 0;">
+                    <hr style="border-color:rgba(255,255,255,0.1);margin:10px 0;">
                     <p><strong style="color:#f7768e;">⚠️ Lưu ý:</strong> Đảm bảo đã đăng nhập trước khi sử dụng.</p>
                 </div>
             </div>
@@ -9706,7 +9706,10 @@
                 }
                 
                 .settings-modal-content {
-                    background: linear-gradient(135deg, #1e1e2e 0%, #2a2a3e 100%);
+                    background: rgba(30, 30, 46, 0.7) !important;
+                    backdrop-filter: blur(12px) !important;
+                    -webkit-backdrop-filter: blur(12px) !important;
+                    border: 1px solid rgba(255, 255, 255, 0.1) !important;
                     border-radius: 10px;
                     width: 92%;
                     max-width: 520px;
@@ -9719,7 +9722,7 @@
                 
                 .settings-modal-header {
                     padding: 10px 14px;
-                    border-bottom: 1px solid #3a3a4e;
+                    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
                     display: flex;
                     justify-content: space-between;
                     align-items: center;
@@ -9753,11 +9756,11 @@
                     display: flex;
                     gap: 4px;
                     padding: 7px 10px;
-                    background: #16161e;
+                    background: rgba(0, 0, 0, 0.2);
                     overflow-x: auto;
-                    border-bottom: 1px solid #3a3a4e;
+                    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
                     scrollbar-width: thin;
-                    scrollbar-color: #4a4a6e #16161e;
+                    scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
                 }
                 
                 .settings-tabs-container::-webkit-scrollbar {
@@ -9765,22 +9768,22 @@
                 }
                 
                 .settings-tabs-container::-webkit-scrollbar-track {
-                    background: #16161e;
+                    background: rgba(0, 0, 0, 0.2);
                 }
                 
                 .settings-tabs-container::-webkit-scrollbar-thumb {
-                    background: #4a4a6e;
+                    background: rgba(255, 255, 255, 0.2);
                     border-radius: 3px;
                 }
                 
                 .settings-tabs-container::-webkit-scrollbar-thumb:hover {
-                    background: #5a5a7e;
+                    background: rgba(255, 255, 255, 0.35);
                 }
                 
                 .settings-tab {
                     padding: 5px 10px;
-                    background: #2a2a3e;
-                    border: none;
+                    background: rgba(255, 255, 255, 0.05);
+                    border: 1px solid rgba(255, 255, 255, 0.05);
                     border-radius: 5px;
                     color: #aaa;
                     cursor: pointer;
@@ -9791,7 +9794,7 @@
                 }
                 
                 .settings-tab:hover {
-                    background: #3a3a4e;
+                    background: rgba(255, 255, 255, 0.15);
                     color: #fff;
                 }
                 
@@ -9806,24 +9809,22 @@
                     overflow-y: auto;
                     padding: 10px 12px;
                     scrollbar-width: thin;
-                    scrollbar-color: #4a4a6e #1e1e2e;
+                    scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
                 }
                 
                 .settings-content-container::-webkit-scrollbar {
                     width: 5px;
                 }
                 
-                .settings-content-container::-webkit-scrollbar-track {
-                    background: #1e1e2e;
-                }
+                .settings-content-container::-webkit-scrollbar-track { background: transparent; }
                 
                 .settings-content-container::-webkit-scrollbar-thumb {
-                    background: #4a4a6e;
+                    background: rgba(255, 255, 255, 0.2);
                     border-radius: 4px;
                 }
                 
                 .settings-content-container::-webkit-scrollbar-thumb:hover {
-                    background: #5a5a7e;
+                    background: rgba(255, 255, 255, 0.35);
                 }
                 
                 .settings-section {
@@ -9891,8 +9892,8 @@
                 .settings-select {
                     width: 100%;
                     padding: 5px 8px;
-                    background: #16161e;
-                    border: 1px solid #3a3a4e;
+                    background: rgba(0, 0, 0, 0.2);
+                    border: 1px solid rgba(255, 255, 255, 0.1);
                     border-radius: 5px;
                     color: #fff;
                     font-size: 12px;
@@ -9902,8 +9903,8 @@
                 
                 .settings-input-number {
                     padding: 5px 8px;
-                    background: #16161e;
-                    border: 1px solid #3a3a4e;
+                    background: rgba(0, 0, 0, 0.2);
+                    border: 1px solid rgba(255, 255, 255, 0.1);
                     border-radius: 5px;
                     color: #fff;
                     font-size: 12px;
@@ -9918,7 +9919,7 @@
                 
                 .settings-modal-footer {
                     padding: 8px 12px;
-                    border-top: 1px solid #3a3a4e;
+                    border-top: 1px solid rgba(255, 255, 255, 0.1);
                     display: flex;
                     justify-content: flex-end;
                 }
