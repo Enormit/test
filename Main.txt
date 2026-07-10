@@ -1,7 +1,7 @@
 // ==UserScript==
-// @name          HH3D Auto - v2.3.2
+// @name          HH3D Auto - v2.3.3
 // @namespace     hh3d-tool
-// @version       v2.3.2
+// @version       v2.3.3
 // @updateURL     https://raw.githubusercontent.com/Enormit/tool-automation/main/Main.js
 // @downloadURL   https://raw.githubusercontent.com/Enormit/tool-automation/main/Main.js
 // @description   Auto  HH3D
@@ -9375,7 +9375,7 @@
                     padding-top: 8px;
                     border-top: 1px solid rgba(255, 255, 255, 0.05);
                     width: 100%;
-                    max-height: 270px !important;
+                    max-height: none !important;
                     overflow-y: auto !important;
                     box-sizing: border-box !important;
                 }
@@ -10292,6 +10292,50 @@
                     color: #64748b !important;
                     border: 1px solid rgba(255, 255, 255, 0.08) !important;
                 }
+
+                /* Extremely compact quest items to display all without scrolling */
+                #reward-progress-wrap .nv-quest-item {
+                    padding: 2px 6px !important;
+                    margin-bottom: 2px !important;
+                    font-size: 10px !important;
+                }
+                #reward-progress-wrap .nv-quest-icon {
+                    font-size: 13px !important;
+                    width: 14px !important;
+                }
+                #reward-progress-wrap .nv-quest-icon i {
+                    font-size: 12px !important;
+                }
+                #reward-progress-wrap .quest-action-btn,
+                #reward-progress-wrap .quest-extra-btn {
+                    padding: 2px 6px !important;
+                    font-size: 9px !important;
+                    min-width: 50px !important;
+                    height: 18px !important;
+                    line-height: 14px !important;
+                }
+                #reward-progress-wrap .quest-extra-btn {
+                    min-width: 24px !important;
+                }
+                #reward-progress-wrap .quest-select {
+                    padding: 1px 3px !important;
+                    font-size: 9px !important;
+                    height: 18px !important;
+                }
+                #reward-progress-wrap .quest-input {
+                    padding: 1px 3px !important;
+                    font-size: 9px !important;
+                    height: 18px !important;
+                    width: 32px !important;
+                }
+                #reward-progress-wrap .quest-toggle {
+                    padding: 2px 4px !important;
+                    font-size: 11px !important;
+                }
+                #reward-progress-wrap .nv-quest-status {
+                    font-size: 9px !important;
+                    padding: 1px 4px !important;
+                }
                 `;
 
             document.head.appendChild(style);
@@ -10419,13 +10463,13 @@
                 statusBar.className = "custom-script-status-bar";
                 dropdownMenu.appendChild(statusBar);
                 const tongMonName = localStorage.getItem('tm_name');
-                // --- Footer Copyright ---
-                const footer = document.createElement("div");
-                footer.className = "custom-script-footer";
-                footer.innerHTML = `
-                    <span class="custom-script-footer-guild">${tongMonName}</span>
-                `;
-                dropdownMenu.appendChild(footer);
+                // --- Footer Copyright (Bỏ theo yêu cầu) ---
+                // const footer = document.createElement("div");
+                // footer.className = "custom-script-footer";
+                // footer.innerHTML = `
+                //     <span class="custom-script-footer-guild">${tongMonName}</span>
+                // `;
+                // dropdownMenu.appendChild(footer);
 
                 customMenuWrapper.appendChild(newMenuButton);
                 customMenuWrapper.appendChild(dropdownMenu);
