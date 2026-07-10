@@ -1,7 +1,7 @@
 // ==UserScript==
-// @name          HH3D Auto - v2.4.0
+// @name          HH3D Auto - v2.4.1
 // @namespace     hh3d-tool
-// @version       v2.4.0
+// @version       v2.4.1
 // @updateURL     https://raw.githubusercontent.com/Enormit/tool-automation/main/Main.js
 // @downloadURL   https://raw.githubusercontent.com/Enormit/tool-automation/main/Main.js
 // @description   Auto  HH3D
@@ -8174,85 +8174,28 @@
             style.innerHTML = `
                     #hh3d-notification-container {
                         position: fixed;
-                        top: 60px; /* Di chuyển xuống dưới nút toggle mới */
+                        top: 30px;
                         left: 10px;
-                        width: 260px;
-                        max-height: 280px;
+                        width: 300px;
+                        max-height: 350px;
                         overflow-y: auto;
                         display: none;
                         flex-direction: column;
-                        gap: 4px;
-                        padding: 8px;
-                        background: rgba(26, 27, 46, 0.7);
-                        backdrop-filter: blur(20px);
-                        border: 1px solid rgba(99, 102, 241, 0.3);
+                        gap: 6px;
+                        padding: 10px;
+                        background: rgba(26, 27, 46, 0.95);
+                        border: 1px solid #33467C;
                         border-radius: 6px;
                         box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
                         z-index: 999999;
                         pointer-events: auto;
                     }
 
-                    #hh3d-noti-toggle {
-                        position: fixed;
-                        top: 10px;
-                        left: 10px;
-                        width: 42px;
-                        height: 42px;
-                        background: linear-gradient(135deg, rgba(59, 130, 246, 0.7), rgba(29, 78, 216, 0.7));
-                        backdrop-filter: blur(20px);
-                        border-radius: 50%;
-                        z-index: 1000001;
-                        cursor: pointer;
-                        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        font-size: 18px;
-                        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-                        border: 1px solid rgba(255, 255, 255, 0.1);
-                        user-select: none;
-                    }
-                    #hh3d-noti-toggle:hover {
-                        transform: scale(1.1);
-                        box-shadow: 0 6px 16px rgba(59, 130, 246, 0.6);
-                    }
-                    #hh3d-noti-toggle:active {
-                        transform: scale(0.95);
-                    }
-
-                    @media (max-width: 768px) {
-                        #hh3d-noti-toggle {
-                            width: 36px;
-                            height: 36px;
-                            font-size: 16px;
-                            top: 8px;
-                            left: 8px;
-                        }
-                        #hh3d-notification-container {
-                            top: 52px;
-                            width: 220px;
-                        }
-                    }
-                    @media (max-width: 480px) {
-                        #hh3d-noti-toggle {
-                            width: 30px;
-                            height: 30px;
-                            font-size: 13px;
-                            top: 5px;
-                            left: 5px;
-                        }
-                        #hh3d-notification-container {
-                            top: 42px;
-                            width: 190px;
-                            left: 5px;
-                        }
-                    }
-
                     .hh3d-notification-item {
-                        padding: 6px 10px;
+                        padding: 8px 12px;
                         border-radius: 4px;
                         color: white;
-                        font-size: 10px;
+                        font-size: 11px;
                         line-height: 1.4;
                         word-break: break-word;
                         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
@@ -8307,6 +8250,7 @@
             toggle = document.createElement('div');
             toggle.id = 'hh3d-noti-toggle';
             toggle.title = 'Lịch sử thông báo';
+            toggle.style.cssText = 'position:fixed;top:5px;left:5px;width:20px;height:20px;background:#3b82f6;border-radius:50%;z-index:1000001;cursor:pointer;box-shadow:0 0 6px rgba(59,130,246,0.6);display:flex;align-items:center;justify-content:center;font-size:11px;';
             toggle.innerHTML = '🔔';
 
             toggle.addEventListener('click', () => {
