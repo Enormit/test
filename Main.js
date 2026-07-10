@@ -1,7 +1,7 @@
 // ==UserScript==
-// @name          HH3D Auto - v2.3.4
+// @name          HH3D Auto - v2.3.5
 // @namespace     hh3d-tool
-// @version       v2.3.4
+// @version       v2.3.5
 // @updateURL     https://raw.githubusercontent.com/Enormit/tool-automation/main/Main.js
 // @downloadURL   https://raw.githubusercontent.com/Enormit/tool-automation/main/Main.js
 // @description   Auto  HH3D
@@ -9096,16 +9096,16 @@
                     display: flex !important;
                     align-items: center;
                     justify-content: space-between;
-                    gap: 6px;
-                    font-size: 11px;
+                    gap: 5px;
+                    font-size: 10px;
                     color: #d0d8f0;
                 }
 
                 .xu-display .xu-left {
                     flex-shrink: 0;
-                    padding: 4px 10px;
+                    padding: 3px 8px;
                     border: 1px solid rgba(122, 162, 247, 0.25);
-                    border-radius: 8px;
+                    border-radius: 6px;
                     background: linear-gradient(135deg, rgba(26, 27, 46, 0.6), rgba(40, 42, 68, 0.4));
                     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.04);
                 }
@@ -9119,24 +9119,24 @@
                 .xu-display strong {
                     color: #f5c542;
                     font-weight: 700;
-                    font-size: 12px;
+                    font-size: 11px;
                 }
 
                 .autorun-main-btn {
                     display: inline-block !important;
                     width: auto;
-                    min-width: 100px;
+                    min-width: 80px;
                     background: linear-gradient(135deg, #667eea, #764ba2);
                     border: 1px solid rgba(102, 126, 234, 0.3);
                     color: #fff;
-                    padding: 4px 12px !important;
+                    padding: 3px 10px !important;
                     border-radius: 5px;
                     cursor: pointer;
-                    font-size: 10px;
+                    font-size: 9px;
                     font-weight: 600;
                     transition: all 0.2s;
                     text-align: center;
-                    margin-top: 4px;
+                    margin-top: 2px;
                     text-transform: uppercase;
                     letter-spacing: 0.3px;
                 }
@@ -9178,7 +9178,7 @@
                 }
 
                 .xu-display .autorun-icon {
-                    font-size: 16px;
+                    font-size: 14px;
                     cursor: pointer;
                     transition: all 0.2s;
                     flex-shrink: 0;
@@ -9319,14 +9319,14 @@
 
                 #reward-progress-wrap .nv-ov-header h3 {
                     margin: 0 !important;
-                    font-size: 13px;
+                    font-size: 11px;
                     font-weight: 700;
                     color: #e0e6f0;
                     flex: 1;
                 }
 
                 #reward-progress-wrap .nv-ov-header .percent {
-                    font-size: 13px;
+                    font-size: 11px;
                     font-weight: 800;
                     color: #f5c542;
                     flex-shrink: 0;
@@ -9339,11 +9339,11 @@
                 #reward-progress-wrap .nv-progress-bar {
                     display: block !important;
                     width: 100% !important;
-                    height: 8px;
+                    height: 5px;
                     background: rgba(255, 255, 255, 0.05);
                     border-radius: 10px;
                     overflow: hidden;
-                    margin-bottom: 6px;
+                    margin-bottom: 4px;
                 }
 
                 #reward-progress-wrap .nv-progress-fill {
@@ -9362,8 +9362,8 @@
 
                 #reward-progress-wrap .nv-ov-summary {
                     display: block !important;
-                    margin: 0 0 6px !important;
-                    font-size: 11px;
+                    margin: 0 0 4px !important;
+                    font-size: 10px;
                     color: #9ca3af;
                     width: 100%;
                 }
@@ -9372,16 +9372,16 @@
                     display: flex !important;
                     flex-direction: row !important;
                     flex-wrap: wrap;
-                    gap: 4px;
+                    gap: 3px;
                     width: 100%;
-                    margin-bottom: 4px;
+                    margin-bottom: 3px;
                 }
 
                 #reward-progress-wrap .nv-chip {
                     display: inline-block !important;
-                    font-size: 10px;
-                    padding: 2px 6px !important;
-                    border-radius: 10px;
+                    font-size: 9px;
+                    padding: 1px 5px !important;
+                    border-radius: 8px;
                     font-weight: 600;
                     white-space: nowrap;
                     flex-grow: 0 !important;
@@ -9405,13 +9405,13 @@
                     background: rgba(245, 197, 66, 0.1);
                     border: 1px solid rgba(245, 197, 66, 0.3);
                     color: #f5c542;
-                    padding: 4px 8px !important;
-                    border-radius: 6px;
+                    padding: 3px 6px !important;
+                    border-radius: 5px;
                     cursor: pointer;
-                    font-size: 10px;
+                    font-size: 9px;
                     font-weight: 600;
                     transition: all 0.2s;
-                    margin-top: 4px;
+                    margin-top: 3px;
                     text-align: center;
                 }
 
@@ -10119,17 +10119,17 @@
                 .general-link-btn,
                 #profile-refresh-btn {
                     font-family: 'Inter', sans-serif !important;
-                    border-radius: 8px !important;
+                    border-radius: 6px !important;
                     font-weight: 600 !important;
-                    padding: 8px 12px !important;
-                    font-size: 12px !important;
+                    padding: 5px 10px !important;
+                    font-size: 11px !important;
                     border: 1px solid rgba(255, 255, 255, 0.08) !important;
                     cursor: pointer !important;
                     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
                     display: inline-flex !important;
                     align-items: center !important;
                     justify-content: center !important;
-                    gap: 6px !important;
+                    gap: 5px !important;
                     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2) !important;
                     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3) !important;
                 }
@@ -10253,10 +10253,10 @@
                 .promo-form input {
                     background: #0f172a !important;
                     border: 1px solid rgba(99, 102, 241, 0.2) !important;
-                    border-radius: 6px !important;
+                    border-radius: 5px !important;
                     color: #f1f5f9 !important;
-                    padding: 6px 10px !important;
-                    font-size: 11px !important;
+                    padding: 4px 8px !important;
+                    font-size: 10px !important;
                     font-family: 'Inter', sans-serif !important;
                     outline: none !important;
                     transition: all 0.2s !important;
@@ -10275,8 +10275,8 @@
                 .custom-script-hoang-vuc-settings-btn,
                 .custom-script-mua-dan-settings-btn,
                 .quest-settings-btn {
-                    width: 30px !important;
-                    height: 30px !important;
+                    width: 24px !important;
+                    height: 24px !important;
                     background: rgba(255, 255, 255, 0.06) !important;
                     border: 1px solid rgba(255, 255, 255, 0.1) !important;
                     color: #94a3b8 !important;
@@ -10287,6 +10287,7 @@
                     cursor: pointer !important;
                     transition: all 0.2s !important;
                     margin-top: 0px !important;
+                    font-size: 11px !important;
                 }
 
                 .custom-script-phuc-loi-icon-btn:hover,
@@ -10302,7 +10303,7 @@
                 #reward-progress-wrap .nv-progress-bar {
                     background: rgba(255, 255, 255, 0.05) !important;
                     border-radius: 10px !important;
-                    height: 8px !important;
+                    height: 5px !important;
                 }
 
                 #reward-progress-wrap .nv-progress-fill {
