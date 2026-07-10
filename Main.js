@@ -1,7 +1,7 @@
 // ==UserScript==
-// @name          HH3D Auto - v2.3.7
+// @name          HH3D Auto - v2.3.8
 // @namespace     hh3d-tool
-// @version       v2.3.7
+// @version       v2.3.8
 // @updateURL     https://raw.githubusercontent.com/Enormit/tool-automation/main/Main.js
 // @downloadURL   https://raw.githubusercontent.com/Enormit/tool-automation/main/Main.js
 // @description   Auto  HH3D
@@ -1262,7 +1262,7 @@
                     }
                 ">▼ Xem chi tiết</button>
             </div>
-            <div class="nv-quest-details" style="max-height: ${localStorage.getItem('hh3d_quest_details_height') || 'none'} !important;">${questsHTML}</div>
+            <div class="nv-quest-details ">${questsHTML}</div>
         `;
     }
 
@@ -2091,19 +2091,6 @@
                     </div>
 
                     <div class="settings-option">
-                        <label>Giới hạn chiều cao danh sách nhiệm vụ:</label>
-                        <select id="general-quest-height" style="margin-top:6px;width:100%;padding:5px 8px;border-radius:4px;border:1px solid rgba(255,255,255,0.2);background:rgba(0,0,0,0.5);color:#d0d8f0;font-size:12px">
-                            <option value="none" ${localStorage.getItem('hh3d_quest_details_height') === 'none' || !localStorage.getItem('hh3d_quest_details_height') ? 'selected' : ''}>Không giới hạn (Tự động)</option>
-                            <option value="180px" ${localStorage.getItem('hh3d_quest_details_height') === '180px' ? 'selected' : ''}>Cực ngắn (180px)</option>
-                            <option value="240px" ${localStorage.getItem('hh3d_quest_details_height') === '240px' ? 'selected' : ''}>Ngắn (240px)</option>
-                            <option value="300px" ${localStorage.getItem('hh3d_quest_details_height') === '300px' ? 'selected' : ''}>Trung bình (300px)</option>
-                            <option value="380px" ${localStorage.getItem('hh3d_quest_details_height') === '380px' ? 'selected' : ''}>Dài (380px)</option>
-                            <option value="480px" ${localStorage.getItem('hh3d_quest_details_height') === '480px' ? 'selected' : ''}>Rất dài (480px)</option>
-                        </select>
-                        <p class="settings-description">Điều chỉnh giới hạn chiều cao tối đa của danh sách chi tiết nhiệm vụ.</p>
-                    </div>
-
-                    <div class="settings-option">
                         <label>Nhiệm vụ:</label>
                         <button id="general-reset-tasks-btn" class="settings-save-btn" style="background:rgba(239,68,68,0.2);color:#ef4444;border:1px solid rgba(239,68,68,0.3);margin-top:6px;width:100%">
                             🔄 Reset trạng thái hoàn thành
@@ -2627,17 +2614,9 @@
                     const h = parseInt(document.getElementById('general-restart-hour')?.value ?? '0', 10) || 0;
                     const m = parseInt(document.getElementById('general-restart-minute')?.value ?? '30', 10);
                     const vipMode = document.getElementById('general-vip-mode')?.checked || false;
-                    const questHeight = document.getElementById('general-quest-height')?.value ?? 'none';
                     localStorage.setItem('selfSchedule_h', String(h));
                     localStorage.setItem('selfSchedule_m', String(m));
                     localStorage.setItem('generalVipMode', String(vipMode));
-                    localStorage.setItem('hh3d_quest_details_height', questHeight);
-
-                    // Áp dụng trực tiếp vào giao diện ngay lập tức
-                    const details = document.querySelector('.nv-quest-details');
-                    if (details) {
-                        details.style.setProperty('max-height', questHeight, 'important');
-                    }
 
                     saved = true;
                     break;
@@ -9095,13 +9074,13 @@
                     background: rgba(255, 255, 255, 0.03);
                     border: 1px solid rgba(245, 197, 66, 0.2);
                     border-radius: 8px;
-                    padding: 5px 8px !important;
-                    margin-bottom: 5px;
+                    padding: 8px 10px !important;
+                    margin-bottom: 8px;
                     position: relative;
                     overflow: hidden;
                     width: 100%;
                     box-sizing: border-box;
-                    font-size: 11px;
+                    font-size: 12px;
                 }
 
                 #xu-info.xu-info-container:before {
@@ -9118,16 +9097,16 @@
                     display: flex !important;
                     align-items: center;
                     justify-content: space-between;
-                    gap: 5px;
-                    font-size: 12px;
+                    gap: 6px;
+                    font-size: 11px;
                     color: #d0d8f0;
                 }
 
                 .xu-display .xu-left {
                     flex-shrink: 0;
-                    padding: 3px 8px;
+                    padding: 4px 10px;
                     border: 1px solid rgba(122, 162, 247, 0.25);
-                    border-radius: 6px;
+                    border-radius: 8px;
                     background: linear-gradient(135deg, rgba(26, 27, 46, 0.6), rgba(40, 42, 68, 0.4));
                     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.04);
                 }
@@ -9141,24 +9120,24 @@
                 .xu-display strong {
                     color: #f5c542;
                     font-weight: 700;
-                    font-size: 13px;
+                    font-size: 12px;
                 }
 
                 .autorun-main-btn {
                     display: inline-block !important;
                     width: auto;
-                    min-width: 80px;
+                    min-width: 100px;
                     background: linear-gradient(135deg, #667eea, #764ba2);
                     border: 1px solid rgba(102, 126, 234, 0.3);
                     color: #fff;
-                    padding: 3px 10px !important;
+                    padding: 4px 12px !important;
                     border-radius: 5px;
                     cursor: pointer;
-                    font-size: 11px;
+                    font-size: 10px;
                     font-weight: 600;
                     transition: all 0.2s;
                     text-align: center;
-                    margin-top: 2px;
+                    margin-top: 4px;
                     text-transform: uppercase;
                     letter-spacing: 0.3px;
                 }
@@ -9200,7 +9179,7 @@
                 }
 
                 .xu-display .autorun-icon {
-                    font-size: 14px;
+                    font-size: 16px;
                     cursor: pointer;
                     transition: all 0.2s;
                     flex-shrink: 0;
@@ -9311,8 +9290,8 @@
                     background: rgba(255, 255, 255, 0.03);
                     border: 1px solid rgba(245, 197, 66, 0.2);
                     border-radius: 8px;
-                    padding: 6px 8px !important;
-                    margin-bottom: 5px;
+                    padding: 10px 12px !important;
+                    margin-bottom: 8px;
                     position: relative;
                     overflow: hidden;
                     width: 100%;
@@ -9361,11 +9340,11 @@
                 #reward-progress-wrap .nv-progress-bar {
                     display: block !important;
                     width: 100% !important;
-                    height: 5px;
+                    height: 8px;
                     background: rgba(255, 255, 255, 0.05);
                     border-radius: 10px;
                     overflow: hidden;
-                    margin-bottom: 4px;
+                    margin-bottom: 6px;
                 }
 
                 #reward-progress-wrap .nv-progress-fill {
@@ -9384,8 +9363,8 @@
 
                 #reward-progress-wrap .nv-ov-summary {
                     display: block !important;
-                    margin: 0 0 4px !important;
-                    font-size: 12px;
+                    margin: 0 0 6px !important;
+                    font-size: 11px;
                     color: #9ca3af;
                     width: 100%;
                 }
@@ -9394,16 +9373,16 @@
                     display: flex !important;
                     flex-direction: row !important;
                     flex-wrap: wrap;
-                    gap: 3px;
+                    gap: 4px;
                     width: 100%;
-                    margin-bottom: 3px;
+                    margin-bottom: 4px;
                 }
 
                 #reward-progress-wrap .nv-chip {
                     display: inline-block !important;
-                    font-size: 11px;
-                    padding: 1px 5px !important;
-                    border-radius: 8px;
+                    font-size: 10px;
+                    padding: 2px 6px !important;
+                    border-radius: 10px;
                     font-weight: 600;
                     white-space: nowrap;
                     flex-grow: 0 !important;
@@ -9427,13 +9406,13 @@
                     background: rgba(245, 197, 66, 0.1);
                     border: 1px solid rgba(245, 197, 66, 0.3);
                     color: #f5c542;
-                    padding: 3px 6px !important;
-                    border-radius: 5px;
+                    padding: 4px 8px !important;
+                    border-radius: 6px;
                     cursor: pointer;
-                    font-size: 11px;
+                    font-size: 10px;
                     font-weight: 600;
                     transition: all 0.2s;
-                    margin-top: 3px;
+                    margin-top: 4px;
                     text-align: center;
                 }
 
@@ -9448,20 +9427,6 @@
                     padding-top: 8px;
                     border-top: 1px solid rgba(255, 255, 255, 0.05);
                     width: 100%;
-                    max-height: none !important;
-                    overflow-y: auto !important;
-                    box-sizing: border-box !important;
-                }
-
-                #reward-progress-wrap .nv-quest-details::-webkit-scrollbar {
-                    width: 4px;
-                }
-                #reward-progress-wrap .nv-quest-details::-webkit-scrollbar-track {
-                    background: transparent;
-                }
-                #reward-progress-wrap .nv-quest-details::-webkit-scrollbar-thumb {
-                    background: rgba(255, 255, 255, 0.1);
-                    border-radius: 2px;
                 }
 
                 #reward-progress-wrap .nv-quest-details.show {
@@ -9473,8 +9438,8 @@
                     flex-direction: row !important;
                     align-items: center;
                     gap: 8px;
-                    padding: 4px 8px !important;
-                    margin-bottom: 3px !important;
+                    padding: 6px 8px !important;
+                    margin-bottom: 4px;
                     background: rgba(255, 255, 255, 0.02);
                     border: 1px solid rgba(255, 255, 255, 0.05);
                     border-radius: 6px;
@@ -9793,9 +9758,7 @@
                 }
                 
                 .settings-modal-content {
-                    background: linear-gradient(135deg, rgba(30, 30, 46, 0.7) 0%, rgba(42, 42, 62, 0.7) 100%) !important;
-                    backdrop-filter: blur(20px) !important;
-                    border: 1px solid rgba(99, 102, 241, 0.3) !important;
+                    background: linear-gradient(135deg, #1e1e2e 0%, #2a2a3e 100%);
                     border-radius: 10px;
                     width: 92%;
                     max-width: 520px;
@@ -10089,326 +10052,6 @@
                         opacity: 1;
                         transform: translateY(0);
                     }
-                }
-
-                @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
-
-                /* Refresh menu UI to match DuaTopVanDap.js glassmorphism style while keeping original size */
-                .custom-script-menu {
-                    background: linear-gradient(145deg, rgba(15, 23, 42, 0.7), rgba(30, 41, 59, 0.7)) !important;
-                    border: 1px solid rgba(99, 102, 241, 0.3) !important;
-                    border-radius: 16px !important;
-                    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6), 0 0 60px rgba(99, 102, 241, 0.1) !important;
-                    font-family: 'Inter', sans-serif !important;
-                    color: #e2e8f0 !important;
-                    backdrop-filter: blur(20px) !important;
-                    box-sizing: border-box !important;
-                    padding: 12px !important;
-                    gap: 8px !important;
-                    min-width: 350px !important;
-                    max-width: 350px !important;
-                }
-
-                #xu-info.xu-info-container,
-                .custom-script-settings-panel,
-                .custom-script-mua-dan-settings-panel,
-                #reward-progress-wrap .nv-overview {
-                    background: rgba(255, 255, 255, 0.03) !important;
-                    border: 1px solid rgba(255, 255, 255, 0.06) !important;
-                    border-radius: 12px !important;
-                    padding: 5px 8px !important;
-                    margin-bottom: 5px !important;
-                    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
-                }
-
-                .custom-script-menu-button,
-                .custom-script-menu-link,
-                .custom-script-auto-btn,
-                .custom-script-phuc-loi-btn,
-                .custom-script-dice-roll-btn,
-                .custom-script-hoang-vuc-btn,
-                .custom-script-khoang-mach-button,
-                .custom-script-hoat-dong-ngay-btn,
-                .custom-script-tang-hoa-btn,
-                .custom-script-mua-ruong-btn,
-                .custom-script-khac-tran-van-btn,
-                .custom-script-khac-tran-van-vip-btn,
-                .custom-script-cau-nguyen-btn,
-                .custom-script-mua-dan-button,
-                .custom-script-mua-dan-action-btn,
-                .quest-action-btn,
-                .quest-extra-btn,
-                .general-link-btn,
-                #profile-refresh-btn {
-                    font-family: 'Inter', sans-serif !important;
-                    border-radius: 6px !important;
-                    font-weight: 600 !important;
-                    padding: 5px 10px !important;
-                    font-size: 12px !important;
-                    border: 1px solid rgba(255, 255, 255, 0.08) !important;
-                    cursor: pointer !important;
-                    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
-                    display: inline-flex !important;
-                    align-items: center !important;
-                    justify-content: center !important;
-                    gap: 5px !important;
-                    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2) !important;
-                    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3) !important;
-                }
-
-                .custom-script-menu-button:hover,
-                .custom-script-menu-link:hover,
-                .custom-script-auto-btn:hover,
-                .custom-script-phuc-loi-btn:hover,
-                .custom-script-dice-roll-btn:hover,
-                .custom-script-hoang-vuc-btn:hover,
-                .custom-script-khoang-mach-button:hover,
-                .custom-script-hoat-dong-ngay-btn:hover,
-                .custom-script-tang-hoa-btn:hover,
-                .custom-script-mua-ruong-btn:hover,
-                .custom-script-khac-tran-van-btn:hover,
-                .custom-script-khac-tran-van-vip-btn:hover,
-                .custom-script-cau-nguyen-btn:hover,
-                .custom-script-mua-dan-button:hover,
-                .custom-script-mua-dan-action-btn:hover,
-                .quest-action-btn:hover:not(:disabled),
-                .quest-extra-btn:hover:not(:disabled),
-                .general-link-btn:hover,
-                #profile-refresh-btn:hover {
-                    transform: translateY(-1px) !important;
-                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3), 0 0 8px rgba(99, 102, 241, 0.2) !important;
-                    filter: brightness(1.1) !important;
-                }
-
-                .custom-script-menu-button:active,
-                .custom-script-menu-link:active,
-                .quest-action-btn:active:not(:disabled) {
-                    transform: translateY(0) !important;
-                }
-
-                /* Tím (Primary/Auto) */
-                .custom-script-auto-btn,
-                .quest-action-btn,
-                .autorun-main-btn {
-                    background: linear-gradient(135deg, #8b5cf6, #6d28d9) !important;
-                    color: #fff !important;
-                    border-color: rgba(139, 92, 246, 0.3) !important;
-                }
-
-                /* Xanh lá (Success) */
-                .custom-script-phuc-loi-btn,
-                .custom-script-mua-ruong-btn,
-                .custom-script-khac-tran-van-vip-btn,
-                #profile-refresh-btn {
-                    background: linear-gradient(135deg, #22c55e, #16a34a) !important;
-                    color: #fff !important;
-                    border-color: rgba(34, 197, 94, 0.3) !important;
-                }
-
-                /* Cam/Vàng (Warning/Check) */
-                .custom-script-dice-roll-btn,
-                .custom-script-hoat-dong-ngay-btn,
-                .custom-script-mua-dan-tong-btn,
-                .custom-script-mua-dan-tubao-btn {
-                    background: linear-gradient(135deg, #f59e0b, #d97706) !important;
-                    color: #fff !important;
-                    border-color: rgba(245, 158, 11, 0.3) !important;
-                }
-
-                /* Xanh lam (Blue / Info) */
-                .custom-script-hoang-vuc-btn,
-                .custom-script-khoang-mach-button,
-                .custom-script-khac-tran-van-btn,
-                .custom-script-mua-dan-button,
-                .general-link-btn {
-                    background: linear-gradient(135deg, #3b82f6, #1d4ed8) !important;
-                    color: #fff !important;
-                    border-color: rgba(59, 130, 246, 0.3) !important;
-                }
-
-                /* Hồng (Tang Hoa / Cau Nguyen) */
-                .custom-script-tang-hoa-btn,
-                .custom-script-cau-nguyen-btn,
-                .quest-extra-btn {
-                    background: linear-gradient(135deg, #ec4899, #be185d) !important;
-                    color: #fff !important;
-                    border-color: rgba(236, 72, 153, 0.3) !important;
-                }
-
-                /* Trạng thái Disabled */
-                .custom-script-menu-button:disabled,
-                .custom-script-menu-link:disabled,
-                .custom-script-auto-btn:disabled,
-                .custom-script-phuc-loi-btn:disabled,
-                .custom-script-dice-roll-btn:disabled,
-                .custom-script-hoang-vuc-btn:disabled,
-                .custom-script-khoang-mach-button:disabled,
-                .custom-script-hoat-dong-ngay-btn:disabled,
-                .custom-script-tang-hoa-btn:disabled,
-                .custom-script-mua-ruong-btn:disabled,
-                .custom-script-khac-tran-van-btn:disabled,
-                .custom-script-khac-tran-van-vip-btn:disabled,
-                .custom-script-cau-nguyen-btn:disabled,
-                .custom-script-mua-dan-button:disabled,
-                .custom-script-mua-dan-action-btn:disabled,
-                .quest-action-btn:disabled,
-                .quest-extra-btn:disabled,
-                .general-link-btn:disabled {
-                    background: #334155 !important;
-                    color: #94a3b8 !important;
-                    border-color: rgba(255, 255, 255, 0.05) !important;
-                    cursor: not-allowed !important;
-                    transform: none !important;
-                    box-shadow: none !important;
-                    opacity: 0.6 !important;
-                }
-
-                /* Dropdowns / Inputs / Selects */
-                .custom-script-dice-roll-select,
-                .custom-script-tang-hoa-select,
-                .custom-script-mua-ruong-select,
-                .custom-script-mua-dan-config-row select,
-                .quest-select,
-                .quest-input,
-                .bicanh-input,
-                .bicanh-socket,
-                .promo-form input {
-                    background: #0f172a !important;
-                    border: 1px solid rgba(99, 102, 241, 0.2) !important;
-                    border-radius: 5px !important;
-                    color: #f1f5f9 !important;
-                    padding: 4px 8px !important;
-                    font-size: 12px !important;
-                    font-family: 'Inter', sans-serif !important;
-                    outline: none !important;
-                    transition: all 0.2s !important;
-                }
-
-                .custom-script-dice-roll-select:focus,
-                .quest-select:focus,
-                .quest-input:focus,
-                .promo-form input:focus {
-                    border-color: #818cf8 !important;
-                    box-shadow: 0 0 0 2px rgba(129, 140, 248, 0.2) !important;
-                }
-
-                /* Icon bánh răng settings */
-                .custom-script-phuc-loi-icon-btn,
-                .custom-script-hoang-vuc-settings-btn,
-                .custom-script-mua-dan-settings-btn,
-                .quest-settings-btn {
-                    width: 24px !important;
-                    height: 24px !important;
-                    background: rgba(255, 255, 255, 0.06) !important;
-                    border: 1px solid rgba(255, 255, 255, 0.1) !important;
-                    color: #94a3b8 !important;
-                    border-radius: 50% !important;
-                    display: inline-flex !important;
-                    align-items: center !important;
-                    justify-content: center !important;
-                    cursor: pointer !important;
-                    transition: all 0.2s !important;
-                    margin-top: 0px !important;
-                    font-size: 11px !important;
-                }
-
-                .custom-script-phuc-loi-icon-btn:hover,
-                .custom-script-hoang-vuc-settings-btn:hover,
-                .custom-script-mua-dan-settings-btn:hover,
-                .quest-settings-btn:hover {
-                    background: rgba(99, 102, 241, 0.2) !important;
-                    border-color: rgba(99, 102, 241, 0.4) !important;
-                    color: #fff !important;
-                }
-
-                /* Progress bar */
-                #reward-progress-wrap .nv-progress-bar {
-                    background: rgba(255, 255, 255, 0.05) !important;
-                    border-radius: 10px !important;
-                    height: 5px !important;
-                }
-
-                #reward-progress-wrap .nv-progress-fill {
-                    background: linear-gradient(90deg, #f5c542, #fb923c) !important;
-                    box-shadow: 0 0 8px rgba(245, 197, 66, 0.5) !important;
-                    border-radius: 10px !important;
-                }
-
-                #reward-progress-wrap .nv-progress-fill.full {
-                    background: linear-gradient(90deg, #22d3a0, #10b981) !important;
-                    box-shadow: 0 0 8px rgba(34, 211, 160, 0.6) !important;
-                }
-
-                /* Quest items list */
-                #reward-progress-wrap .nv-quest-item {
-                    background: rgba(255, 255, 255, 0.02) !important;
-                    border: 1px solid rgba(255, 255, 255, 0.05) !important;
-                    border-radius: 8px !important;
-                    padding: 4px 8px !important;
-                    margin-bottom: 3px !important;
-                }
-
-                #reward-progress-wrap .nv-quest-item.done {
-                    background: rgba(34, 211, 160, 0.08) !important;
-                    border-color: rgba(34, 211, 160, 0.2) !important;
-                    color: #22d3a0 !important;
-                }
-
-                /* Chips */
-                #reward-progress-wrap .nv-chip.chip-done {
-                    background: rgba(34, 211, 160, 0.12) !important;
-                    color: #22d3a0 !important;
-                    border: 1px solid rgba(34, 211, 160, 0.2) !important;
-                }
-
-                #reward-progress-wrap .nv-chip.chip-pend {
-                    background: rgba(255, 255, 255, 0.04) !important;
-                    color: #64748b !important;
-                    border: 1px solid rgba(255, 255, 255, 0.08) !important;
-                }
-
-                /* Compact quest items - slightly taller for readability */
-                #reward-progress-wrap .nv-quest-item {
-                    padding: 4px 6px !important;
-                    margin-bottom: 3px !important;
-                    font-size: 12px !important;
-                }
-                #reward-progress-wrap .nv-quest-icon {
-                    font-size: 13px !important;
-                    width: 14px !important;
-                }
-                #reward-progress-wrap .nv-quest-icon i {
-                    font-size: 12px !important;
-                }
-                #reward-progress-wrap .quest-action-btn,
-                #reward-progress-wrap .quest-extra-btn {
-                    padding: 3px 6px !important;
-                    font-size: 11px !important;
-                    min-width: 50px !important;
-                    height: 20px !important;
-                    line-height: 14px !important;
-                }
-                #reward-progress-wrap .quest-extra-btn {
-                    min-width: 24px !important;
-                }
-                #reward-progress-wrap .quest-select {
-                    padding: 2px 3px !important;
-                    font-size: 11px !important;
-                    height: 20px !important;
-                }
-                #reward-progress-wrap .quest-input {
-                    padding: 2px 3px !important;
-                    font-size: 11px !important;
-                    height: 20px !important;
-                    width: 32px !important;
-                }
-                #reward-progress-wrap .quest-toggle {
-                    padding: 3px 4px !important;
-                    font-size: 11px !important;
-                }
-                #reward-progress-wrap .nv-quest-status {
-                    font-size: 11px !important;
-                    padding: 1px 4px !important;
                 }
                 `;
 
