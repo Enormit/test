@@ -1,7 +1,7 @@
 // ==UserScript==
-// @name          HH3D Auto - v2.3.6
+// @name          HH3D Auto - v2.3.7
 // @namespace     hh3d-tool
-// @version       v2.3.6
+// @version       v2.3.7
 // @updateURL     https://raw.githubusercontent.com/Enormit/tool-automation/main/Main.js
 // @downloadURL   https://raw.githubusercontent.com/Enormit/tool-automation/main/Main.js
 // @description   Auto  HH3D
@@ -1262,7 +1262,7 @@
                     }
                 ">▼ Xem chi tiết</button>
             </div>
-            <div class="nv-quest-details ">${questsHTML}</div>
+            <div class="nv-quest-details" style="max-height: ${localStorage.getItem('hh3d_quest_details_height') || 'none'} !important;">${questsHTML}</div>
         `;
     }
 
@@ -2091,6 +2091,19 @@
                     </div>
 
                     <div class="settings-option">
+                        <label>Giới hạn chiều cao danh sách nhiệm vụ:</label>
+                        <select id="general-quest-height" style="margin-top:6px;width:100%;padding:5px 8px;border-radius:4px;border:1px solid rgba(255,255,255,0.2);background:rgba(0,0,0,0.5);color:#d0d8f0;font-size:12px">
+                            <option value="none" ${localStorage.getItem('hh3d_quest_details_height') === 'none' || !localStorage.getItem('hh3d_quest_details_height') ? 'selected' : ''}>Không giới hạn (Tự động)</option>
+                            <option value="180px" ${localStorage.getItem('hh3d_quest_details_height') === '180px' ? 'selected' : ''}>Cực ngắn (180px)</option>
+                            <option value="240px" ${localStorage.getItem('hh3d_quest_details_height') === '240px' ? 'selected' : ''}>Ngắn (240px)</option>
+                            <option value="300px" ${localStorage.getItem('hh3d_quest_details_height') === '300px' ? 'selected' : ''}>Trung bình (300px)</option>
+                            <option value="380px" ${localStorage.getItem('hh3d_quest_details_height') === '380px' ? 'selected' : ''}>Dài (380px)</option>
+                            <option value="480px" ${localStorage.getItem('hh3d_quest_details_height') === '480px' ? 'selected' : ''}>Rất dài (480px)</option>
+                        </select>
+                        <p class="settings-description">Điều chỉnh giới hạn chiều cao tối đa của danh sách chi tiết nhiệm vụ.</p>
+                    </div>
+
+                    <div class="settings-option">
                         <label>Nhiệm vụ:</label>
                         <button id="general-reset-tasks-btn" class="settings-save-btn" style="background:rgba(239,68,68,0.2);color:#ef4444;border:1px solid rgba(239,68,68,0.3);margin-top:6px;width:100%">
                             🔄 Reset trạng thái hoàn thành
@@ -2614,9 +2627,18 @@
                     const h = parseInt(document.getElementById('general-restart-hour')?.value ?? '0', 10) || 0;
                     const m = parseInt(document.getElementById('general-restart-minute')?.value ?? '30', 10);
                     const vipMode = document.getElementById('general-vip-mode')?.checked || false;
+                    const questHeight = document.getElementById('general-quest-height')?.value ?? 'none';
                     localStorage.setItem('selfSchedule_h', String(h));
                     localStorage.setItem('selfSchedule_m', String(m));
                     localStorage.setItem('generalVipMode', String(vipMode));
+                    localStorage.setItem('hh3d_quest_details_height', questHeight);
+
+                    // Áp dụng trực tiếp vào giao diện ngay lập tức
+                    const details = document.querySelector('.nv-quest-details');
+                    if (details) {
+                        details.style.setProperty('max-height', questHeight, 'important');
+                    }
+
                     saved = true;
                     break;
                 }
