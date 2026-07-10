@@ -1,7 +1,7 @@
 // ==UserScript==
-// @name          HH3D Auto - v2.3.0
+// @name          HH3D Auto - v2.3.1
 // @namespace     hh3d-tool
-// @version       v2.3.0
+// @version       v2.3.1
 // @updateURL     https://raw.githubusercontent.com/Enormit/tool-automation/main/Main.js
 // @downloadURL   https://raw.githubusercontent.com/Enormit/tool-automation/main/Main.js
 // @description   Auto  HH3D
@@ -8175,15 +8175,16 @@
                         position: fixed;
                         top: 60px; /* Di chuyển xuống dưới nút toggle mới */
                         left: 10px;
-                        width: 320px;
-                        max-height: 400px;
+                        width: 260px;
+                        max-height: 280px;
                         overflow-y: auto;
                         display: none;
                         flex-direction: column;
-                        gap: 6px;
-                        padding: 10px;
-                        background: rgba(26, 27, 46, 0.95);
-                        border: 1px solid #33467C;
+                        gap: 4px;
+                        padding: 8px;
+                        background: rgba(26, 27, 46, 0.7);
+                        backdrop-filter: blur(20px);
+                        border: 1px solid rgba(99, 102, 241, 0.3);
                         border-radius: 6px;
                         box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
                         z-index: 999999;
@@ -8196,7 +8197,8 @@
                         left: 10px;
                         width: 42px;
                         height: 42px;
-                        background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+                        background: linear-gradient(135deg, rgba(59, 130, 246, 0.7), rgba(29, 78, 216, 0.7));
+                        backdrop-filter: blur(20px);
                         border-radius: 50%;
                         z-index: 1000001;
                         cursor: pointer;
@@ -8227,7 +8229,7 @@
                         }
                         #hh3d-notification-container {
                             top: 52px;
-                            width: 280px;
+                            width: 220px;
                         }
                     }
                     @media (max-width: 480px) {
@@ -8240,16 +8242,16 @@
                         }
                         #hh3d-notification-container {
                             top: 42px;
-                            width: 250px;
+                            width: 190px;
                             left: 5px;
                         }
                     }
 
                     .hh3d-notification-item {
-                        padding: 8px 12px;
+                        padding: 6px 10px;
                         border-radius: 4px;
                         color: white;
-                        font-size: 11px;
+                        font-size: 10px;
                         line-height: 1.4;
                         word-break: break-word;
                         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
@@ -9424,6 +9426,20 @@
                     padding-top: 8px;
                     border-top: 1px solid rgba(255, 255, 255, 0.05);
                     width: 100%;
+                    max-height: 220px !important;
+                    overflow-y: auto !important;
+                    box-sizing: border-box !important;
+                }
+
+                #reward-progress-wrap .nv-quest-details::-webkit-scrollbar {
+                    width: 4px;
+                }
+                #reward-progress-wrap .nv-quest-details::-webkit-scrollbar-track {
+                    background: transparent;
+                }
+                #reward-progress-wrap .nv-quest-details::-webkit-scrollbar-thumb {
+                    background: rgba(255, 255, 255, 0.1);
+                    border-radius: 2px;
                 }
 
                 #reward-progress-wrap .nv-quest-details.show {
@@ -9755,7 +9771,9 @@
                 }
                 
                 .settings-modal-content {
-                    background: linear-gradient(135deg, #1e1e2e 0%, #2a2a3e 100%);
+                    background: linear-gradient(135deg, rgba(30, 30, 46, 0.7) 0%, rgba(42, 42, 62, 0.7) 100%) !important;
+                    backdrop-filter: blur(20px) !important;
+                    border: 1px solid rgba(99, 102, 241, 0.3) !important;
                     border-radius: 10px;
                     width: 92%;
                     max-width: 520px;
@@ -10055,7 +10073,7 @@
 
                 /* Refresh menu UI to match DuaTopVanDap.js glassmorphism style while keeping original size */
                 .custom-script-menu {
-                    background: linear-gradient(145deg, rgba(15, 23, 42, 0.97), rgba(30, 41, 59, 0.97)) !important;
+                    background: linear-gradient(145deg, rgba(15, 23, 42, 0.7), rgba(30, 41, 59, 0.7)) !important;
                     border: 1px solid rgba(99, 102, 241, 0.3) !important;
                     border-radius: 16px !important;
                     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6), 0 0 60px rgba(99, 102, 241, 0.1) !important;
