@@ -38,18 +38,6 @@
 
 ---
 
-## 💾 Hướng dẫn cài đặt Chrome Extension
-
-Cách này chạy độc lập dưới dạng một Chrome Extension, có giao diện popup tiện lợi để bật/tắt và xem log.
-
-1. **Tải mã nguồn:** Nhấn nút **Code** -> chọn **Download ZIP** trên Github và giải nén (Ví dụ: `C:\HH3D-Auto-Extension`).
-2. **Trang tiện ích:** Mở trình duyệt Chrome (hoặc Edge, Cốc Cốc, Brave...) và truy cập `chrome://extensions/`.
-3. **Bật Developer mode:** Bật công tắc **Developer mode** ở góc trên bên phải.
-4. **Tải tiện ích:** Click **Load unpacked** -> chọn đúng thư mục **`auto-hh3d/extention`** (nơi chứa file `manifest.json`).
-5. **Ghim tiện ích:** Bấm biểu tượng 🧩 trên trình duyệt và ghim **HH3D Auto Tool** lên thanh công cụ.
-
----
-
 ## 🔌 Hướng dẫn cài đặt & Cấp quyền Extension Tampermonkey
 
 Để chạy Userscript `Main.js`, trước tiên bạn phải cài đặt tiện ích mở rộng Tampermonkey vào trình duyệt và cấu hình các quyền cần thiết để tránh bị Chrome chặn script.
