@@ -8413,6 +8413,9 @@
                     .hh3d-noti-blink {
                         animation: noti-blink 1s infinite;
                     }
+                    .swal2-container {
+                        z-index: 10000000 !important;
+                    }
                 `;
             document.head.appendChild(style);
             isCssInjected = true;
