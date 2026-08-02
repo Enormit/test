@@ -2883,7 +2883,7 @@
     * @param {object} headers Headers của yêu cầu để gửi đi.
     * @returns {Promise<boolean>} True nếu câu trả lời được gửi thành công, ngược lại là false.
     */
-        async checkAnswerAndSubmit(question, headers) {
+        async checkAnswerAndSubmit(question, headers, securityToken) {
 
             const normalizedIncomingQuestion = this.normalizeText(question.question);// system question
 
@@ -2952,7 +2952,8 @@
             }
 
             const payloadSubmitAnswer = new URLSearchParams();
-            payloadSubmitAnswer.append('action', 'save_quiz_result');
+            const actionSave = (typeof hData !== 'undefined' && hData?.act?.vdSave) ? hData.act.vdSave : 'save_quiz_result';
+            payloadSubmitAnswer.append('action', actionSave);
             payloadSubmitAnswer.append('question_id', question.id);
             payloadSubmitAnswer.append('answer', answerIndex);
             payloadSubmitAnswer.append('security_token', securityToken);
@@ -2974,7 +2975,7 @@
                 if (dataSubmit.success) {
                     return { success: true };
                 } else {
-                    const msg = dataSubmit?.data?.message || dataSubmit?.message || "Server không trả về thông điệp lỗi";
+                    const msg = typeof dataSubmit.data === 'string' ? dataSubmit.data : (dataSubmit?.data?.message || dataSubmit?.message || "Server không trả về thông điệp lỗi");
                     return { success: false, reason: "server_error", message: msg };
                 }
             } catch (error) {
@@ -3008,7 +3009,8 @@
                 while (correctCount < 5 && currentAttempt < maxAttempts) {
                     currentAttempt++;
                     const payloadLoadQuiz = new URLSearchParams();
-                    payloadLoadQuiz.append('action', 'load_quiz_data');
+                    const actionLoad = (typeof hData !== 'undefined' && hData?.act?.vdLoad) ? hData.act.vdLoad : 'load_quiz_data';
+                    payloadLoadQuiz.append('action', actionLoad);
                     payloadLoadQuiz.append('security_token', securityToken);
 
                     const responseQuiz = await fetch(this.ajaxUrl, {
