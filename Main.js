@@ -1,7 +1,7 @@
-﻿// ==UserScript==
-// @name          HH3D Auto - v2.4.3
+// ==UserScript==
+// @name          HH3D Auto - v2.4.4
 // @namespace     hh3d-tool
-// @version       v2.4.3
+// @version       v2.4.4
 // @updateURL     https://raw.githubusercontent.com/Enormit/test/main/Main.js
 // @downloadURL   https://raw.githubusercontent.com/Enormit/test/main/Main.js
 // @description   Auto  HH3D
