@@ -1,4 +1,4 @@
-// ==UserScript==
+﻿// ==UserScript==
 // @name          HH3D Auto - v2.4.3
 // @namespace     hh3d-tool
 // @version       v2.4.3
@@ -2133,6 +2133,14 @@
                             <button class="general-link-btn" data-path="/thong-bao-tu-chu-phu">📢 Thông Báo</button>
                         </div>
                     </div>
+
+                    <div class="settings-section" style="border-top: 1px solid rgba(255,255,255,0.08); padding-top: 15px; margin-top: 15px;">
+                        <h3>Sao lưu / Khôi phục cấu hình</h3>
+                        <div style="display:flex;gap:8px;margin-top:6px">
+                            <button id="settings-export-btn" class="settings-save-btn" style="background:rgba(59,130,246,0.2);color:#3b82f6;border:1px solid rgba(59,130,246,0.3);flex:1;margin:0;padding:6px 12px;font-size:12px;">📤 Xuất Cấu Hình</button>
+                            <button id="settings-import-btn" class="settings-save-btn" style="background:rgba(16,185,129,0.2);color:#10b981;border:1px solid rgba(16,185,129,0.3);flex:1;margin:0;padding:6px 12px;font-size:12px;">📥 Nhập Cấu Hình</button>
+                        </div>
+                    </div>
                 </div>
             `;
 
@@ -2442,6 +2450,15 @@
                         else window.open(url, '_blank');
                     });
                 });
+
+                const exportBtn = document.getElementById('settings-export-btn');
+                if (exportBtn) {
+                    exportBtn.addEventListener('click', exportSettings);
+                }
+                const importBtn = document.getElementById('settings-import-btn');
+                if (importBtn) {
+                    importBtn.addEventListener('click', importSettings);
+                }
                 break;
             }
 
@@ -2594,6 +2611,174 @@
             default:
                 break;
         }
+    }
+
+    // ===============================================
+    // XUẤT CÀI ĐẶT
+    // ===============================================
+    function exportSettings() {
+        const exactKeys = [
+            'selfSchedule_h',
+            'selfSchedule_m',
+            'generalVipMode',
+            'hoangvucMaximizeDamage',
+            'khoangmach_use_buff',
+            'khoangmach_fast_attack',
+            'khoangmach_auto_takeover',
+            'khoangmach_auto_takeover_rotation',
+            'khoangmach_outer_notification',
+            'khoangmach_reward_mode',
+            'khoangmach_reward_time',
+            'khoangmach_check_interval',
+            'luyenDanMinStars',
+            'luyenDanTargetTier',
+            'luyenDanAutoStart',
+            'luyenDanAutoUse',
+            'luyenDanAutoDecompose',
+            'luyenDanAutoTune',
+            'luyenDanAutoInvite',
+            'luyenDanWaitInviteSeconds',
+            'luyenDanAutoAcceptInvite',
+            'luyenDanAcceptAllInvites',
+            'luyenDanAutoLeave',
+            'luyenDanSelectedFriendIds',
+            'reservebicanhAttacks',
+            'bicanhSocketEnabled',
+            'luanVoChallengeMode',
+            'dice-roll-choice',
+            'tienduyen-choice'
+        ];
+
+        const prefixKeys = [
+            'khoangmach_selected_mine_',
+            'khoangmach_leave_mine_to_claim_reward_',
+            'luanVoTargetUserId_',
+            'luyenDanLastProgress_',
+            'reserve',
+            'SocketEnabled',
+            '-choice'
+        ];
+
+        const exported = {};
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (!key) continue;
+            
+            const isExact = exactKeys.includes(key);
+            const isPrefix = prefixKeys.some(prefix => key.startsWith(prefix) || key.endsWith(prefix));
+            
+            if (isExact || isPrefix) {
+                exported[key] = localStorage.getItem(key);
+            }
+        }
+
+        const jsonStr = JSON.stringify(exported, null, 2);
+
+        Swal.fire({
+            title: '📤 Xuất Cấu Hình',
+            html: `
+                <p style="font-size:13px;color:#d0d8f0;margin-bottom:10px">Bạn có thể copy mã cấu hình bên dưới hoặc bấm nút tải file cấu hình.</p>
+                <textarea id="swal-export-json" readonly style="width:100%;height:150px;font-family:monospace;font-size:11px;background:#1e1e2e;color:#a6adc8;border:1px solid #313244;border-radius:4px;padding:8px;box-sizing:border-box;resize:none">${jsonStr}</textarea>
+            `,
+            showCancelButton: true,
+            confirmButtonText: '📋 Sao chép',
+            cancelButtonText: '💾 Tải File .json',
+            customClass: {
+                confirmButton: 'swal2-confirm swal2-styled',
+                cancelButton: 'swal2-deny swal2-styled'
+            },
+            preConfirm: () => {
+                const textarea = document.getElementById('swal-export-json');
+                if (textarea) {
+                    textarea.select();
+                    document.execCommand('copy');
+                    showNotification('📋 Đã sao chép cấu hình vào clipboard!', 'success', 2000);
+                }
+            }
+        }).then((result) => {
+            if (result.dismiss === Swal.DismissReason.cancel) {
+                const blob = new Blob([jsonStr], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `hh3d_settings_${Date.now()}.json`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                showNotification('💾 Đã tải file cấu hình thành công!', 'success', 2000);
+            }
+        });
+    }
+
+    // ===============================================
+    // NHẬP CÀI ĐẶT
+    // ===============================================
+    function importSettings() {
+        Swal.fire({
+            title: '📥 Nhập Cấu Hình',
+            html: `
+                <p style="font-size:13px;color:#d0d8f0;margin-bottom:10px">Dán mã cấu hình JSON vào ô dưới đây HOẶC chọn file cấu hình (.json) từ máy tính của bạn:</p>
+                <input type="file" id="swal-import-file" accept=".json" style="width:100%;margin-bottom:10px;color:#d0d8f0;font-size:12px;">
+                <textarea id="swal-import-json" placeholder='Dán chuỗi JSON cấu hình vào đây...' style="width:100%;height:150px;font-family:monospace;font-size:11px;background:#1e1e2e;color:#a6adc8;border:1px solid #313244;border-radius:4px;padding:8px;box-sizing:border-box;resize:none"></textarea>
+            `,
+            showCancelButton: true,
+            confirmButtonText: '📥 Xác nhận nhập',
+            cancelButtonText: 'Hủy',
+            didOpen: () => {
+                const fileInput = document.getElementById('swal-import-file');
+                const textarea = document.getElementById('swal-import-json');
+                if (fileInput && textarea) {
+                    fileInput.addEventListener('change', (e) => {
+                        const file = e.target.files[0];
+                        if (file) {
+                            const reader = new FileReader();
+                            reader.onload = (event) => {
+                                textarea.value = event.target.result;
+                            };
+                            reader.readAsText(file);
+                        }
+                    });
+                }
+            },
+            preConfirm: () => {
+                const jsonStr = document.getElementById('swal-import-json')?.value?.trim();
+                if (!jsonStr) {
+                    Swal.showValidationMessage('Vui lòng dán mã cấu hình hoặc chọn file JSON!');
+                    return false;
+                }
+                try {
+                    const settings = JSON.parse(jsonStr);
+                    if (typeof settings !== 'object' || settings === null) {
+                        throw new Error('Dữ liệu không phải là một Object hợp lệ');
+                    }
+                    return settings;
+                } catch (err) {
+                    Swal.showValidationMessage('Dữ liệu JSON không hợp lệ: ' + err.message);
+                    return false;
+                }
+            }
+        }).then((result) => {
+            if (result.isConfirmed && result.value) {
+                const settings = result.value;
+                let count = 0;
+                for (const [key, value] of Object.entries(settings)) {
+                    if (value !== null && value !== undefined) {
+                        localStorage.setItem(key, String(value));
+                        count++;
+                    }
+                }
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Thành công',
+                    text: `Đã nhập thành công ${count} khóa cấu hình! Đang tải lại trang...`,
+                    timer: 2000,
+                    showConfirmButton: false
+                }).then(() => {
+                    window.location.reload();
+                });
+            }
+        });
     }
 
     // ===============================================
