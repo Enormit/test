@@ -1,7 +1,7 @@
 // ==UserScript==
-// @name          HH3D Auto - v2.4.5
+// @name          HH3D Auto - v2.4.6
 // @namespace     hh3d-tool
-// @version       v2.4.5
+// @version       v2.4.6
 // @updateURL     https://raw.githubusercontent.com/Enormit/test/main/Main.js
 // @downloadURL   https://raw.githubusercontent.com/Enormit/test/main/Main.js
 // @description   Auto  HH3D
@@ -4124,7 +4124,8 @@
                     return;
                 }
 
-                if (time === '00:00') {
+                const isVip = localStorage.getItem('generalVipMode') === 'true';
+                if (time === '00:00' || isVip) {
                     console.log(`[HH3D Phúc Lợi Đường] 🎁 Đang mở rương cấp ${chest_level + 1}...`);
                     const payloadOpen = new URLSearchParams();
                     payloadOpen.append('action', 'open_chest_pl');
@@ -4146,26 +4147,30 @@
                         if (message.includes('đã hoàn thành Phúc Lợi ngày hôm nay')) {
                             taskTracker.markTaskDone(accountId, 'phucloi');
                         } else {
-                            const isVip = localStorage.getItem('generalVipMode') === 'true';
                             const nextDelay = isVip ? '07:33' : '30:00';
                             taskTracker.adjustTaskTime(accountId, 'phucloi', timePlus(nextDelay));
                         }
                     } else {
                         const errorMessage = dataOpen.data && dataOpen.data.message ? dataOpen.data.message : 'Lỗi không xác định khi mở rương.';
-                        showNotification(errorMessage, 'error');
+                        if (isVip) {
+                            console.log(`[HH3D Phúc Lợi Đường] ⚠️ Thử mở rương VIP thất bại (chưa đến thời gian hoặc lỗi khác): ${errorMessage}`);
+                            if (!errorMessage.toLowerCase().includes('thời gian') && !errorMessage.toLowerCase().includes('đợi')) {
+                                showNotification(errorMessage, 'error');
+                            } else {
+                                showNotification(`VIP: Vui lòng đợi thêm để mở rương tiếp theo.`, 'info');
+                            }
+                            const parts = time.split(':').map(Number);
+                            const serverWaitMs = parts.length === 2 ? (parts[0] * 60 + parts[1]) * 1000 : 0;
+                            const vipWaitMs = 7 * 60 * 1000 + 33 * 1000; // 7.55 minutes
+                            const waitMs = (serverWaitMs > 0 && serverWaitMs < vipWaitMs) ? serverWaitMs : vipWaitMs;
+                            taskTracker.adjustTaskTime(accountId, 'phucloi', Date.now() + waitMs);
+                        } else {
+                            showNotification(errorMessage, 'error');
+                        }
                     }
                 } else {
                     showNotification(`Vui lòng đợi ${time} để mở rương tiếp theo.`, 'warn');
-                    const isVip = localStorage.getItem('generalVipMode') === 'true';
-                    if (isVip) {
-                        const parts = time.split(':').map(Number);
-                        const serverWaitMs = parts.length === 2 ? (parts[0] * 60 + parts[1]) * 1000 : 0;
-                        const vipWaitMs = 7 * 60 * 1000 + 33 * 1000; // 7.55 minutes
-                        const waitMs = (serverWaitMs > 0 && serverWaitMs < vipWaitMs) ? serverWaitMs : vipWaitMs;
-                        taskTracker.adjustTaskTime(accountId, 'phucloi', Date.now() + waitMs);
-                    } else {
-                        taskTracker.adjustTaskTime(accountId, 'phucloi', timePlus(time));
-                    }
+                    taskTracker.adjustTaskTime(accountId, 'phucloi', timePlus(time));
                 }
             } else {
                 const errorMessage = dataTime.data && dataTime.data.message ? dataTime.data.message : 'Lỗi không xác định khi lấy thời gian.';
