@@ -1,7 +1,7 @@
 // ==UserScript==
-// @name          HH3D Auto - v2.4.6
+// @name          HH3D Auto - v2.4.7
 // @namespace     hh3d-tool
-// @version       v2.4.6
+// @version       v2.4.7
 // @updateURL     https://raw.githubusercontent.com/Enormit/test/main/Main.js
 // @downloadURL   https://raw.githubusercontent.com/Enormit/test/main/Main.js
 // @description   Auto  HH3D
@@ -795,6 +795,25 @@
             if (accountData[taskName]) {
                 accountData[taskName].done = true;
                 this.saveData();
+
+                // Trigger Hoạt Động Ngày khi cả 4 nhiệm vụ yêu cầu đã hoàn thành
+                if (['diemdanh', 'thiluyen', 'phucloi', 'hoangvuc'].includes(taskName)) {
+                    setTimeout(() => {
+                        if (typeof window.hh3dAutomatic !== 'undefined' && window.hh3dAutomatic) {
+                            const auto = window.hh3dAutomatic;
+                            const isHoangVucDone = this.isTaskDone(accountId, 'hoangvuc');
+                            const isPhucLoiDone = this.isTaskDone(accountId, 'phucloi');
+                            const isDiemDanhDone = this.isTaskDone(accountId, 'diemdanh');
+                            const isThiluyenDone = this.isTaskDone(accountId, 'thiluyen');
+                            const isHoatDongNgayDone = this.isTaskDone(accountId, 'hoatdongngay');
+
+                            if (isHoangVucDone && isPhucLoiDone && isDiemDanhDone && isThiluyenDone && !isHoatDongNgayDone) {
+                                console.log('[Auto Trigger] Phát hiện cả 4 nhiệm vụ (Hoang Vực, Phúc Lợi, Điểm Danh, Thí Luyện) đã hoàn thành! Kích hoạt ngay Hoạt Động Ngày...');
+                                auto.scheduleHoatDongNgay();
+                            }
+                        }
+                    }, 500);
+                }
             } else {
                 console.error(`[TaskTracker] Nhiệm vụ "${taskName}" không tồn tại cho tài khoản "${accountId}"`);
             }
@@ -11043,8 +11062,9 @@
             const isHoangVucDone = taskTracker.isTaskDone(this.accountId, 'hoangvuc');
             const isPhucLoiDone = taskTracker.isTaskDone(this.accountId, 'phucloi');
             const isDiemDanhDone = taskTracker.isTaskDone(this.accountId, 'diemdanh');
+            const isThiluyenDone = taskTracker.isTaskDone(this.accountId, 'thiluyen');
             // const isLuanVoDone = taskTracker.isTaskDone(this.accountId, 'luanvo');
-            if (isHoangVucDone && isPhucLoiDone && isDiemDanhDone) {
+            if (isHoangVucDone && isPhucLoiDone && isDiemDanhDone && isThiluyenDone) {
                 console.log("[Auto] Điều kiện đã đủ, đang thực hiện Hoạt Động Ngày...");
                 try {
                     await hoatdongngay.doHoatDongNgay();
